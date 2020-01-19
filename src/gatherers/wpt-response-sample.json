@@ -1,0 +1,13 @@
+{
+  statusCode: 200,
+  statusText: 'Ok',
+  data: {
+    testId: '200118_KA_4022ee20eaf1deebb393585731de6576',
+    ownerKey: '9c58809d442152143c04bb7f1a711224aac3cfde',
+    jsonUrl: 'https://webpagetest.org/jsonResult.php?test=200118_KA_4022ee20eaf1deebb393585731de6576',
+    xmlUrl: 'https://webpagetest.org/xmlResult/200118_KA_4022ee20eaf1deebb393585731de6576/',
+    userUrl: 'https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/',
+    summaryCSV: 'https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/page_data.csv',
+    detailCSV: 'https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/requests.csv'
+  }
+}

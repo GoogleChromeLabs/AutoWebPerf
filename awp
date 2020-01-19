@@ -1,0 +1,13 @@
+#!/usr/bin/env node
+
+'use strict';
+
+const prototyper = require('./src/cli.js');
+
+Promise.all([
+  prototyper.begin()
+]).then(process.exit)
+.catch(reason => {
+  console.log(reason);
+  process.exit();
+});

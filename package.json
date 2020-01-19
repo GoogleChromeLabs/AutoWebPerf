@@ -1,0 +1,29 @@
+{
+  "name": "awp",
+  "version": "0.1.0",
+  "description": "AutoWebPerf",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonchenn/awp.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jonchenn/awp/issues"
+  },
+  "homepage": "https://github.com/jonchenn/awp#readme",
+  "dependencies": {
+    "assert": "^2.0.0",
+    "fs": "0.0.1-security",
+    "fs-extra": "^8.1.0",
+    "minimist": "^1.2.0",
+    "path": "^0.12.7",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.5",
+    "sync-request": "^6.1.0"
+  }
+}
