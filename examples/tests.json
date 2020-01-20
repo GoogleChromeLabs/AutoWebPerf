@@ -15,6 +15,12 @@
         "script": null
       }
     },
+    "psi": {
+      "settings": {
+        "locale": "en-US",
+        "strategy": "mobile"
+      }
+    },
     "performanceBudget": {
       "FCP": 2,
       "SpeedIndex": 3,

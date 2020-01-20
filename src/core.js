@@ -2,6 +2,7 @@
 
 const request = require('request');
 const WPTGatherer = require('./gatherers/wpt-gatherer');
+const PSIGatherer = require('./gatherers/psi-gatherer');
 const JSONConnector = require('./connectors/json-connector');
 const {NodeApiHandler} = require('./helpers/node-helper.js');
 const Status = require('./common/status');
@@ -19,7 +20,7 @@ const DATA_SOURCES = [
 // TODO: Put this into env vars, or global vars in Sheets.
 const API_KEYS = {
   'webpagetest': 'TEST_API', //'A.33b645010f88e6a09879bf0a55a419b9',
-  'psi': 'AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk',
+  'psi': 'TEST_API', //'AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk',
 }
 
 class AutoWebPerf {
@@ -58,9 +59,12 @@ class AutoWebPerf {
         break;
 
       case 'psi':
-        this.psiGatherer = new PSIGatherer({
-          apiKey: 'AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk',
-        }, this.apiHandler);
+        if (!this.psiGatherer) {
+          this.psiGatherer = new PSIGatherer({
+            apiKey: API_KEYS[name],
+          }, this.apiHandler);
+        }
+        return this.psiGatherer;
         break;
 
       case 'crux':
@@ -78,10 +82,12 @@ class AutoWebPerf {
 
     tests.map((test) => {
       let nowtime = Date.now();
+      let statuses = [];
 
       let newResult = {
         status: Status.SUBMITTED,
         label: test.label,
+        url: test.url,
         createdTimestamp: nowtime,
         modifiedTimestamp: nowtime,
       }
@@ -90,18 +96,23 @@ class AutoWebPerf {
         if (!test[dataSource]) return;
 
         let gatherer = this.getGatherer(dataSource);
-        let settings = test.webpagetest.settings;
+        let settings = test[dataSource].settings;
         let response = gatherer.run(test, {
           debug: true,
         });
+        statuses.push(response.status);
 
-        newResult['status'] = response.status,
         newResult[dataSource] = {
+          status: response.status,
           metadata: response.metadata,
           settings: test[dataSource].settings,
           metrics: response.metrics,
         }
       });
+
+      if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
+        newResult.status = Status.RETRIEVED;
+      }
 
       newResults.push(newResult);
     });
@@ -123,7 +134,7 @@ class AutoWebPerf {
 
           let gatherer = this.getGatherer(dataSource);
           let response = gatherer.retrieve(
-              result[dataSource], {debug: true});
+              result, {debug: true});
 
           statuses.push(response.status);
           newResult[dataSource] = response;

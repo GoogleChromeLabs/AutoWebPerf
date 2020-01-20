@@ -59,18 +59,19 @@ class WebPageTestGatherer extends Gatherer {
     assert(test, 'Parameter test is missing.');
     options = options || {};
 
+    let settings = test.webpagetest.settings;
     let params = {
+      'label': encodeURIComponent(test.label),
       'url': encodeURIComponent(test.url),
       'k': this.apiKey,
       'f': 'json',
       'video': '1',
       'lighthouse': '1',
-      'runs': test.runs || '1',
-      'fvonly': test.firstViewOnly || true,
-      'label': encodeURIComponent(test.label),
-      'timeline': test.hasTimeline || false,
-      'block': test.block || '',
-      'script': test.script || '',
+      'runs': settings.runs || '1',
+      'fvonly': settings.firstViewOnly || true,
+      'timeline': settings.hasTimeline || false,
+      'block': settings.block || '',
+      'script': settings.script || '',
     }
 
     let urlParams = [];
@@ -122,9 +123,10 @@ class WebPageTestGatherer extends Gatherer {
     }
   }
 
-  // Note: gathererData = result[dataSource]. E.g. result.webpagetest
-  retrieve(gathererData, options) {
+  retrieve(resultObj, options) {
     options = options || {};
+
+    let gathererData = resultObj.webpagetest;
 
     try {
       let urlParams = [
