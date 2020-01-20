@@ -3,10 +3,25 @@
     "selected": true,
     "label": "Think With Google",
     "url": "https://thinkwithgoogle.com",
-    "runs": 1,
     "webpagetest": {
+      "locationId": "Dulles_MotoG4",
+      "device": "Pixel",
+      "connection": "4G",
+      "runs": 1,
       "firstViewOnly": true,
-      "timeline": true
+      "timeline": true,
+      "block": null,
+      "script": null
+    },
+    "performanceBudget": {
+      "fcp": 2,
+      "speedIndex": 3,
+      "tti": 5,
+      "javascript": 500,
+      "css": 500,
+      "fonts": 100,
+      "images": 500,
+      "videos": 500
     }
   }]
 }

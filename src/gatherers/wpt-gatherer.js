@@ -23,7 +23,32 @@ class WebPageTestGatherer extends Gatherer {
     this.apiHelper = apiHelper;
 
     this.valueMap = {
-      
+      'testId': 'data.testId',
+
+      'lighthouse.Performance': 'data.median.firstView[\'lighthouse.Performance\']',
+      'lighthouse.PWA': 'data.median.firstView[\'lighthouse.ProgressiveWebApp\']',
+      'lighthouse.FCP': 'data.median.firstView[\'lighthouse.Performance.first-contentful-paint\']',
+      'lighthouse.FMP': 'data.median.firstView[\'lighthouse.Performance.first-meaningful-paint\']',
+      'lighthouse.SpeedIndex': 'data.median.firstView[\'lighthouse.Performance.speed-index\']',
+      'lighthouse.TTI': 'data.median.firstView[\'lighthouse.Performance.interactive\']',
+      'lighthouse.CPUIdle': 'data.median.firstView[\'lighthouse.Performance.first-cpu-idle\']',
+
+      'SpeedIndex': 'data.median.firstView.SpeedIndex',
+      'TTFB': 'data.median.firstView.TTFB',
+      'Render': 'data.median.firstView.render',
+      'VisualComplete': 'data.median.firstView.visualComplete',
+      'TTI': 'data.median.firstView.TTIMeasurementEnd',
+      'LoadTime': 'data.median.firstView.loadTime',
+      'RequestsDoc': 'data.median.firstView.requestsDoc',
+      'DCL': 'data.median.firstView.domContentLoadedEventStart',
+      'BytesIn': 'data.median.firstView.bytesIn',
+      'DOMElements': 'data.median.firstView.domElements',
+
+      'CSS': 'data.median.firstView.breakdown.css.bytes',
+      'Fonts': 'data.median.firstView.breakdown.font.bytes',
+      'Javascript': 'data.median.firstView.breakdown.js.bytes',
+      'Images': 'data.median.firstView.breakdown.image.bytes',
+      'Videos': 'data.median.firstView.breakdown.video.bytes'
     };
   }
 
@@ -51,15 +76,6 @@ class WebPageTestGatherer extends Gatherer {
     });
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
 
-    // 'k=' + Helper.retrieveUserKey() +
-    //     '&location=' + fullLocation + '&url=' + encodeURIComponent(url) +
-    //     '&priority=' + testPriority + '&f=json' +
-    //     '&video=1' +
-    //     '&lighthouse=1' +
-    //     '&runs=' + runs + '&fvonly=' + fvOnly + '&label=' + label +
-    //     '&timeline=' + timeline + ((block != '') ? ('&block=' + block) : '') +
-    //     ((script != '') ? ('&script=' + script) : '');
-
     if (options.debug) console.log(url);
 
     try {
@@ -75,7 +91,6 @@ class WebPageTestGatherer extends Gatherer {
         return {
           status: Status.SUBMITTED,
           webpagetest: json.data,
-          testId: json.data.testId,
         }
       } else if (json.statusCode === 400) {
         return {
@@ -110,9 +125,13 @@ class WebPageTestGatherer extends Gatherer {
       if (options.debug) console.log(json);
 
       if (json.statusCode === 200) {
+        let data = {};
+        Object.keys(this.valueMap).forEach(key => {
+          data[key] = eval('json.' + this.valueMap[key]);
+        });
         return {
           status: Status.RETRIEVED,
-          webpagetest: json.data,
+          result: data,
           testId: json.data.testId,
         }
       } else if (json.statusCode === 400) {

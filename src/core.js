@@ -13,6 +13,7 @@ const TestType = {
 
 class AutoWebPerf {
   constructor(awpConfig) {
+    this.debug = awpConfig.debug || false;
     this.connector = new JSONConnector({
       tests: awpConfig.tests,
       results: awpConfig.results,
@@ -28,10 +29,7 @@ class AutoWebPerf {
     let newResults = [];
 
     tests.map((test) => {
-      console.log('Running audit for test item:');
-      console.log(test);
-
-      let result = this.wptGatherer.run({
+      let wptResponse = this.wptGatherer.run({
         label: test.label,
         url: test.url,
         firstViewOnly: test.webpagetest.firstViewOnly,
@@ -39,11 +37,16 @@ class AutoWebPerf {
       }, {
         debug: true,
       });
+      console.log(wptResponse);
 
-      console.log('Got result...');
-      console.log(result);
+      let nowtime = Date.now();
 
-      newResults.push(result);
+      newResults.push({
+        status: wptResponse.status,
+        createdTimestamp: nowtime,
+        modifiedTimestamp: nowtime,
+        webpagetest: wptResponse.webpagetest,
+      });
     });
 
     this.connector.appendResultList(newResults);
@@ -53,7 +56,15 @@ class AutoWebPerf {
     let results = this.connector.getResultList();
     results = results.map(result => {
       if (result.status !== Status.RETRIEVED) {
-        return this.wptGatherer.retrieve(result.testId, {debug: true});
+        let wptResponse = this.wptGatherer.retrieve(
+            result.webpagetest.testId, {debug: true});
+
+        return {
+          status: wptResponse.status,
+          createdTimestamp: result.createdTimestamp,
+          modifiedTimestamp: Date.now(),
+          webpagetest: wptResponse.result,
+        };
       } else {
         return result;
       }
