@@ -34,6 +34,7 @@ async function begin() {
   let awp = new AutoWebPerf({
     tests: argv['tests'],
     results: argv['results'],
+    connector: 'JSON',
   });
 
   switch(action) {

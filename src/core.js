@@ -11,17 +11,65 @@ const TestType = {
   RECURRING: 'Recurring',
 };
 
+const DATA_SOURCES = [
+  'webpagetest',
+  'psi',
+];
+
+// TODO: Put this into env vars, or global vars in Sheets.
+const API_KEYS = {
+  'webpagetest': 'TEST_API', //'A.33b645010f88e6a09879bf0a55a419b9',
+  'psi': 'AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk',
+}
+
 class AutoWebPerf {
   constructor(awpConfig) {
     this.debug = awpConfig.debug || false;
-    this.connector = new JSONConnector({
-      tests: awpConfig.tests,
-      results: awpConfig.results,
-    });
 
-    this.wptGatherer = new WPTGatherer({
-      apiKey: 'TEST_API', //'A.33b645010f88e6a09879bf0a55a419b9',
-    }, new NodeApiHandler());
+    switch (awpConfig.connector) {
+      case 'JSON':
+        this.connector = new JSONConnector({
+          tests: awpConfig.tests,
+          results: awpConfig.results,
+        });
+        break;
+
+      case 'GoogleSheets':
+        break;
+
+      default:
+        throw new Error(
+            `Connector ${awpConfig.connector} is not supported.`);
+        break;
+    }
+
+    this.apiHandler = new NodeApiHandler();
+  }
+
+  getGatherer(name) {
+    switch (name) {
+      case 'webpagetest':
+        if (!this.wptGatherer) {
+          this.wptGatherer = new WPTGatherer({
+            apiKey: API_KEYS[name],
+          }, this.apiHandler);
+        }
+        return this.wptGatherer;
+        break;
+
+      case 'psi':
+        this.psiGatherer = new PSIGatherer({
+          apiKey: 'AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk',
+        }, this.apiHandler);
+        break;
+
+      case 'crux':
+        break;
+
+      default:
+        throw new Error(`Gathere ${name} is not supported.`);
+        break;
+    }
   }
 
   run() {
@@ -29,25 +77,33 @@ class AutoWebPerf {
     let newResults = [];
 
     tests.map((test) => {
-      let settings = test.webpagetest.settings;
-      let wptResponse = this.wptGatherer.run(test, {
-        debug: true,
-      });
       let nowtime = Date.now();
 
-      console.log('wptResponse.metadata...');
-      console.log(wptResponse.metadata);
-
-      newResults.push({
-        status: wptResponse.status,
+      let newResult = {
+        status: Status.SUBMITTED,
+        label: test.label,
         createdTimestamp: nowtime,
         modifiedTimestamp: nowtime,
-        webpagetest: {
-          metadata: wptResponse.metadata,
-          settings: test.webpagetest.settings,
-          metrics: wptResponse.metrics,
-        },
+      }
+
+      DATA_SOURCES.forEach(dataSource => {
+        if (!test[dataSource]) return;
+
+        let gatherer = this.getGatherer(dataSource);
+        let settings = test.webpagetest.settings;
+        let response = gatherer.run(test, {
+          debug: true,
+        });
+
+        newResult['status'] = response.status,
+        newResult[dataSource] = {
+          metadata: response.metadata,
+          settings: test[dataSource].settings,
+          metrics: response.metrics,
+        }
       });
+
+      newResults.push(newResult);
     });
 
     this.connector.appendResultList(newResults);
@@ -57,20 +113,27 @@ class AutoWebPerf {
     let results = this.connector.getResultList();
     results = results.map(result => {
       if (result.status !== Status.RETRIEVED) {
-        let wptResponse = this.wptGatherer.retrieve(
-            result.webpagetest.metadata.testId,
-            {debug: true});
+        let statuses = [];
+        let newResult = result;
+        newResult.modifiedTimestamp = Date.now();
 
-        return {
-          status: wptResponse.status,
-          createdTimestamp: result.createdTimestamp,
-          modifiedTimestamp: Date.now(),
-          webpagetest: {
-            metadata: result.webpagetest.metadata,
-            settings: result.webpagetest.settings,
-            metrics: wptResponse.metrics,
-          },
-        };
+        DATA_SOURCES.forEach(dataSource => {
+          if (!result[dataSource]) return;
+          if (result[dataSource].status === Status.RETRIEVED) return;
+
+          let gatherer = this.getGatherer(dataSource);
+          let response = gatherer.retrieve(
+              result[dataSource], {debug: true});
+
+          statuses.push(response.status);
+          newResult[dataSource] = response;
+        });
+
+        if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
+          newResult.status = Status.RETRIEVED;
+        }
+        return newResult;
+
       } else {
         return result;
       }

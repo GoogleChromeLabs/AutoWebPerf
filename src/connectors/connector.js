@@ -1,3 +1,5 @@
+'use strict';
+
 class Connector {
   constructor(config) {}
   getTestList() {}

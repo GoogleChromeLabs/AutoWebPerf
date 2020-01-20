@@ -2,13 +2,7 @@
 
 const assert = require('assert');
 const Status = require('../common/status');
-
-class Gatherer {
-  constructor(config) {}
-  run(test) {}
-  retrieve(testId) {}
-  cancel(testId) {}
-}
+const Gatherer = require('./gatherer');
 
 class WebPageTestGatherer extends Gatherer {
   constructor(config, apiHelper) {
@@ -40,7 +34,7 @@ class WebPageTestGatherer extends Gatherer {
       'lighthouse.FMP': 'data.median.firstView[\'lighthouse.Performance.first-meaningful-paint\']',
       'lighthouse.SpeedIndex': 'data.median.firstView[\'lighthouse.Performance.speed-index\']',
       'lighthouse.TTI': 'data.median.firstView[\'lighthouse.Performance.interactive\']',
-      'lighthouse.CPUIdle': 'data.median.firstView[\'lighthouse.Performance.first-cpu-idle\']',
+      'lighthouse.FirstCPUIdle': 'data.median.firstView[\'lighthouse.Performance.first-cpu-idle\']',
 
       'SpeedIndex': 'data.median.firstView.SpeedIndex',
       'TTFB': 'data.median.firstView.TTFB',
@@ -128,14 +122,13 @@ class WebPageTestGatherer extends Gatherer {
     }
   }
 
-  retrieve(testId, options) {
+  // Note: gathererData = result[dataSource]. E.g. result.webpagetest
+  retrieve(gathererData, options) {
     options = options || {};
-
-    console.log('retrieve...');
 
     try {
       let urlParams = [
-        'test=' + testId,
+        'test=' + gathererData.metadata.testId,
       ];
       let url = this.resultApiEndpoint + '?' + urlParams.join('&');
       if (options.debug) console.log(url);
@@ -148,18 +141,18 @@ class WebPageTestGatherer extends Gatherer {
         Object.keys(this.metricsMap).forEach(key => {
           metrics[key] = eval('json.' + this.metricsMap[key]);
         });
-        Object.keys(this.metadataMap).forEach(key => {
-          metadata[key] = eval('json.' + this.metadataMap[key]);
-        });
         return {
           status: Status.RETRIEVED,
-          metadata: metadata,
+          metadata: gathererData.metadata,
+          settings: gathererData.settings,
           metrics: metrics,
         }
       } else if (json.statusCode === 400) {
         return {
           status: Status.ERROR,
           statusText: json.statusText,
+          metadata: gathererData.metadata,
+          settings: gathererData.settings,
         };
       } else {
         throw new Error('Unknown error');
@@ -169,6 +162,8 @@ class WebPageTestGatherer extends Gatherer {
       return {
         status: Status.ERROR,
         statusText: error.toString(),
+        metadata: gathererData.metadata,
+        settings: gathererData.settings,
       };
     }
   }
