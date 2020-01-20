@@ -4,24 +4,26 @@
     "label": "Think With Google",
     "url": "https://thinkwithgoogle.com",
     "webpagetest": {
-      "locationId": "Dulles_MotoG4",
-      "device": "Pixel",
-      "connection": "4G",
-      "runs": 1,
-      "firstViewOnly": true,
-      "timeline": true,
-      "block": null,
-      "script": null
+      "settings": {
+        "locationId": "Dulles_MotoG4",
+        "device": "Pixel",
+        "connection": "4G",
+        "runs": 1,
+        "firstViewOnly": true,
+        "timeline": true,
+        "block": null,
+        "script": null
+      }
     },
     "performanceBudget": {
-      "fcp": 2,
-      "speedIndex": 3,
-      "tti": 5,
-      "javascript": 500,
-      "css": 500,
-      "fonts": 100,
-      "images": 500,
-      "videos": 500
+      "FCP": 2,
+      "SpeedIndex": 3,
+      "TTI": 5,
+      "Javascript": 500,
+      "CSS": 500,
+      "Fonts": 100,
+      "Images": 500,
+      "Videos": 500
     }
   }]
 }

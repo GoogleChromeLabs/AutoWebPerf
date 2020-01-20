@@ -29,23 +29,24 @@ class AutoWebPerf {
     let newResults = [];
 
     tests.map((test) => {
-      let wptResponse = this.wptGatherer.run({
-        label: test.label,
-        url: test.url,
-        firstViewOnly: test.webpagetest.firstViewOnly,
-        timeline: test.webpagetest.timeline,
-      }, {
+      let settings = test.webpagetest.settings;
+      let wptResponse = this.wptGatherer.run(test, {
         debug: true,
       });
-      console.log(wptResponse);
-
       let nowtime = Date.now();
+
+      console.log('wptResponse.metadata...');
+      console.log(wptResponse.metadata);
 
       newResults.push({
         status: wptResponse.status,
         createdTimestamp: nowtime,
         modifiedTimestamp: nowtime,
-        webpagetest: wptResponse.webpagetest,
+        webpagetest: {
+          metadata: wptResponse.metadata,
+          settings: test.webpagetest.settings,
+          metrics: wptResponse.metrics,
+        },
       });
     });
 
@@ -57,13 +58,18 @@ class AutoWebPerf {
     results = results.map(result => {
       if (result.status !== Status.RETRIEVED) {
         let wptResponse = this.wptGatherer.retrieve(
-            result.webpagetest.testId, {debug: true});
+            result.webpagetest.metadata.testId,
+            {debug: true});
 
         return {
           status: wptResponse.status,
           createdTimestamp: result.createdTimestamp,
           modifiedTimestamp: Date.now(),
-          webpagetest: wptResponse.result,
+          webpagetest: {
+            metadata: result.webpagetest.metadata,
+            settings: result.webpagetest.settings,
+            metrics: wptResponse.metrics,
+          },
         };
       } else {
         return result;
@@ -73,7 +79,7 @@ class AutoWebPerf {
     this.connector.updateResultList(results);
   }
 
-  cancel(testIds) {
+  cancel(tests) {
 
   }
 }

@@ -7,8 +7,7 @@ class Gatherer {
   constructor(config) {}
   run(test) {}
   retrieve(testId) {}
-  parse(result) {}
-  record(result) {}
+  cancel(testId) {}
 }
 
 class WebPageTestGatherer extends Gatherer {
@@ -22,9 +21,19 @@ class WebPageTestGatherer extends Gatherer {
     this.apiKey = config.apiKey;
     this.apiHelper = apiHelper;
 
-    this.valueMap = {
+    // TODO: Metadata keys should be standardized.
+    this.metadataMap = {
       'testId': 'data.testId',
+      'jsonUrl': 'data.jsonUrl',
+      'ownerKey': 'data.ownerKey',
+      'jsonUrl': 'data.jsonUrl',
+      'xmlUrl': 'data.xmlUrl',
+      'userUrl': 'data.userUrl',
+      'summaryCSV': 'data.summaryCSV',
+      'detailCSV': 'data.detailCSV',
+    };
 
+    this.metricsMap = {
       'lighthouse.Performance': 'data.median.firstView[\'lighthouse.Performance\']',
       'lighthouse.PWA': 'data.median.firstView[\'lighthouse.ProgressiveWebApp\']',
       'lighthouse.FCP': 'data.median.firstView[\'lighthouse.Performance.first-contentful-paint\']',
@@ -79,18 +88,28 @@ class WebPageTestGatherer extends Gatherer {
     if (options.debug) console.log(url);
 
     try {
-      if (this.apiKey === 'TEST_API') return this.fakeResponse();
+      let json = {};
+      if (this.apiKey === 'TEST_API') {
+        json = this.fakeJsonResponse();
 
-      let res = this.apiHelper.fetch(url);
-      if (options.debug) console.log(url);
+      } else {
+        let res = this.apiHelper.fetch(url);
+        if (options.debug) console.log(url);
 
-      let json = JSON.parse(res);
-      if (options.debug) console.log(json);
+        let json = JSON.parse(res);
+        if (options.debug) console.log(json);
+      }
 
       if (json.statusCode === 200) {
+        let metadata = {};
+        Object.keys(this.metadataMap).forEach(key => {
+          metadata[key] = eval('json.' + this.metadataMap[key]);
+        });
+
         return {
           status: Status.SUBMITTED,
-          webpagetest: json.data,
+          settings: test.webpagetest.settings,
+          metadata: metadata,
         }
       } else if (json.statusCode === 400) {
         return {
@@ -101,6 +120,7 @@ class WebPageTestGatherer extends Gatherer {
         throw new Error('Unknown error');
       }
     } catch (error) {
+      console.error(error);
       return {
         status: Status.ERROR,
         statusText: error.toString(),
@@ -122,17 +142,19 @@ class WebPageTestGatherer extends Gatherer {
 
       let res = this.apiHelper.fetch(url);
       let json = JSON.parse(res);
-      if (options.debug) console.log(json);
 
       if (json.statusCode === 200) {
-        let data = {};
-        Object.keys(this.valueMap).forEach(key => {
-          data[key] = eval('json.' + this.valueMap[key]);
+        let metrics = {}, metadata = {};
+        Object.keys(this.metricsMap).forEach(key => {
+          metrics[key] = eval('json.' + this.metricsMap[key]);
+        });
+        Object.keys(this.metadataMap).forEach(key => {
+          metadata[key] = eval('json.' + this.metadataMap[key]);
         });
         return {
           status: Status.RETRIEVED,
-          result: data,
-          testId: json.data.testId,
+          metadata: metadata,
+          metrics: metrics,
         }
       } else if (json.statusCode === 400) {
         return {
@@ -151,19 +173,11 @@ class WebPageTestGatherer extends Gatherer {
     }
   }
 
-  parse(result) {
-
-  }
-
-  record(result) {
-
-  }
-
-  fakeResponse(result) {
+  fakeJsonResponse() {
     return {
-      status: Status.SUBMITTED,
-      testId: '200118_KA_4022ee20eaf1deebb393585731de6576',
-      webpagetest: {
+      statusCode: 200,
+      statusText: 'Ok',
+      data: {
         testId: '200118_KA_4022ee20eaf1deebb393585731de6576',
         ownerKey: '9c58809d442152143c04bb7f1a711224aac3cfde',
         jsonUrl: 'https://webpagetest.org/jsonResult.php?test=200118_KA_4022ee20eaf1deebb393585731de6576',
