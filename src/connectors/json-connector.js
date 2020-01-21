@@ -16,12 +16,18 @@ class JSONConnector extends Connector {
   }
 
   getTestList() {
-    let rawdata = fse.readFileSync(this.tests);
-    return JSON.parse(rawdata).testList;
+    let filepath = path.resolve(`./${this.tests}`);
+    let rawdata = fse.readFileSync(filepath);
+    return JSON.parse(rawdata).tests;
   }
 
-  updateTestList(tests) {
-
+  updateTestList(newTests) {
+    let filepath = path.resolve(`./${this.tests}`);
+    fse.outputFileSync(
+      filepath,
+      JSON.stringify({
+        "tests": newTests,
+      }, null, 2));
   }
 
   getResultList() {
@@ -48,12 +54,12 @@ class JSONConnector extends Connector {
       }, null, 2));
   }
 
-  updateResultList(results) {
+  updateResultList(newResults) {
     let filepath = path.resolve(`./output/${this.results}`);
     fse.outputFileSync(
       filepath,
       JSON.stringify({
-        "results": results,
+        "results": newResults,
       }, null, 2));
   }
 }

@@ -6,9 +6,9 @@ function printUsage() {
 Usage: ./awp [ACTION] [OPTIONS...]
 
 Available Actions:
-  run\t\tExecute audits for the URL list.
-  retrieve\tRetrieve test results from the URL list.
-  audit\t\tRun a single audit to a given URL.
+  run\t\tExecute audits from the test list.
+  recurring\t\tExecute recurring audits from the test list.
+  retrieve\tRetrieve test results from the results list.
 
 Options (*denotes default value if not passed in):
   tests\t\tThe JSON file with the URL list for audit.
@@ -41,9 +41,15 @@ async function begin() {
     case 'run':
       await awp.run();
       break;
+
+    case 'recurring':
+      await awp.recurring();
+      break;
+
     case 'retrieve':
       await awp.retrieve();
       break;
+
     default:
       printUsage();
       break;

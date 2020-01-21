@@ -12,6 +12,21 @@ const TestType = {
   RECURRING: 'Recurring',
 };
 
+const Frequency = {
+  DAILY: 'daily',
+  WEEKLY: 'weekly',
+  BIWEEKLY: 'biweekly',
+  MONTHLY: 'monthly',
+};
+
+// TODO: May need to use MomemtJS for more accurate date offset.
+const FrequencyInMinutes = {
+  DAILY: 24 * 60 * 60 * 1000,
+  WEEKLY: 7 * 24 * 60 * 60 * 1000,
+  BIWEEKLY: 14 * 24 * 60 * 60 * 1000,
+  MONTHLY: 30 * 24 * 60 * 60 * 1000,
+};
+
 const DATA_SOURCES = [
   'webpagetest',
   'psi',
@@ -80,44 +95,76 @@ class AutoWebPerf {
     let tests = this.connector.getTestList();
     let newResults = [];
 
-    tests.map((test) => {
-      let nowtime = Date.now();
-      let statuses = [];
-
-      let newResult = {
-        status: Status.SUBMITTED,
-        label: test.label,
-        url: test.url,
-        createdTimestamp: nowtime,
-        modifiedTimestamp: nowtime,
-      }
-
-      DATA_SOURCES.forEach(dataSource => {
-        if (!test[dataSource]) return;
-
-        let gatherer = this.getGatherer(dataSource);
-        let settings = test[dataSource].settings;
-        let response = gatherer.run(test, {
-          debug: true,
-        });
-        statuses.push(response.status);
-
-        newResult[dataSource] = {
-          status: response.status,
-          metadata: response.metadata,
-          settings: test[dataSource].settings,
-          metrics: response.metrics,
-        }
-      });
-
-      if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
-        newResult.status = Status.RETRIEVED;
-      }
-
+    tests.filter(test => test.selected).map((test) => {
+      let newResult = this.runSingleTest(test);
       newResults.push(newResult);
     });
 
     this.connector.appendResultList(newResults);
+  }
+
+  recurring() {
+    let tests = this.connector.getTestList();
+    let newResults = [];
+
+    let newTests = tests.map(test => {
+      let nowtime = Date.now();
+      let recurring = test.recurring;
+      if (!recurring || !recurring.frequency ||
+          !Frequency[recurring.frequency.toUpperCase()]) return test;
+
+      if (!recurring.nextTriggerTimestamp ||
+          recurring.nextTriggerTimestamp <= nowtime) {
+        console.log('triggered curring...');
+        let newResult = this.runSingleTest(test);
+        newResults.push(newResult);
+
+        let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
+        recurring.nextTriggerTimestamp = nowtime + offset;
+        recurring.nextTrigger = new Date(nowtime + offset).toString();
+      }
+
+      return test;
+    });
+
+    this.connector.updateTestList(newTests);
+    this.connector.appendResultList(newResults);
+  }
+
+  runSingleTest(test) {
+    let nowtime = Date.now();
+    let statuses = [];
+
+    let newResult = {
+      status: Status.SUBMITTED,
+      label: test.label,
+      url: test.url,
+      createdTimestamp: nowtime,
+      modifiedTimestamp: nowtime,
+    }
+
+    DATA_SOURCES.forEach(dataSource => {
+      if (!test[dataSource]) return;
+
+      let gatherer = this.getGatherer(dataSource);
+      let settings = test[dataSource].settings;
+      let response = gatherer.run(test, {
+        debug: true,
+      });
+      statuses.push(response.status);
+
+      newResult[dataSource] = {
+        status: response.status,
+        metadata: response.metadata,
+        settings: test[dataSource].settings,
+        metrics: response.metrics,
+      }
+    });
+
+    if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
+      newResult.status = Status.RETRIEVED;
+    }
+    return newResult;
   }
 
   retrieve(options) {
