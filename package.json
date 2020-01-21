@@ -4,7 +4,8 @@
   "description": "AutoWebPerf",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",
@@ -24,6 +25,11 @@
     "path": "^0.12.7",
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
+    "rollup": "^1.29.0",
     "sync-request": "^6.1.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^7.0.0",
+    "rollup-plugin-commonjs": "^10.1.0"
   }
 }

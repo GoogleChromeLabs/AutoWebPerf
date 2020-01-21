@@ -35,6 +35,7 @@ async function begin() {
     tests: argv['tests'],
     results: argv['results'],
     connector: 'JSON',
+    helper: 'Node',
   });
 
   switch(action) {

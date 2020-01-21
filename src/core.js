@@ -1,10 +1,7 @@
 'use strict';
 
-const request = require('request');
 const WPTGatherer = require('./gatherers/wpt-gatherer');
 const PSIGatherer = require('./gatherers/psi-gatherer');
-const JSONConnector = require('./connectors/json-connector');
-const {NodeApiHandler} = require('./helpers/node-helper.js');
 const Status = require('./common/status');
 
 const TestType = {
@@ -44,6 +41,7 @@ class AutoWebPerf {
 
     switch (awpConfig.connector) {
       case 'JSON':
+        let JSONConnector = require('./connectors/json-connector');
         this.connector = new JSONConnector({
           tests: awpConfig.tests,
           results: awpConfig.results,
@@ -51,6 +49,11 @@ class AutoWebPerf {
         break;
 
       case 'GoogleSheets':
+        let GoogleSheetsConnector = require('./connectors/googlesheets-connector');
+
+        // TODO: Standardize awConfig.
+        this.connector = new GoogleSheetsConnector(
+            awpConfig.googleSheetsConfig);
         break;
 
       default:
@@ -59,7 +62,22 @@ class AutoWebPerf {
         break;
     }
 
-    this.apiHandler = new NodeApiHandler();
+    switch (awpConfig.helper) {
+      case 'Node':
+        let {NodeApiHandler} = require('./helpers/node-helper.js');
+        this.apiHandler = new NodeApiHandler();
+        break;
+
+      case 'GoogleSheets':
+        let {GoogleSheetsApiHandler} = require('./helpers/node-helper.js');
+        this.apiHandler = new GoogleSheetsApiHandler();
+        break;
+
+      default:
+        throw new Error(
+            `Helper ${awpConfig.helper} is not supported.`);
+        break;
+    }
   }
 
   getGatherer(name) {

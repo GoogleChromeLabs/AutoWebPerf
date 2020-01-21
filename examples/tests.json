@@ -1,7 +1,7 @@
 {
   "tests": [
     {
-      "selected": false,
+      "selected": true,
       "label": "Think With Google",
       "url": "https://thinkwithgoogle.com",
       "recurring": {
