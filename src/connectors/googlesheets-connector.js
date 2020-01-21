@@ -1,11 +1,9 @@
 'use strict';
 
-const fse = require('fs-extra');
-const path = require('path');
-const assert = require('assert');
-const Connector = require('./connector');
+import assert from 'assert';
+import Connector from './connector';
 
-class GoogleSheetConnector extends Connector {
+class GoogleSheetsConnector extends Connector {
   constructor(config) {
     super();
     assert(config.tests, 'tests is missing in config.');
@@ -58,4 +56,4 @@ class GoogleSheetConnector extends Connector {
   }
 }
 
-module.exports = GoogleSheetConnector;
+export default GoogleSheetsConnector;
