@@ -1,6 +1,6 @@
 'use strict';
 
-const assert = require('assert');
+const assert = require('../utils/assert');
 const Status = require('../common/status');
 const Gatherer = require('./gatherer');
 

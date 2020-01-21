@@ -64,12 +64,12 @@ class AutoWebPerf {
 
     switch (awpConfig.helper) {
       case 'Node':
-        let {NodeApiHandler} = require('./helpers/node-helper.js');
+        let {NodeApiHandler} = require('./helpers/node-helper');
         this.apiHandler = new NodeApiHandler();
         break;
 
       case 'GoogleSheets':
-        let {GoogleSheetsApiHandler} = require('./helpers/node-helper.js');
+        let {GoogleSheetsApiHandler} = require('./helpers/googlesheet-helper');
         this.apiHandler = new GoogleSheetsApiHandler();
         break;
 

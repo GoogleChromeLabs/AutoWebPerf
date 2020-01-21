@@ -2,7 +2,7 @@
 
 const fse = require('fs-extra');
 const path = require('path');
-const assert = require('assert');
+const assert = require('../utils/assert');
 const Connector = require('./connector');
 
 class JSONConnector extends Connector {

@@ -1,7 +1,7 @@
 'use strict';
 
-import assert from 'assert';
-import Connector from './connector';
+const assert = require('../utils/assert');
+const Connector = require('./connector');
 
 class GoogleSheetsConnector extends Connector {
   constructor(config) {
