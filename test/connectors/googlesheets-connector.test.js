@@ -27,7 +27,7 @@ let connector = new GoogleSheetsConnector({
 });
 
 let fakeConfigSheetData = [
-  [],
+  ['Name', 'key', 'value', ''],
   ['WPT API Key', 'apiKeys.webpagetest', 'TEST_APIKEY'],
   ['PSI API Key', 'apiKeys.psi', 'TEST_APIKEY'],
 ];
@@ -64,9 +64,7 @@ describe('GoogleSheetsConnector Config tab', () => {
       }
     });
   });
-
 });
-
 
 describe('GoogleSheetsConnector Tests tab', () => {
   beforeEach(() => {
@@ -128,7 +126,6 @@ describe('GoogleSheetsConnector Tests tab', () => {
     connector.getRowRange = (tabName, cellRow) => {
       return {
         setValues: (values) => {
-          console.log(values);
           fakeTestsSheetData[
               cellRow - connector.tabConfigs[tabName].dataStartRow] = values;
         }

@@ -33,30 +33,23 @@ class GoogleSheetsConnector extends Connector {
         tabName: config.configTabName,
         sheet: this.activeSpreadsheet.getSheetByName(config.configTabName),
         dataAxis: DataAxis.COLUMN,
-        propertyLookup: 2,
-        dataStart: 3,
+        propertyLookup: 2, // Starts at 1
+        skipRows: 1,
+        skipColumns: 2,
       },
       testsTab: {
         tabName: config.testsTabName,
         sheet: this.activeSpreadsheet.getSheetByName(config.testsTabName),
         dataAxis: DataAxis.ROW,
-        propertyLookup: 3, // Row starts at 1
-        dataStart: 4,
-        // dataConversion: {
-        //   cellToObject: {
-        //
-        //   },
-        //   objectToCell: {
-        //
-        //   },
-        // },
+        propertyLookup: 3, // Starts at 1
+        skipRows: 3,
       },
       resultsTab: {
         tabName: config.resultsTabName,
         sheet: this.activeSpreadsheet.getSheetByName(config.resultsTabName),
         dataAxis: DataAxis.ROW,
-        propertyLookup: 3, // Row starts at 1
-        dataStart: 4,
+        propertyLookup: 3, // Starts at 1
+        skipRows: 3,
       }
     };
 
@@ -82,9 +75,7 @@ class GoogleSheetsConnector extends Connector {
   }
 
   getConfig() {
-    let configValues = this.getList('configTab', {
-      dataAxis: DataAxis.COLUMN,
-    });
+    let configValues = this.getList('configTab');
     return configValues[0];
   }
 
@@ -93,17 +84,22 @@ class GoogleSheetsConnector extends Connector {
     let tabConfig = this.tabConfigs[tabName];
     let data = tabConfig.sheet.getDataRange().getValues();
 
-    if (options.dataAxis === DataAxis.COLUMN) {
-      transpose(data);
-    }
-    let propertyLookup = data[tabConfig.propertyLookup - 1];
+    let skipRows = tabConfig.skipRows || 0;
+    let skipColumns = tabConfig.skipColumns || 0;
 
-    data = data.slice(tabConfig.dataStart - 1, data.length);
+    if (tabConfig.dataAxis === DataAxis.COLUMN) {
+      data = transpose(data);
+      skipRows = tabConfig.skipColumns;
+      skipColumns = tabConfig.skipRows;
+    }
+
+    let propertyLookup = data[tabConfig.propertyLookup - 1];
+    data = data.slice(skipRows, data.length);
 
     let items = [];
     for (let i = 0; i < data.length; i++) {
       let newTest = {};
-      for (let j = 0; j < data[i].length; j++) {
+      for (let j = skipColumns; j < data[i].length; j++) {
         if (propertyLookup[j]) {
           setObject(newTest, propertyLookup[j], data[i][j]);
         }
@@ -144,7 +140,7 @@ class GoogleSheetsConnector extends Connector {
 
     newTests.forEach(test => {
       let values = [];
-      let cellRow = test.googlesheets.dataRow + tabConfig.dataStart;
+      let cellRow = test.googlesheets.dataRow + tabConfig.skipRows + 1;
       propertyLookup.forEach(lookup => {
         let value = lookup ? eval(`test.${lookup}`) : '';
         values.push(value);

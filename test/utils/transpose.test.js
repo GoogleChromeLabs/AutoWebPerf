@@ -9,23 +9,22 @@ const transpose = require('../../src/utils/transpose');
 
 describe('transpose test', () => {
   it('transposes an 2D array.', async () => {
-    let array = [[1,1,1], [2,2,2], [3,3,3]];
+    let array = [[1,2,3], [1,2,3]];
 
-    transpose(array);
-    expect(array).toEqual([
-      [1,2,3], [1,2,3], [1,2,3]
+    let newArray = transpose(array);
+    expect(newArray).toEqual([
+      [1,1],[2,2],[3,3]
     ]);
   });
 
   it('transposes an 2D array twice and gets its original state.', async () => {
-    let array = [[1,1,1], [2,2,2], [3,3,3]];
+    let array = [[1,2,3], [1,2,3]];
 
-    transpose(array);
-    transpose(array);
+    let newArray = transpose(array);
+    newArray = transpose(newArray);
 
-    expect(array).toEqual([
-      [1,1,1], [2,2,2], [3,3,3]
+    expect(newArray).toEqual([
+      [1,2,3], [1,2,3]
     ]);
   });
-
 });
