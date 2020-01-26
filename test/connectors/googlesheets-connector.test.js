@@ -26,6 +26,12 @@ let connector = new GoogleSheetsConnector({
   resultsTabName: 'results',
 });
 
+let fakeConfigSheetData = [
+  [],
+  ['WPT API Key', 'apiKeys.webpagetest', 'TEST_APIKEY'],
+  ['PSI API Key', 'apiKeys.psi', 'TEST_APIKEY'],
+];
+
 let fakeTestsSheetData = [
   [],
   [],
@@ -37,7 +43,32 @@ let fakeTestsSheetData = [
 
 /* eslint-env jest */
 
-describe('GoogleSheetsConnector test', () => {
+describe('GoogleSheetsConnector Config tab', () => {
+  beforeEach(() => {
+    // Overrides properties for testing.
+    connector.tabConfigs['configTab'].sheet.getDataRange = function() {
+      return {
+        getValues: function() {
+          return fakeConfigSheetData;
+        }
+      }
+    };
+  });
+
+  it('returns list of config values from the Config sheet', async () => {
+    let config = connector.getConfig();
+    expect(config).toEqual({
+      apiKeys: {
+        webpagetest: 'TEST_APIKEY',
+        psi: 'TEST_APIKEY',
+      }
+    });
+  });
+
+});
+
+
+describe('GoogleSheetsConnector Tests tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     connector.tabConfigs['testsTab'].sheet.getDataRange = function() {

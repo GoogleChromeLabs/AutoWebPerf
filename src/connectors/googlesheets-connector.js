@@ -2,7 +2,13 @@
 
 const assert = require('../utils/assert');
 const setObject = require('../utils/set-object');
+const transpose = require('../utils/transpose');
 const Connector = require('./connector');
+
+const DataAxis = {
+  ROW: 'row',
+  COLUMN: 'column',
+};
 
 class GoogleSheetsConnector extends Connector {
   constructor(config) {
@@ -25,12 +31,17 @@ class GoogleSheetsConnector extends Connector {
     this.tabConfigs = {
       configTab: {
         tabName: config.configTabName,
+        sheet: this.activeSpreadsheet.getSheetByName(config.configTabName),
+        dataAxis: DataAxis.COLUMN,
+        propertyLookup: 2,
+        dataStart: 3,
       },
       testsTab: {
         tabName: config.testsTabName,
-        columnLookupRow: 3, // Row starts at 1
-        dataStartRow: 4,
         sheet: this.activeSpreadsheet.getSheetByName(config.testsTabName),
+        dataAxis: DataAxis.ROW,
+        propertyLookup: 3, // Row starts at 1
+        dataStart: 4,
         // dataConversion: {
         //   cellToObject: {
         //
@@ -42,9 +53,10 @@ class GoogleSheetsConnector extends Connector {
       },
       resultsTab: {
         tabName: config.resultsTabName,
-        columnLookupRow: 3, // Row starts at 1
-        dataStartRow: 4,
         sheet: this.activeSpreadsheet.getSheetByName(config.resultsTabName),
+        dataAxis: DataAxis.ROW,
+        propertyLookup: 3, // Row starts at 1
+        dataStart: 4,
       }
     };
 
@@ -70,30 +82,39 @@ class GoogleSheetsConnector extends Connector {
   }
 
   getConfig() {
-
+    let configValues = this.getList('configTab', {
+      dataAxis: DataAxis.COLUMN,
+    });
+    return configValues[0];
   }
 
   getList(tabName, options) {
+    options = options || {};
     let tabConfig = this.tabConfigs[tabName];
-
     let data = tabConfig.sheet.getDataRange().getValues();
-    let columnLookup = data[tabConfig.columnLookupRow - 1];
 
-    data = data.slice(tabConfig.dataStartRow - 1, data.length);
+    if (options.dataAxis === DataAxis.COLUMN) {
+      transpose(data);
+    }
+    let propertyLookup = data[tabConfig.propertyLookup - 1];
+
+    data = data.slice(tabConfig.dataStart - 1, data.length);
 
     let items = [];
     for (let i = 0; i < data.length; i++) {
       let newTest = {};
       for (let j = 0; j < data[i].length; j++) {
-        if (columnLookup[j]) {
-          setObject(newTest, columnLookup[j], data[i][j]);
+        if (propertyLookup[j]) {
+          setObject(newTest, propertyLookup[j], data[i][j]);
         }
       }
 
       // Add metadata for GoogleSheets.
-      newTest.googlesheets = {
-        dataRow: i,
-      };
+      if (options.insertRowNumber) {
+        newTest.googlesheets = {
+          dataRow: i,
+        };
+      }
       items.push(newTest);
     }
 
@@ -101,7 +122,10 @@ class GoogleSheetsConnector extends Connector {
   }
 
   getTestList(options) {
-    let selected = (options || {}).selected;
+    options = options || {};
+    let selected = options.selected;
+    options.insertRowNumber = true;
+
     let tests = this.getList('testsTab', options);
 
     // Apply selection.
@@ -116,12 +140,12 @@ class GoogleSheetsConnector extends Connector {
     let tabConfig = this.tabConfigs['testsTab'];
 
     let testsData = tabConfig.sheet.getDataRange().getValues();
-    let columnLookup = testsData[tabConfig.columnLookupRow - 1];
+    let propertyLookup = testsData[tabConfig.propertyLookup - 1];
 
     newTests.forEach(test => {
       let values = [];
-      let cellRow = test.googlesheets.dataRow + tabConfig.dataStartRow;
-      columnLookup.forEach(lookup => {
+      let cellRow = test.googlesheets.dataRow + tabConfig.dataStart;
+      propertyLookup.forEach(lookup => {
         let value = lookup ? eval(`test.${lookup}`) : '';
         values.push(value);
       });

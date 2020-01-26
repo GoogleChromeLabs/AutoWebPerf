@@ -65,7 +65,7 @@ class PSIGatherer extends Gatherer {
 
     try {
       let json = {};
-      if (this.apiKey === 'TEST_API') {
+      if (this.apiKey === 'TEST_APIKEY') {
         json = this.fakeJsonResponse();
 
       } else {
