@@ -3,4 +3,6 @@ node_modules
 output/
 tmp/
 build/
+dist/
 stats.html
+.cache

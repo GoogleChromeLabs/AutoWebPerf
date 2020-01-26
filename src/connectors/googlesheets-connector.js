@@ -56,4 +56,4 @@ class GoogleSheetsConnector extends Connector {
   }
 }
 
-export default GoogleSheetsConnector;
+module.exports = GoogleSheetsConnector;

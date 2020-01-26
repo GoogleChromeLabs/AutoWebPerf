@@ -1,4 +1,4 @@
-const AutoWebPerf = require('./core');
+const AutoWebPerf = require('./awp-core');
 const argv = require('minimist')(process.argv.slice(2));
 
 function printUsage() {

@@ -1,10 +1,8 @@
-'use strict';
-
 class Connector {
   constructor(config) {}
   getTestList() {}
   updateTestList(tests) {}
-  getResultList() {}
+  getResultList(conditions) {}
   appendResultList() {}
   updateResultList() {}
 }

@@ -2,6 +2,7 @@
 
 const WPTGatherer = require('./gatherers/wpt-gatherer');
 const PSIGatherer = require('./gatherers/psi-gatherer');
+const Connector = require('./connectors/connector');
 const Status = require('./common/status');
 
 const TestType = {
@@ -31,8 +32,8 @@ const DATA_SOURCES = [
 
 // TODO: Put this into env vars, or global vars in Sheets.
 const API_KEYS = {
-  'webpagetest': 'TEST_API', //'A.33b645010f88e6a09879bf0a55a419b9',
-  'psi': 'TEST_API', //'AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk',
+  'webpagetest': 'A.33b645010f88e6a09879bf0a55a419b9', // 'TEST_API'
+  'psi': 'AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk', // 'TEST_API'
 }
 
 class AutoWebPerf {

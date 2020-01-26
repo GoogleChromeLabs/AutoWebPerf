@@ -6,8 +6,8 @@
       "url": "https://thinkwithgoogle.com",
       "recurring": {
         "frequency": "daily",
-        "nextTriggerTimestamp": 1579652716682,
-        "nextTrigger": "Tue Jan 21 2020 19:25:16 GMT-0500 (Eastern Standard Time)"
+        "nextTriggerTimestamp": 1579707051025,
+        "nextTrigger": "Wed Jan 22 2020 10:30:51 GMT-0500 (Eastern Standard Time)"
       },
       "webpagetest": {
         "settings": {
