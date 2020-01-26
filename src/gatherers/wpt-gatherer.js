@@ -36,7 +36,7 @@ class WebPageTestGatherer extends Gatherer {
       'lighthouse.TTI': 'data.median.firstView[\'lighthouse.Performance.interactive\']',
       'lighthouse.FID': 'data.median.firstView[\'lighthouse.Performance.max-potential-fid\']',
       'lighthouse.FirstCPUIdle': 'data.median.firstView[\'lighthouse.Performance.first-cpu-idle\']',
-      'lighthouse.TBT': 'data.lighthouse.total-blocking-time.numbericValue',
+      'lighthouse.TBT': 'data.lighthouse.\'total-blocking-time\'.numbericValue',
 
       'TTFB': 'data.median.firstView.TTFB',
       'FirstPaint': 'data.median.firstView.render',
