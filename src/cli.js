@@ -11,6 +11,7 @@ Available Actions:
   retrieve\tRetrieve test results from the results list.
 
 Options (*denotes default value if not passed in):
+  single\t\tRun a single audit.
   tests\t\tThe JSON file with the URL list for audit.
   results\t\tThe output JSON file for writing test results.
 
@@ -40,7 +41,9 @@ async function begin() {
 
   switch(action) {
     case 'run':
-      await awp.run();
+      await awp.run({
+        single: argv['single'],
+      });
       break;
 
     case 'recurring':

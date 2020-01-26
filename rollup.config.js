@@ -26,7 +26,7 @@ export default [
       }),
       resolve({
         preferBuiltins: true,
-        // jail: './src',
+        jail: './src',
         dedupe: ['../utils/assert'],
       }),
       replace({
