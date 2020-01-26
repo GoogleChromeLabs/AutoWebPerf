@@ -1,4 +1,10 @@
 {
+  "config": {
+    "apiKeys": {
+      "webpagetest": "A.33b645010f88e6a09879bf0a55a419b9",
+      "psi": "AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk"
+    }
+  },
   "tests": [
     {
       "selected": true,
@@ -15,11 +21,12 @@
           "device": "Pixel",
           "connection": "4G",
           "runs": 1,
-          "firstViewOnly": true,
+          "repeatView": true,
           "timeline": true,
           "block": null,
           "script": null
-        }
+        },
+        "lastRunId": ""
       },
       "psi": {
         "settings": {

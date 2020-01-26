@@ -30,11 +30,6 @@ const DATA_SOURCES = [
   'psi',
 ];
 
-// TODO: Put this into env vars, or global vars in Sheets.
-const API_KEYS = {
-  'webpagetest': 'A.33b645010f88e6a09879bf0a55a419b9', // 'TEST_API'
-  'psi': 'AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk', // 'TEST_API'
-}
 
 class AutoWebPerf {
   constructor(awpConfig) {
@@ -50,11 +45,12 @@ class AutoWebPerf {
         break;
 
       case 'GoogleSheets':
+        assert(awConfig.googleSheets, 'googleSheets is missing.');
         let GoogleSheetsConnector = require('./connectors/googlesheets-connector');
 
         // TODO: Standardize awConfig.
         this.connector = new GoogleSheetsConnector(
-            awpConfig.googleSheetsConfig);
+            awpConfig.googleSheets);
         break;
 
       default:
@@ -79,6 +75,8 @@ class AutoWebPerf {
             `Helper ${awpConfig.helper} is not supported.`);
         break;
     }
+
+    this.apiKeys = this.connector.getConfig().apiKeys;
   }
 
   getGatherer(name) {
@@ -86,7 +84,7 @@ class AutoWebPerf {
       case 'webpagetest':
         if (!this.wptGatherer) {
           this.wptGatherer = new WPTGatherer({
-            apiKey: API_KEYS[name],
+            apiKey: this.apiKeys[name],
           }, this.apiHandler);
         }
         return this.wptGatherer;
@@ -95,7 +93,7 @@ class AutoWebPerf {
       case 'psi':
         if (!this.psiGatherer) {
           this.psiGatherer = new PSIGatherer({
-            apiKey: API_KEYS[name],
+            apiKey: this.apiKeys[name],
           }, this.apiHandler);
         }
         return this.psiGatherer;
@@ -155,6 +153,8 @@ class AutoWebPerf {
     let statuses = [];
 
     let newResult = {
+      id: nowtime + '-' + test.url,
+      type: TestType.SINGLE,
       status: Status.SUBMITTED,
       label: test.label,
       url: test.url,

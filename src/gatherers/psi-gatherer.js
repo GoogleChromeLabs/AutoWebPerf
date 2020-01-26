@@ -26,12 +26,17 @@ class PSIGatherer extends Gatherer {
     };
 
     this.metricsMap = {
-      'FCP': 'lighthouseResult.metrics.details.items[0].observedFirstContentfulPaint',
-      'FMP': 'lighthouseResult.metrics.details.items[0].observedFirstMeaningfulPaint',
-      'SpeedIndex': 'lighthouseResult.metrics.details.items[0].observedSpeedIndex',
-      'TTI': 'lighthouseResult.metrics.details.items[0].interactive',
-      'FirstCPUIdle': 'lighthouseResult.metrics.details.items[0].firstCPUIdle',
-      'FID': 'lighthouseResult.metrics.details.items[0].estimatedInputLatency',
+      'FirstPaint': 'lighthouseResult.audits.metrics.details.items[0].observedFirstPaint',
+      'FCP': 'lighthouseResult.audits.metrics.details.items[0].observedFirstContentfulPaint',
+      'FMP': 'lighthouseResult.audits.metrics.details.items[0].observedFirstMeaningfulPaint',
+      'SpeedIndex': 'lighthouseResult.audits.metrics.details.items[0].observedSpeedIndex',
+      'TTI': 'lighthouseResult.audits.metrics.details.items[0].interactive',
+      'FirstCPUIdle': 'lighthouseResult.audits.metrics.details.items[0].firstCPUIdle',
+      'FID': 'lighthouseResult.audits.metrics.details.items[0].estimatedInputLatency',
+      'TBT': 'lighthouseResult.audits.metrics.details.items[0].totalBlockingTime',
+      'LCP': 'lighthouseResult.audits.metrics.details.items[0].observedLargestContentfulPaintTs',
+      'DCL': 'lighthouseResult.audits.metrics.details.items[0].observedDomContentLoaded',
+      'onLoad': 'lighthouseResult.audits.metrics.details.items[0].observedLoad',
     };
   }
 
@@ -65,10 +70,7 @@ class PSIGatherer extends Gatherer {
 
       } else {
         let res = this.apiHelper.fetch(url);
-        if (options.debug) console.log(url);
-
-        let json = JSON.parse(res);
-        if (options.debug) console.log(json);
+        json = JSON.parse(res);
       }
 
       if (json.lighthouseResult) {
@@ -119,49 +121,51 @@ class PSIGatherer extends Gatherer {
           "hostUserAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.74 Safari/537.36",
           "benchmarkIndex": 642
         },
-        "metrics": {
-          "id": "metrics",
-          "title": "Metrics",
-          "description": "Collects all available metrics.",
-          "score": null,
-          "scoreDisplayMode": "informative",
-          "details": {
-            "items": [
-              {
-                "observedNavigationStart": 0,
-                "interactive": 1643,
-                "observedFirstVisualChangeTs": 1984383603815,
-                "observedFirstContentfulPaintTs": 1984383611285,
-                "observedLoad": 1158,
-                "observedLastVisualChangeTs": 1984384687815,
-                "observedLargestContentfulPaint": 971,
-                "observedDomContentLoadedTs": 1984382958768,
-                "observedSpeedIndex": 1009,
-                "estimatedInputLatency": 13,
-                "totalBlockingTime": 132,
-                "observedFirstPaint": 971,
-                "observedLastVisualChange": 2048,
-                "firstContentfulPaint": 1040,
-                "observedFirstPaintTs": 1984383611285,
-                "speedIndex": 1208,
-                "observedSpeedIndexTs": 1984383649146,
-                "observedFirstContentfulPaint": 971,
-                "observedNavigationStartTs": 1984382639815,
-                "observedLargestContentfulPaintTs": 1984383611285,
-                "observedFirstVisualChange": 964,
-                "observedLoadTs": 1984383798034,
-                "firstMeaningfulPaint": 1060,
-                "observedTraceEnd": 2217,
-                "observedFirstMeaningfulPaint": 971,
-                "observedTraceEndTs": 1984384856768,
-                "firstCPUIdle": 1445,
-                "observedFirstMeaningfulPaintTs": 1984383611285,
-                "observedDomContentLoaded": 319
-              }
-            ],
-            "type": "debugdata"
+        "audits": {
+          "metrics": {
+            "id": "metrics",
+            "title": "Metrics",
+            "description": "Collects all available metrics.",
+            "score": null,
+            "scoreDisplayMode": "informative",
+            "details": {
+              "items": [
+                {
+                  "observedNavigationStart": 0,
+                  "interactive": 1643,
+                  "observedFirstVisualChangeTs": 1984383603815,
+                  "observedFirstContentfulPaintTs": 1984383611285,
+                  "observedLoad": 1158,
+                  "observedLastVisualChangeTs": 1984384687815,
+                  "observedLargestContentfulPaint": 971,
+                  "observedDomContentLoadedTs": 1984382958768,
+                  "observedSpeedIndex": 1009,
+                  "estimatedInputLatency": 13,
+                  "totalBlockingTime": 132,
+                  "observedFirstPaint": 971,
+                  "observedLastVisualChange": 2048,
+                  "firstContentfulPaint": 1040,
+                  "observedFirstPaintTs": 1984383611285,
+                  "speedIndex": 1208,
+                  "observedSpeedIndexTs": 1984383649146,
+                  "observedFirstContentfulPaint": 971,
+                  "observedNavigationStartTs": 1984382639815,
+                  "observedLargestContentfulPaintTs": 1984383611285,
+                  "observedFirstVisualChange": 964,
+                  "observedLoadTs": 1984383798034,
+                  "firstMeaningfulPaint": 1060,
+                  "observedTraceEnd": 2217,
+                  "observedFirstMeaningfulPaint": 971,
+                  "observedTraceEndTs": 1984384856768,
+                  "firstCPUIdle": 1445,
+                  "observedFirstMeaningfulPaintTs": 1984383611285,
+                  "observedDomContentLoaded": 319
+                }
+              ],
+              "type": "debugdata"
+            },
+            "numericValue": 1642.5
           },
-          "numericValue": 1642.5
         },
       },
       "analysisUTCTimestamp": "2020-01-20T22:38:16.761Z"

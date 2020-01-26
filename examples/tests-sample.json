@@ -1,11 +1,19 @@
 {
+  "config": {
+    "apiKeys": {
+      "webpagetest": "TEST_API",
+      "psi": "TEST_API"
+    },
+  },
   "tests": [
     {
-      "selected": false,
+      "selected": true,
       "label": "Think With Google",
       "url": "https://thinkwithgoogle.com",
       "recurring": {
-        "frequency": "daily"
+        "frequency": "daily",
+        "nextTriggerTimestamp": 1579707051025,
+        "nextTrigger": "Wed Jan 22 2020 10:30:51 GMT-0500 (Eastern Standard Time)"
       },
       "webpagetest": {
         "settings": {
@@ -13,11 +21,12 @@
           "device": "Pixel",
           "connection": "4G",
           "runs": 1,
-          "firstViewOnly": true,
+          "repeatView": true,
           "timeline": true,
           "block": null,
           "script": null
-        }
+        },
+        "lastRunId": ""
       },
       "psi": {
         "settings": {

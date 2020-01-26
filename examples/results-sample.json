@@ -1,0 +1,209 @@
+{
+  "results": [
+    {
+      "status": "retrieved",
+      "type": "single",
+      "label": "Think With Google",
+      "url": "https://thinkwithgoogle.com",
+      "createdTimestamp": 1579620229206,
+      "modifiedTimestamp": 1579620264020,
+      "webpagetest": {
+        "status": "retrieved",
+        "metadata": {
+          "testId": "200118_KA_4022ee20eaf1deebb393585731de6576",
+          "jsonUrl": "https://webpagetest.org/jsonResult.php?test=200118_KA_4022ee20eaf1deebb393585731de6576",
+          "ownerKey": "9c58809d442152143c04bb7f1a711224aac3cfde",
+          "xmlUrl": "https://webpagetest.org/xmlResult/200118_KA_4022ee20eaf1deebb393585731de6576/",
+          "userUrl": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/",
+          "summaryCSV": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/page_data.csv",
+          "detailCSV": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/requests.csv"
+        },
+        "settings": {
+          "locationId": "Dulles_MotoG4",
+          "device": "Pixel",
+          "connection": "4G",
+          "runs": 1,
+          "repeatView": true,
+          "timeline": true,
+          "block": null,
+          "script": null
+        },
+        "metrics": {
+          "lighthouse.Performance": 0.97,
+          "lighthouse.PWA": 0.38,
+          "lighthouse.FCP": 1805.008,
+          "lighthouse.FMP": 1912.109,
+          "lighthouse.SpeedIndex": 1971,
+          "lighthouse.TTI": 3032.887,
+          "lighthouse.FID": 500,
+          "lighthouse.FirstCPUIdle": 3032.887,
+          "SpeedIndex": 702,
+          "TTFB": 482,
+          "Render": 700,
+          "VisualComplete": 900,
+          "TTI": 3527,
+          "onLoad": 1681,
+          "RequestsDoc": 17,
+          "DCL": 741,
+          "BytesIn": 439869,
+          "DOMElements": 206,
+          "CSS": 0,
+          "Fonts": 30780,
+          "Javascript": 311343,
+          "Images": 18910,
+          "Videos": 0
+        }
+      },
+      "psi": {
+        "status": "retrieved",
+        "metadata": {
+          "testId": "https://www.thinkwithgoogle.com/",
+          "requestedUrl": "https://thinkwithgoogle.com/",
+          "finalUrl": "https://www.thinkwithgoogle.com/",
+          "lighthouseVersion": "5.6.0",
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.74 Safari/537.36",
+          "fetchTime": "2020-01-20T22:38:16.761Z"
+        },
+        "settings": {
+          "locale": "en-US",
+          "strategy": "mobile"
+        },
+        "metrics": {
+          "FCP": 971,
+          "FMP": 971,
+          "SpeedIndex": 1009,
+          "TTI": 1643,
+          "FirstCPUIdle": 1445,
+          "FID": 13
+        }
+      }
+    },
+    {
+      "uuid": "something",
+      "status": "retrieved",
+      "label": "Think With Google",
+      "url": "https://thinkwithgoogle.com",
+      "createdTimestamp": 1579620651027,
+      "modifiedTimestamp": 1579620666492,
+      "webpagetest": {
+        "status": "retrieved",
+        "metadata": {
+          "testId": "200118_KA_4022ee20eaf1deebb393585731de6576",
+          "jsonUrl": "https://webpagetest.org/jsonResult.php?test=200118_KA_4022ee20eaf1deebb393585731de6576",
+          "ownerKey": "9c58809d442152143c04bb7f1a711224aac3cfde",
+          "xmlUrl": "https://webpagetest.org/xmlResult/200118_KA_4022ee20eaf1deebb393585731de6576/",
+          "userUrl": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/",
+          "summaryCSV": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/page_data.csv",
+          "detailCSV": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/requests.csv"
+        },
+        "settings": {
+          "locationId": "Dulles_MotoG4",
+          "device": "Pixel",
+          "connection": "4G",
+          "runs": 1,
+          "repeatView": true,
+          "timeline": true,
+          "block": null,
+          "script": null
+        },
+        "metrics": {
+          "lighthouse.Performance": 0.97,
+          "lighthouse.PWA": 0.38,
+          "lighthouse.FCP": 1805.008,
+          "lighthouse.FMP": 1912.109,
+          "lighthouse.SpeedIndex": 1971,
+          "lighthouse.TTI": 3032.887,
+          "lighthouse.FirstCPUIdle": 3032.887,
+          "SpeedIndex": 702,
+          "TTFB": 482,
+          "Render": 700,
+          "VisualComplete": 900,
+          "TTI": 3527,
+          "LoadTime": 1681,
+          "RequestsDoc": 17,
+          "DCL": 741,
+          "BytesIn": 439869,
+          "DOMElements": 206,
+          "CSS": 0,
+          "Fonts": 30780,
+          "Javascript": 311343,
+          "Images": 18910,
+          "Videos": 0
+        }
+      },
+      "psi": {
+        "status": "retrieved",
+        "metadata": {
+          "testId": "https://www.thinkwithgoogle.com/",
+          "requestedUrl": "https://thinkwithgoogle.com/",
+          "finalUrl": "https://www.thinkwithgoogle.com/",
+          "lighthouseVersion": "5.6.0",
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.74 Safari/537.36",
+          "fetchTime": "2020-01-20T22:38:16.761Z"
+        },
+        "settings": {
+          "locale": "en-US",
+          "strategy": "mobile"
+        },
+        "metrics": {
+          "FCP": 971,
+          "FMP": 971,
+          "SpeedIndex": 1009,
+          "TTI": 1643,
+          "FirstCPUIdle": 1445,
+          "FID": 13
+        }
+      }
+    },
+    {
+      "status": "submitted",
+      "label": "Think With Google",
+      "url": "https://thinkwithgoogle.com",
+      "createdTimestamp": 1579620768437,
+      "modifiedTimestamp": 1579984387810,
+      "webpagetest": {
+        "status": "error",
+        "statusText": "TypeError: Cannot read property 'testId' of undefined",
+        "settings": {
+          "locationId": "Dulles_MotoG4",
+          "device": "Pixel",
+          "connection": "4G",
+          "runs": 1,
+          "repeatView": true,
+          "timeline": true,
+          "block": null,
+          "script": null
+        }
+      },
+      "psi": {
+        "status": "error",
+        "statusText": "Error: No Lighthouse result found."
+      }
+    },
+    {
+      "status": "submitted",
+      "label": "Think With Google",
+      "url": "https://thinkwithgoogle.com",
+      "createdTimestamp": 1579983925319,
+      "modifiedTimestamp": 1579984394814,
+      "webpagetest": {
+        "status": "error",
+        "statusText": "TypeError: Cannot read property 'testId' of undefined",
+        "settings": {
+          "locationId": "Dulles_MotoG4",
+          "device": "Pixel",
+          "connection": "4G",
+          "runs": 1,
+          "repeatView": true,
+          "timeline": true,
+          "block": null,
+          "script": null
+        }
+      },
+      "psi": {
+        "status": "error",
+        "statusText": "Error: No Lighthouse result found."
+      }
+    }
+  ]
+}

@@ -13,12 +13,17 @@ class JSONConnector extends Connector {
 
     this.tests = config.tests;
     this.results = config.results;
+
+    this.testsData = JSON.parse(
+        fse.readFileSync(path.resolve(`./${this.tests}`)));
+  }
+
+  getConfig() {
+    return this.testsData.config;
   }
 
   getTestList() {
-    let filepath = path.resolve(`./${this.tests}`);
-    let rawdata = fse.readFileSync(filepath);
-    return JSON.parse(rawdata).tests;
+    return this.testsData.tests;
   }
 
   updateTestList(newTests) {
