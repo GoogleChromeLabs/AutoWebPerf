@@ -10,6 +10,7 @@ const WPTGatherer = require('./gatherers/wpt-gatherer');
 const PSIGatherer = require('./gatherers/psi-gatherer');
 const Connector = require('./connectors/connector');
 const Status = require('./common/status');
+const assert = require('./utils/assert');
 
 const TestType = {
   SINGLE: 'Single',
@@ -51,10 +52,10 @@ class AutoWebPerf {
         break;
 
       case 'GoogleSheets':
-        assert(awConfig.googleSheets, 'googleSheets is missing.');
+        assert(awpConfig.googleSheets, 'googleSheets is missing.');
         let GoogleSheetsConnector = require('./connectors/googlesheets-connector');
 
-        // TODO: Standardize awConfig.
+        // TODO: Standardize awpConfig.
         this.connector = new GoogleSheetsConnector(
             awpConfig.googleSheets);
         break;

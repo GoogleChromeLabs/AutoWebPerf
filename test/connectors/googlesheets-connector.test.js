@@ -21,14 +21,15 @@ global.SpreadsheetApp = {
 };
 
 let connector = new GoogleSheetsConnector({
-  testsTab: 'tests',
-  resultsTab: 'results',
+  configTabName: 'config',
+  testsTabName: 'tests',
+  resultsTabName: 'results',
 });
 
 let fakeTestsSheetData = [
   [],
-  ['selected', 'url', 'label', 'recurring.frequency', 'webpagetest.settings.connection'],
   [],
+  ['selected', 'url', 'label', 'recurring.frequency', 'webpagetest.settings.connection'],
   [true, 'google.com', 'Google', 'daily', '4G'],
   [false, 'examples.com', 'Example', null, '3G'],
   [true, 'web.dev', 'Web.Dev', 'daily', '3G'],

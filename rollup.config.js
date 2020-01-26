@@ -27,10 +27,10 @@ export default [
       resolve({
         preferBuiltins: true,
         jail: './src',
-        dedupe: ['../utils/assert'],
+        dedupe: [],
       }),
       replace({
-        changed: 'module.exports = core;',
+        // changed: 'module.exports = core;',
       }),
       visualizer(),
     ]

@@ -7,12 +7,14 @@ const Connector = require('./connector');
 class GoogleSheetsConnector extends Connector {
   constructor(config) {
     super();
-    assert(config.testsTab, 'testsTab is missing in config.');
-    assert(config.resultsTab, 'resultsTab is missing in config.');
+    assert(config.configTabName, 'configTabName is missing in config.');
+    assert(config.testsTabName, 'testsTabName is missing in config.');
+    assert(config.resultsTabName, 'resultsTabName is missing in config.');
 
     this.activeSpreadsheet = SpreadsheetApp.getActive();
-    this.testsSheet = this.activeSpreadsheet.getSheetByName(config.testsTab);
-    this.resultsSheet = this.activeSpreadsheet.getSheetByName(config.resultsTab);
+    this.configSheet = this.activeSpreadsheet.getSheetByName(config.configTabName);
+    this.testsSheet = this.activeSpreadsheet.getSheetByName(config.testsTabName);
+    this.resultsSheet = this.activeSpreadsheet.getSheetByName(config.resultsTabName);
     // this.locationsSheet = this.activeSpreadsheet.getSheetByName('Locations');
     // this.compareSheet = this.activeSpreadsheet.getSheetByName('Comparison');
     // this.frequencySheet = this.activeSpreadsheet.getSheetByName('schedule_frequency');
@@ -21,11 +23,14 @@ class GoogleSheetsConnector extends Connector {
     // this.perfBudgetDashSheet = this.activeSpreadsheet.getSheetByName('Perf Budget Dashboard');
 
     this.tabConfigs = {
+      configTab: {
+        tabName: config.configTabName,
+      },
       testsTab: {
-        tabName: config.testsTab,
-        columnLookupRow: 2, // Row starts at 1
+        tabName: config.testsTabName,
+        columnLookupRow: 3, // Row starts at 1
         dataStartRow: 4,
-        sheet: this.activeSpreadsheet.getSheetByName(config.testsTab),
+        sheet: this.activeSpreadsheet.getSheetByName(config.testsTabName),
         // dataConversion: {
         //   cellToObject: {
         //
@@ -36,10 +41,10 @@ class GoogleSheetsConnector extends Connector {
         // },
       },
       resultsTab: {
-        tabName: config.resultsTab,
-        columnLookupRow: 2, // Row starts at 1
+        tabName: config.resultsTabName,
+        columnLookupRow: 3, // Row starts at 1
         dataStartRow: 4,
-        sheet: this.activeSpreadsheet.getSheetByName(config.resultsTab),
+        sheet: this.activeSpreadsheet.getSheetByName(config.resultsTabName),
       }
     };
 
@@ -62,6 +67,10 @@ class GoogleSheetsConnector extends Connector {
       'webpagetest.metrics.Load Time': [10000, 6500, 5000],
       'webpagetest.metrics.Connection': [30, 20, 10],
     };
+  }
+
+  getConfig() {
+
   }
 
   getList(tabName, options) {
