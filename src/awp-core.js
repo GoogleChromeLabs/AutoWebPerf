@@ -147,8 +147,11 @@ class AutoWebPerf {
 
       if (!recurring.nextTriggerTimestamp ||
           recurring.nextTriggerTimestamp <= nowtime) {
-        console.log('triggered curring...');
-        let newResult = this.runTest(test);
+
+        console.log('Triggered curring...');
+        let newResult = this.runTest(test, {
+          recurring: true,
+        });
         newResults.push(newResult);
 
         let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
