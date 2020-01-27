@@ -1,9 +1,9 @@
 {
   "config": {
     "apiKeys": {
-      "webpagetest": "A.33b645010f88e6a09879bf0a55a419b9",
-      "psi": "AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk"
-    }
+      "webpagetest": "TEST_API",
+      "psi": "TEST_API"
+    },
   },
   "tests": [
     {
@@ -34,7 +34,7 @@
           "strategy": "mobile"
         }
       },
-      "budgets": {
+      "performanceBudget": {
         "FCP": 2,
         "SpeedIndex": 3,
         "TTI": 5,
