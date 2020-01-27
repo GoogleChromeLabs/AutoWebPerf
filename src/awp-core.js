@@ -156,12 +156,14 @@ class AutoWebPerf {
   }
 
   runTest(test, options) {
+    options = options || {};
+
     let nowtime = Date.now();
     let statuses = [];
 
     let newResult = {
       id: nowtime + '-' + test.url,
-      type: TestType.SINGLE,
+      type: options.recurring ? TestType.RECURRING : TestType.SINGLE,
       status: Status.SUBMITTED,
       label: test.label,
       url: test.url,
