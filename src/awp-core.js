@@ -281,41 +281,44 @@ class AutoWebPerf {
    * @param  {object} options
    */
   retrieve(options) {
+    options = options || {};
+
     let results = this.connector.getResultList();
+    results = this.filterAll(results, options.filters);
+
+    results = results.filter(result => {
+      return result.status !== Status.RETRIEVED;
+    });
+
     results = results.map(result => {
       if (this.debug) console.log('AutoWebPerf::retrieve, result=\n', result);
 
-      if (result.status !== Status.RETRIEVED) {
-        let statuses = [];
-        let newResult = result;
-        newResult.modifiedTimestamp = Date.now();
+      let statuses = [];
+      let newResult = result;
+      newResult.modifiedTimestamp = Date.now();
 
-        DATA_SOURCES.forEach(dataSource => {
-          if (!result[dataSource]) return;
-          if (result[dataSource].status === Status.RETRIEVED) return;
+      DATA_SOURCES.forEach(dataSource => {
+        if (!result[dataSource]) return;
+        if (result[dataSource].status === Status.RETRIEVED) return;
 
-          let gatherer = this.getGatherer(dataSource);
-          let response = gatherer.retrieve(
-              result, {debug: true});
+        let gatherer = this.getGatherer(dataSource);
+        let response = gatherer.retrieve(
+            result, {debug: true});
 
-          statuses.push(response.status);
-          newResult[dataSource] = response;
-        });
+        statuses.push(response.status);
+        newResult[dataSource] = response;
+      });
 
-        // Extensions
-        Object.keys(this.extensions).forEach(extName => {
-          let extension = this.extensions[extName];
-          extension.postRetrieve(newResult);
-        });
+      // Extensions
+      Object.keys(this.extensions).forEach(extName => {
+        let extension = this.extensions[extName];
+        extension.postRetrieve(newResult);
+      });
 
-        if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
-          newResult.status = Status.RETRIEVED;
-        }
-        return newResult;
-
-      } else {
-        return result;
+      if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
+        newResult.status = Status.RETRIEVED;
       }
+      return newResult;
     });
 
     // TODO: Update to tests list with webpagetest's lastTestId.
@@ -328,6 +331,7 @@ class AutoWebPerf {
   }
 
   filterAll(items, filters) {
+    filters = filters || {};
     if (filters.id) {
       items = items.filter(item => item.id === filters.id);
     }
