@@ -14,6 +14,7 @@ Options (*denotes default value if not passed in):
   single\t\tRun a single audit.
   tests\t\tThe JSON file with the URL list for audit.
   results\t\tThe output JSON file for writing test results.
+  debug\t\tPrint out debug console logs.
 
 Examples:
   # ...
@@ -26,6 +27,7 @@ Examples:
  */
 async function begin() {
   let action = argv['_'][0], output = argv['output'];
+  let debug = argv['debug'];
 
   if (!action) {
     printUsage();
@@ -37,21 +39,27 @@ async function begin() {
     results: argv['results'],
     connector: 'JSON',
     helper: 'Node',
+    debug: debug,
   });
 
   switch(action) {
     case 'run':
       await awp.run({
         single: argv['single'],
+        debug: debug,
       });
       break;
 
     case 'recurring':
-      await awp.recurring();
+      await awp.recurring({
+        debug: debug,
+      });
       break;
 
     case 'retrieve':
-      await awp.retrieve();
+      await awp.retrieve({
+        debug: debug,
+      });
       break;
 
     default:

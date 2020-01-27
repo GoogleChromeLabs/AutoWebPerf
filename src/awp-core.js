@@ -92,7 +92,11 @@ class AutoWebPerf {
         if (!this.wptGatherer) {
           this.wptGatherer = new WPTGatherer({
             apiKey: this.apiKeys[name],
-          }, this.apiHandler);
+          },
+          this.apiHandler,
+          {
+            debug: this.debug,
+          });
         }
         return this.wptGatherer;
         break;
@@ -101,7 +105,11 @@ class AutoWebPerf {
         if (!this.psiGatherer) {
           this.psiGatherer = new PSIGatherer({
             apiKey: this.apiKeys[name],
-          }, this.apiHandler);
+          },
+          this.apiHandler,
+          {
+            debug: this.debug,
+          });
         }
         return this.psiGatherer;
         break;

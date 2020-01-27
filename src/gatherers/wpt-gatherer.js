@@ -5,7 +5,7 @@ const Status = require('../common/status');
 const Gatherer = require('./gatherer');
 
 class WebPageTestGatherer extends Gatherer {
-  constructor(config, apiHelper) {
+  constructor(config, apiHelper, options) {
     super();
     assert(config, 'Parameter config is missing.');
     assert(apiHelper, 'Parameter apiHelper is missing.');
@@ -14,7 +14,9 @@ class WebPageTestGatherer extends Gatherer {
     this.resultApiEndpoint = 'https://webpagetest.org/jsonResult.php';
     this.apiKey = config.apiKey;
     this.apiHelper = apiHelper;
-    this.debug = config.debug;
+
+    options = options || {};
+    this.debug = options.debug;
 
     // TODO: Metadata keys should be standardized.
     this.metadataMap = {
@@ -84,8 +86,9 @@ class WebPageTestGatherer extends Gatherer {
       urlParams.push(key + '=' + params[key]);
     });
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
+    let metadata = {};
 
-    if (options.debug) console.log(url);
+    if (options.debug) console.log('WPTGatherer::run\n', url);
 
     try {
       let json = {};
@@ -94,14 +97,13 @@ class WebPageTestGatherer extends Gatherer {
 
       } else {
         let res = this.apiHelper.fetch(url);
-        if (options.debug) console.log(url);
+        if (options.debug) console.log('WPTGatherer::run\n', url);
 
-        let json = JSON.parse(res);
-        if (options.debug) console.log(json);
+        json = JSON.parse(res);
+        if (options.debug) console.log('WPTGatherer::run\n', json);
       }
 
       if (json.statusCode === 200) {
-        let metadata = {};
         Object.keys(this.metadataMap).forEach(key => {
           try {
             metadata[key] = eval('json.' + this.metadataMap[key]);
@@ -119,6 +121,7 @@ class WebPageTestGatherer extends Gatherer {
         return {
           status: Status.ERROR,
           statusText: json.statusText,
+          metadata: metadata,
         };
       } else {
         throw new Error('Unknown error');
@@ -131,6 +134,7 @@ class WebPageTestGatherer extends Gatherer {
       return {
         status: Status.ERROR,
         statusText: error.toString(),
+        metadata: metadata,
       };
     }
   }
@@ -145,7 +149,7 @@ class WebPageTestGatherer extends Gatherer {
         'test=' + gathererData.metadata.testId,
       ];
       let url = this.resultApiEndpoint + '?' + urlParams.join('&');
-      if (options.debug) console.log(url);
+      if (options.debug) console.log('WPTGatherer::run\n', url);
 
       let res = this.apiHelper.fetch(url);
       let json = JSON.parse(res);
