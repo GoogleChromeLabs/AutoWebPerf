@@ -52,12 +52,12 @@ describe('Budgets unit test', () => {
           FCP: {
             ms: 1000,
             seconds: 1,
-            percentageOver: 50,
+            overRatio: 0.5,
           },
           SpeedIndex: {
             ms: 3000,
             seconds: 3,
-            percentageOver: 100,
+            overRatio: 1,
           },
         }
       }
@@ -104,12 +104,12 @@ describe('Budgets unit test', () => {
           FCP: {
             ms: 1000,
             seconds: 1,
-            percentageOver: 50,
+            overRatio: 0.5,
           },
           SpeedIndex: {
             ms: 3000,
             seconds: 3,
-            percentageOver: 100,
+            overRatio: 1,
           },
         }
       }
