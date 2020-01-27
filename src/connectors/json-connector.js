@@ -35,6 +35,7 @@ class JSONConnector extends Connector {
     fse.outputFileSync(
       filepath,
       JSON.stringify({
+        "config": this.testsData.config,
         "tests": newTests,
       }, null, 2));
   }

@@ -138,12 +138,19 @@ class AutoWebPerf {
     }
   }
 
+  /**
+   * Run selected tests for all tests, and writes output to results.
+   * @param  {object} options
+   */
   run(options) {
     let tests = this.connector.getTestList();
     let newResults = [];
 
-    tests.filter(test => test.selected).map((test) => {
+    tests.filter(test => test.selected).map(test => {
       if (this.debug) console.log('AutoWebPerf::run, test=\n', test);
+
+      // Assign id if none.
+      if (!test.id) test.id = Date.now() + '-' + test.url;
 
       let newResult = this.runTest(test, options);
 
@@ -160,10 +167,25 @@ class AutoWebPerf {
       if (this.debug) console.log('AutoWebPerf::run, newResult=\n', newResult);
     });
 
+    this.connector.updateTestList(tests);
     this.connector.appendResultList(newResults);
   }
 
+  /**
+   * Update recurring settings without running tests.
+   * @param  {object} options
+   */
+  recurringActivate(options) {
+
+  }
+
+  /**
+   * Submit recurring tests.
+   * @param  {object} options description
+   */
   recurring(options) {
+    options = options || {};
+
     let tests = this.connector.getTestList();
     let newResults = [];
 
@@ -204,6 +226,11 @@ class AutoWebPerf {
     this.connector.appendResultList(newResults);
   }
 
+  /**
+   * The main function for running a test.
+   * @param  {object} test
+   * @param  {object} options
+   */
   runTest(test, options) {
     options = options || {};
 
@@ -244,6 +271,10 @@ class AutoWebPerf {
     return newResult;
   }
 
+  /**
+   * Retrieve test result for all result list.
+   * @param  {object} options
+   */
   retrieve(options) {
     let results = this.connector.getResultList();
     results = results.map(result => {
@@ -283,11 +314,12 @@ class AutoWebPerf {
     });
 
     // TODO: Update to tests list with webpagetest's lastTestId.
+
     this.connector.updateResultList(results);
   }
 
   cancel(tests) {
-
+    // TODO
   }
 }
 

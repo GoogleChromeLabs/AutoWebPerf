@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('../utils/assert');
+const setObject = require('../utils/set-object');
 const Status = require('../common/status');
 const Gatherer = require('./gatherer');
 
@@ -111,6 +112,11 @@ class WebPageTestGatherer extends Gatherer {
             metadata[key] = null;
           }
         });
+
+        // Update Test's metadata with the lastTestId.
+        if (metadata.testId) {
+          setObject(test, 'webpagetest.metadata.lastTestId', metadata.testId);
+        }
 
         return {
           status: Status.SUBMITTED,
