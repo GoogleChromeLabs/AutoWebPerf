@@ -72,11 +72,17 @@ class GoogleSheetsConnector extends Connector {
       'webpagetest.metrics.Load Time': [10000, 6500, 5000],
       'webpagetest.metrics.Connection': [30, 20, 10],
     };
+
+    this.healthCheck();
   }
 
   getConfig() {
     let configValues = this.getList('configTab');
     return configValues[0];
+  }
+
+  healthCheck() {
+    // TODO: validate data type in sheets, e.g. check string type for propertyLookup.
   }
 
   getList(tabName, options) {
@@ -101,6 +107,11 @@ class GoogleSheetsConnector extends Connector {
       let newTest = {};
       for (let j = skipColumns; j < data[i].length; j++) {
         if (propertyLookup[j]) {
+          if (typeof propertyLookup[j] !== 'string') {
+            throw new Error(
+                `${tabName} Tab: Property lookup ${propertyLookup[j]} is not a string`);
+          }
+
           setObject(newTest, propertyLookup[j], data[i][j]);
         }
       }
@@ -134,9 +145,8 @@ class GoogleSheetsConnector extends Connector {
 
   updateTestList(newTests, options) {
     let tabConfig = this.tabConfigs['testsTab'];
-
-    let testsData = tabConfig.sheet.getDataRange().getValues();
-    let propertyLookup = testsData[tabConfig.propertyLookup - 1];
+    let data = tabConfig.sheet.getDataRange().getValues();
+    let propertyLookup = data[tabConfig.propertyLookup - 1];
 
     newTests.forEach(test => {
       let values = [];
@@ -151,38 +161,64 @@ class GoogleSheetsConnector extends Connector {
   }
 
   getRowRange(tabName, cellRow) {
-    return this.tabConfigs[tabName].sheet.getRange(`A${cellRow}:ZZZ${cellRow}`)
+    let lastColumn = this.tabConfigs[tabName].sheet.getLastColumn();
+    return this.tabConfigs[tabName].sheet.getRange(cellRow, 1, 1, lastColumn);
   }
 
-  getResultList() {
-    let selected = (options || {}).selected;
+  getResultList(options) {
+    options = options || {};
+
+    let selected = options.selected;
     let results = this.getList('resultsTab', options);
 
-    // Apply selection.
-    results = results.filter(test => {
-      return test.selected;
+    results = results.filter(result => {
+      return result.id;
+    });
+
+    // filters example: ['selected', 'webpatestest.metrics.something']
+    (options.filters || []).forEach(filter => {
+      results = results.filter(result => {
+        try {
+          return eval(`result.${filter}`);
+        } catch (error) {
+          return false;
+        }
+      });
     });
 
     return results;
   }
 
   appendResultList(newResults) {
-    let results = this.getResultList();
-    let filepath = path.resolve(`./output/${this.results}`);
-    fse.outputFileSync(
-      filepath,
-      JSON.stringify({
-        "results": results.concat(newResults),
-      }, null, 2));
+    let tabConfig = this.tabConfigs['resultsTab'];
+    let data = tabConfig.sheet.getDataRange().getValues();
+    let propertyLookup = data[tabConfig.propertyLookup - 1];
+
+    let cellRow = this.getResultList().length + 1 + tabConfig.skipRows;
+    newResults.forEach(result => {
+      let values = [];
+      propertyLookup.forEach(lookup => {
+        if (typeof lookup !== 'string') {
+          throw new Error(
+              `Results Tab: Property lookup ${lookup} is not a string`);
+        }
+        try {
+          let value = lookup ? eval(`result.${lookup}`) : '';
+          values.push(value);
+        } catch (error) {
+          values.push('');
+        }
+      });
+
+      let range = this.getRowRange('resultsTab', cellRow);
+      range.setValues([values]);
+
+      cellRow++;
+    });
   }
 
   updateResultList(results) {
-    let filepath = path.resolve(`./output/${this.results}`);
-    fse.outputFileSync(
-      filepath,
-      JSON.stringify({
-        "results": results,
-      }, null, 2));
+
   }
 }
 

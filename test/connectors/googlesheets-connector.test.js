@@ -41,6 +41,13 @@ let fakeTestsSheetData = [
   [true, 'web.dev', 'Web.Dev', 'daily', '3G'],
 ];
 
+let fakeResultsSheetData = [
+  [],
+  [],
+  ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FCP'],
+  [true, 'id-1234', 'single', 'retrieved', 'google.com', 500],
+]
+
 /* eslint-env jest */
 
 describe('GoogleSheetsConnector Config tab', () => {
@@ -175,4 +182,40 @@ describe('GoogleSheetsConnector Tests tab', () => {
       },
     ]);
   });
+});
+
+describe('GoogleSheetsConnector Results tab', () => {
+  beforeEach(() => {
+    // Overrides properties for testing.
+    connector.tabConfigs['resultsTab'].sheet.getDataRange = function() {
+      return {
+        getValues: function() {
+          return fakeResultsSheetData;
+        }
+      }
+    };
+  });
+
+  it('returns list of results from the Results sheet', async () => {
+    let results = connector.getResultList();
+    expect(results).toEqual([
+      {
+        selected: true,
+        id: 'id-1234',
+        type: 'single',
+        url: 'google.com',
+        status: 'retrieved',
+        webpagetest: {
+          metrics: {
+            FCP: 500,
+          }
+        },
+      },
+    ]);
+  });
+
+  it('sets a new set of results to the Results sheet', async () => {
+    // TODO
+  });
+
 });

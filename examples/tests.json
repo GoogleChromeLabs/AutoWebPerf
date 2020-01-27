@@ -34,7 +34,7 @@
           "strategy": "mobile"
         }
       },
-      "performanceBudget": {
+      "budgets": {
         "FCP": 2,
         "SpeedIndex": 3,
         "TTI": 5,

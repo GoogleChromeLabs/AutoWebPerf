@@ -18,6 +18,10 @@ class JSONConnector extends Connector {
         fse.readFileSync(path.resolve(`./${this.tests}`)));
   }
 
+  healthCheck() {
+
+  }
+
   getConfig() {
     return this.testsData.config;
   }
