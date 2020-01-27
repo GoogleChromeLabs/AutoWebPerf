@@ -157,7 +157,7 @@ class GoogleSheetsConnector extends Connector {
         values.push(value);
       });
       let range = this.getRowRange('testsTab', cellRow);
-      range.setValues(values);
+      range.setValues([values]);
     });
   }
 

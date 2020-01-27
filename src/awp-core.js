@@ -172,14 +172,6 @@ class AutoWebPerf {
   }
 
   /**
-   * Update recurring settings without running tests.
-   * @param  {object} options
-   */
-  recurringActivate(options) {
-
-  }
-
-  /**
    * Submit recurring tests.
    * @param  {object} options description
    */
@@ -189,13 +181,26 @@ class AutoWebPerf {
     let tests = this.connector.getTestList();
     let newResults = [];
 
+    tests = this.filterAll(tests, options.filters);
+    tests = tests.filter(test => {
+      let recurring = test.recurring;
+      return recurring && recurring.frequency &&
+          Frequency[recurring.frequency.toUpperCase()];
+    });
+
     let newTests = tests.map(test => {
       if (this.debug) console.log('AutoWebPerf::recurring, test=\n', test);
 
       let nowtime = Date.now();
       let recurring = test.recurring;
-      if (!recurring || !recurring.frequency ||
-          !Frequency[recurring.frequency.toUpperCase()]) return test;
+
+      if (options.activateOnly) {
+        // Update Test item.
+        let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
+        recurring.nextTriggerTimestamp = nowtime + offset;
+        recurring.nextTrigger = new Date(nowtime + offset).toString();
+        return test;
+      }
 
       if (!recurring.nextTriggerTimestamp ||
           recurring.nextTriggerTimestamp <= nowtime) {
@@ -320,6 +325,14 @@ class AutoWebPerf {
 
   cancel(tests) {
     // TODO
+  }
+
+  filterAll(items, filters) {
+    if (filters.id) {
+      items = items.filter(item => item.id === filters.id);
+    }
+
+    return items;
   }
 }
 

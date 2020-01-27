@@ -65,11 +65,22 @@ class JSONConnector extends Connector {
   }
 
   updateResultList(newResults) {
+    let results = this.getResultList();
+    let idToResults = {};
+
+    newResults.forEach(result => {
+      idToResults[result.id] = result;
+    });
+
+    results = results.map(result => {
+      return idToResults[result.id] || result;
+    });
+
     let filepath = path.resolve(`./output/${this.results}`);
     fse.outputFileSync(
       filepath,
       JSON.stringify({
-        "results": newResults,
+        "results": results,
       }, null, 2));
   }
 }

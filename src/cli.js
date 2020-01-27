@@ -7,6 +7,7 @@ Usage: ./awp [ACTION] [OPTIONS...]
 
 Available Actions:
   run\t\tExecute audits from the test list.
+  recurringActivate\tUpdate test frequency and timestamps.
   recurring\t\tExecute recurring audits from the test list.
   retrieve\tRetrieve test results from the results list.
 
@@ -51,6 +52,13 @@ async function begin() {
     case 'run':
       await awp.run({
         single: argv['single'],
+        debug: debug,
+      });
+      break;
+
+    case 'recurringActivate':
+      await awp.recurring({
+        activateOnly: true,
         debug: debug,
       });
       break;

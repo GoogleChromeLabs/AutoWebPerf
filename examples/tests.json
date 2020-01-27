@@ -1,8 +1,8 @@
 {
   "config": {
     "apiKeys": {
-      "webpagetest": "A.33b645010f88e6a09879bf0a55a419b9",
-      "psi": "AIzaSyCKpw-t9UzdU9rP_Bqker0nYrVtY4W7nxk"
+      "webpagetest": "TEST_APIKEY",
+      "psi": "TEST_APIKEY"
     }
   },
   "tests": [
@@ -12,8 +12,8 @@
       "url": "https://thinkwithgoogle.com",
       "recurring": {
         "frequency": "daily",
-        "nextTriggerTimestamp": 1579707051025,
-        "nextTrigger": "Wed Jan 22 2020 10:30:51 GMT-0500 (Eastern Standard Time)"
+        "nextTriggerTimestamp": 1580193842663,
+        "nextTrigger": "Tue Jan 28 2020 01:44:02 GMT-0500 (Eastern Standard Time)"
       },
       "webpagetest": {
         "settings": {
@@ -27,7 +27,7 @@
           "script": null
         },
         "metadata": {
-          "lastTestId": "200127_NF_0cd6c5afe28f283d9ca9ba3e8ac5b06c"
+          "lastTestId": "200118_KA_4022ee20eaf1deebb393585731de6576"
         }
       },
       "psi": {
