@@ -14,6 +14,7 @@ Options (*denotes default value if not passed in):
   single\t\tRun a single audit.
   tests\t\tThe JSON file with the URL list for audit.
   results\t\tThe output JSON file for writing test results.
+  extensions\t\tComma-separated list of extensions.
   debug\t\tPrint out debug console logs.
 
 Examples:
@@ -27,6 +28,7 @@ Examples:
  */
 async function begin() {
   let action = argv['_'][0], output = argv['output'];
+  let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let debug = argv['debug'];
 
   if (!action) {
@@ -34,11 +36,14 @@ async function begin() {
     return;
   }
 
+  console.log(extensions);
+
   let awp = new AutoWebPerf({
     tests: argv['tests'],
     results: argv['results'],
     connector: 'JSON',
     helper: 'Node',
+    extensions: extensions,
     debug: debug,
   });
 

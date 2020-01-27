@@ -8,7 +8,7 @@
 
 const WPTGatherer = require('./gatherers/wpt-gatherer');
 const PSIGatherer = require('./gatherers/psi-gatherer');
-const Connector = require('./connectors/connector');
+const BudgetsExtension = require('./extensions/budgets');
 const Status = require('./common/status');
 const assert = require('./utils/assert');
 
@@ -65,6 +65,7 @@ class AutoWebPerf {
             `Connector ${awpConfig.connector} is not supported.`);
         break;
     }
+    this.apiKeys = this.connector.getConfig().apiKeys;
 
     switch (awpConfig.helper) {
       case 'Node':
@@ -83,7 +84,21 @@ class AutoWebPerf {
         break;
     }
 
-    this.apiKeys = this.connector.getConfig().apiKeys;
+    this.extensions = {};
+    if (awpConfig.extensions) {
+      awpConfig.extensions.forEach(extension => {
+        switch (extension) {
+          case 'budgets':
+            this.extensions.budgets = new BudgetsExtension(awpConfig.budgets);
+            break;
+
+          default:
+            throw new Error(
+                `Extension ${extension} is not supported.`);
+            break;
+        }
+      });
+    }
   }
 
   getGatherer(name) {
@@ -128,8 +143,21 @@ class AutoWebPerf {
     let newResults = [];
 
     tests.filter(test => test.selected).map((test) => {
+      if (this.debug) console.log('AutoWebPerf::run, test=\n', test);
+
       let newResult = this.runTest(test, options);
+
+      // Extensions
+      Object.keys(this.extensions).forEach(extName => {
+        if (this.debug) console.log('AutoWebPerf::run, extName=\n', extName);
+
+        let extension = this.extensions[extName];
+        extension.postRun(test, newResult);
+      });
+
       newResults.push(newResult);
+
+      if (this.debug) console.log('AutoWebPerf::run, newResult=\n', newResult);
     });
 
     this.connector.appendResultList(newResults);
@@ -140,6 +168,8 @@ class AutoWebPerf {
     let newResults = [];
 
     let newTests = tests.map(test => {
+      if (this.debug) console.log('AutoWebPerf::recurring, test=\n', test);
+
       let nowtime = Date.now();
       let recurring = test.recurring;
       if (!recurring || !recurring.frequency ||
@@ -152,8 +182,16 @@ class AutoWebPerf {
         let newResult = this.runTest(test, {
           recurring: true,
         });
+
+        // Extensions
+        Object.keys(this.extensions).forEach(extName => {
+          let extension = this.extensions[extName];
+          extension.postRetrieve(newResult);
+        });
+
         newResults.push(newResult);
 
+        // Update Test item.
         let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
         recurring.nextTriggerTimestamp = nowtime + offset;
         recurring.nextTrigger = new Date(nowtime + offset).toString();
@@ -209,6 +247,8 @@ class AutoWebPerf {
   retrieve(options) {
     let results = this.connector.getResultList();
     results = results.map(result => {
+      if (this.debug) console.log('AutoWebPerf::retrieve, result=\n', result);
+
       if (result.status !== Status.RETRIEVED) {
         let statuses = [];
         let newResult = result;
@@ -224,6 +264,12 @@ class AutoWebPerf {
 
           statuses.push(response.status);
           newResult[dataSource] = response;
+        });
+
+        // Extensions
+        Object.keys(this.extensions).forEach(extName => {
+          let extension = this.extensions[extName];
+          extension.postRetrieve(newResult);
         });
 
         if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {

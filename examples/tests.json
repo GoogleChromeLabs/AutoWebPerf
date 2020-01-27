@@ -1,9 +1,9 @@
 {
   "config": {
     "apiKeys": {
-      "webpagetest": "TEST_API",
-      "psi": "TEST_API"
-    },
+      "webpagetest": "TEST_APIKEY",
+      "psi": "TEST_APIKEY"
+    }
   },
   "tests": [
     {
@@ -34,15 +34,33 @@
           "strategy": "mobile"
         }
       },
-      "performanceBudget": {
-        "FCP": 2,
-        "SpeedIndex": 3,
-        "TTI": 5,
-        "Javascript": 500,
-        "CSS": 500,
-        "Fonts": 100,
-        "Images": 500,
-        "Videos": 500
+      "budgets": {
+        "metrics": {
+          "FCP": {
+            "seconds": 2
+          },
+          "SpeedIndex": {
+            "seconds": 3
+          },
+          "TTI": {
+            "seconds": 5
+          },
+          "Javascript": {
+            "kb": 500
+          },
+          "CSS": {
+            "kb": 500
+          },
+          "Fonts": {
+            "kb": 100
+          },
+          "Images": {
+            "kb": 500
+          },
+          "Videos": {
+            "kb": 500
+          }
+        }
       }
     }
   ]
