@@ -165,7 +165,7 @@ class GoogleSheetsConnector extends Connector {
       });
 
       let range = this.getRowRange('testsTab', idToRows[test.id]);
-      range.setValues(values);
+      range.setValues([values]);
     });
   }
 
