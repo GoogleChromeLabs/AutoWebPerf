@@ -74,7 +74,7 @@ class AutoWebPerf {
         break;
 
       case 'GoogleSheets':
-        let {GoogleSheetsApiHandler} = require('./helpers/googlesheet-helper');
+        let {GoogleSheetsApiHandler} = require('./helpers/googlesheets-helper');
         this.apiHandler = new GoogleSheetsApiHandler();
         break;
 
