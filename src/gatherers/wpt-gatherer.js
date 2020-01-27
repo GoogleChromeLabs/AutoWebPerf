@@ -14,6 +14,7 @@ class WebPageTestGatherer extends Gatherer {
     this.resultApiEndpoint = 'https://webpagetest.org/jsonResult.php';
     this.apiKey = config.apiKey;
     this.apiHelper = apiHelper;
+    this.debug = config.debug;
 
     // TODO: Metadata keys should be standardized.
     this.metadataMap = {
@@ -102,7 +103,11 @@ class WebPageTestGatherer extends Gatherer {
       if (json.statusCode === 200) {
         let metadata = {};
         Object.keys(this.metadataMap).forEach(key => {
-          metadata[key] = eval('json.' + this.metadataMap[key]);
+          try {
+            metadata[key] = eval('json.' + this.metadataMap[key]);
+          } catch (error) {
+            metadata[key] = null;
+          }
         });
 
         return {
@@ -119,7 +124,10 @@ class WebPageTestGatherer extends Gatherer {
         throw new Error('Unknown error');
       }
     } catch (error) {
-      console.error(error);
+      if (this.debug) {
+        console.log('Error when running...');
+        console.error(error);
+      }
       return {
         status: Status.ERROR,
         statusText: error.toString(),
@@ -145,7 +153,11 @@ class WebPageTestGatherer extends Gatherer {
       if (json.statusCode === 200) {
         let metrics = {}, metadata = {};
         Object.keys(this.metricsMap).forEach(key => {
-          metrics[key] = eval('json.' + this.metricsMap[key]);
+          try {
+            metrics[key] = eval('json.' + this.metricsMap[key]);
+          } catch (error) {
+            metrics[key] = null;
+          }
         });
         return {
           status: Status.RETRIEVED,
@@ -164,7 +176,11 @@ class WebPageTestGatherer extends Gatherer {
         throw new Error('Unknown error');
       }
     } catch (error) {
-      console.log(error);
+      if (this.debug) {
+        console.log('Error when retrieving...');
+        console.log(error);
+      }
+
       return {
         status: Status.ERROR,
         statusText: error.toString(),

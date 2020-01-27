@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('../utils/assert');
+const Status = require('../common/status');
 const setObject = require('../utils/set-object');
 const transpose = require('../utils/transpose');
 const Connector = require('./connector');
@@ -104,7 +105,7 @@ class GoogleSheetsConnector extends Connector {
 
     let items = [];
     for (let i = 0; i < data.length; i++) {
-      let newTest = {};
+      let newItem = {};
       for (let j = skipColumns; j < data[i].length; j++) {
         if (propertyLookup[j]) {
           if (typeof propertyLookup[j] !== 'string') {
@@ -112,17 +113,17 @@ class GoogleSheetsConnector extends Connector {
                 `${tabName} Tab: Property lookup ${propertyLookup[j]} is not a string`);
           }
 
-          setObject(newTest, propertyLookup[j], data[i][j]);
+          setObject(newItem, propertyLookup[j], data[i][j]);
         }
       }
 
       // Add metadata for GoogleSheets.
       if (options.insertRowNumber) {
-        newTest.googlesheets = {
+        newItem.googlesheets = {
           dataRow: i,
         };
       }
-      items.push(newTest);
+      items.push(newItem);
     }
 
     return items;
@@ -217,8 +218,36 @@ class GoogleSheetsConnector extends Connector {
     });
   }
 
-  updateResultList(results) {
+  updateResultList(newResults) {
+    let tabConfig = this.tabConfigs['resultsTab'];
+    let data = tabConfig.sheet.getDataRange().getValues();
+    let propertyLookup = data[tabConfig.propertyLookup - 1];
 
+    let idToRows = {}, cellRow = tabConfig.skipRows + 1;
+    let results = this.getResultList();
+    results.forEach(result => {
+      idToRows[result.id] = cellRow;
+      cellRow++;
+    });
+
+    newResults.forEach(result => {
+      let values = [];
+      propertyLookup.forEach(lookup => {
+        if (typeof lookup !== 'string') {
+          throw new Error(
+              `Results Tab: Property lookup ${lookup} is not a string`);
+        }
+        try {
+          let value = lookup ? eval(`result.${lookup}`) : '';
+          values.push(value);
+        } catch (error) {
+          values.push('');
+        }
+      });
+
+      let range = this.getRowRange('resultsTab', idToRows[result.id]);
+      range.setValues([values]);
+    });
   }
 }
 

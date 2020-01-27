@@ -214,8 +214,11 @@ describe('GoogleSheetsConnector Results tab', () => {
     ]);
   });
 
-  it('sets a new set of results to the Results sheet', async () => {
+  it('appends a new set of results to the Results sheet', async () => {
     // TODO
   });
 
+  it('updates results to the Results sheet', async () => {
+    // TODO
+  });
 });
