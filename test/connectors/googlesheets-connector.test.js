@@ -101,7 +101,7 @@ describe('GoogleSheetsConnector Tests tab', () => {
           }
         },
         googlesheets: {
-          dataRow: 0,
+          rowIndex: 4,
         }
       },
       {
@@ -117,7 +117,7 @@ describe('GoogleSheetsConnector Tests tab', () => {
           }
         },
         googlesheets: {
-          dataRow: 2,
+          rowIndex: 6,
         }
       },
     ]);
@@ -158,7 +158,7 @@ describe('GoogleSheetsConnector Tests tab', () => {
           }
         },
         googlesheets: {
-          dataRow: 0,
+          rowIndex: 4,
         }
       },
       {
@@ -177,7 +177,34 @@ describe('GoogleSheetsConnector Tests tab', () => {
           }
         },
         googlesheets: {
-          dataRow: 2,
+          rowIndex: 6,
+        }
+      },
+    ]);
+  });
+
+  it('filters tests based on rowIndex', async () => {
+    let tests = connector.getTestList();
+
+    let newTests = connector.filterTests(tests, {
+      rowIndex: 6,
+    });
+
+    expect(newTests).toEqual([
+      {
+        selected: true,
+        url: 'web.dev',
+        label: 'Web.Dev',
+        recurring: {
+          frequency: 'daily',
+        },
+        webpagetest: {
+          settings: {
+            connection: '3G',
+          }
+        },
+        googlesheets: {
+          rowIndex: 6,
         }
       },
     ]);
@@ -208,8 +235,11 @@ describe('GoogleSheetsConnector Results tab', () => {
         webpagetest: {
           metrics: {
             FCP: 500,
-          }
+          },
         },
+        googlesheets: {
+          rowIndex: 4,
+        }
       },
     ]);
   });

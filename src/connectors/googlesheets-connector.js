@@ -118,9 +118,9 @@ class GoogleSheetsConnector extends Connector {
       }
 
       // Add metadata for GoogleSheets.
-      if (options.insertRowNumber) {
+      if (options.appendRowIndex) {
         newItem.googlesheets = {
-          dataRow: i,
+          rowIndex: i + tabConfig.skipRows + 1,
         };
       }
       items.push(newItem);
@@ -132,7 +132,7 @@ class GoogleSheetsConnector extends Connector {
   getTestList(options) {
     options = options || {};
     let selected = options.selected;
-    options.insertRowNumber = true;
+    options.appendRowIndex = true;
 
     let tests = this.getList('testsTab', options);
 
@@ -151,7 +151,7 @@ class GoogleSheetsConnector extends Connector {
 
     newTests.forEach(test => {
       let values = [];
-      let cellRow = test.googlesheets.dataRow + tabConfig.skipRows + 1;
+      let cellRow = test.googlesheets.rowIndex + tabConfig.skipRows + 1;
       propertyLookup.forEach(lookup => {
         let value = lookup ? eval(`test.${lookup}`) : '';
         values.push(value);
@@ -168,6 +168,7 @@ class GoogleSheetsConnector extends Connector {
 
   getResultList(options) {
     options = options || {};
+    options.appendRowIndex = true;
 
     let selected = options.selected;
     let results = this.getList('resultsTab', options);
@@ -248,6 +249,29 @@ class GoogleSheetsConnector extends Connector {
       let range = this.getRowRange('resultsTab', idToRows[result.id]);
       range.setValues([values]);
     });
+  }
+
+  filterTests(tests, filters) {
+    return this.filterItems('testsTab', tests, filters);
+  }
+
+  filterResults(results, filters) {
+    return this.filterItems('resultsTab', results, filters);
+  }
+
+  filterItems(tabName, items, filters) {
+    let tabConfig = this.tabConfigs[tabName];
+
+    filters = filters || {};
+
+    // rowIndex is a GoogleSheet-specific filer property.
+    if (filters.rowIndex) {
+      items = items.filter(item => {
+        return item.googlesheets &&
+            item.googlesheets.rowIndex === filters.rowIndex;
+      });
+    }
+    return items;
   }
 }
 

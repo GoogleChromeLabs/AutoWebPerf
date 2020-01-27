@@ -7,6 +7,7 @@ class Connector {
   getResultList(conditions) {}
   appendResultList() {}
   updateResultList() {}
+  filterAll() {}
 }
 
 module.exports = Connector;

@@ -18,6 +18,7 @@ const TestType = {
 };
 
 const Frequency = {
+  NONE: 'none',
   DAILY: 'daily',
   WEEKLY: 'weekly',
   BIWEEKLY: 'biweekly',
@@ -146,6 +147,9 @@ class AutoWebPerf {
     let tests = this.connector.getTestList();
     let newResults = [];
 
+    tests = this.connector.filterTests(tests, options.filters);
+    tests = this.filterTests(tests, options.filters);
+
     tests.filter(test => test.selected).map(test => {
       if (this.debug) console.log('AutoWebPerf::run, test=\n', test);
 
@@ -181,7 +185,8 @@ class AutoWebPerf {
     let tests = this.connector.getTestList();
     let newResults = [];
 
-    tests = this.filterAll(tests, options.filters);
+    tests = this.connector.filterTests(tests, options.filters);
+    tests = this.filterTests(tests, options.filters);
     tests = tests.filter(test => {
       let recurring = test.recurring;
       return recurring && recurring.frequency &&
@@ -194,34 +199,43 @@ class AutoWebPerf {
       let nowtime = Date.now();
       let recurring = test.recurring;
 
-      if (options.activateOnly) {
-        // Update Test item.
+      if (options.activateOnly &&
+          recurring.frequency !== recurring.activatedFrequency) {
         let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
-        recurring.nextTriggerTimestamp = nowtime + offset;
-        recurring.nextTrigger = new Date(nowtime + offset).toString();
+
+        if (!offset) {
+          recurring.nextTriggerTimestamp = null;
+          recurring.nextTrigger = null;
+        } else {
+          recurring.nextTriggerTimestamp = nowtime + offset;
+          recurring.nextTrigger = new Date(nowtime + offset).toString();
+        }
+        recurring.activatedFrequency = recurring.frequency;
         return test;
-      }
 
-      if (!recurring.nextTriggerTimestamp ||
-          recurring.nextTriggerTimestamp <= nowtime) {
+      } else {
+        // Run normal recurring tests.
+        if (!recurring.nextTriggerTimestamp ||
+            recurring.nextTriggerTimestamp <= nowtime) {
 
-        console.log('Triggered curring...');
-        let newResult = this.runTest(test, {
-          recurring: true,
-        });
+          console.log('Triggered curring...');
+          let newResult = this.runTest(test, {
+            recurring: true,
+          });
 
-        // Extensions
-        Object.keys(this.extensions).forEach(extName => {
-          let extension = this.extensions[extName];
-          extension.postRetrieve(newResult);
-        });
+          // Extensions
+          Object.keys(this.extensions).forEach(extName => {
+            let extension = this.extensions[extName];
+            extension.postRetrieve(newResult);
+          });
 
-        newResults.push(newResult);
+          newResults.push(newResult);
 
-        // Update Test item.
-        let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
-        recurring.nextTriggerTimestamp = nowtime + offset;
-        recurring.nextTrigger = new Date(nowtime + offset).toString();
+          // Update Test item.
+          let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
+          recurring.nextTriggerTimestamp = nowtime + offset;
+          recurring.nextTrigger = new Date(nowtime + offset).toString();
+        }
       }
 
       return test;
@@ -284,7 +298,8 @@ class AutoWebPerf {
     options = options || {};
 
     let results = this.connector.getResultList();
-    results = this.filterAll(results, options.filters);
+    results = this.connector.filterResults(results, options.filters);
+    results = this.filterResults(results, options.filters);
 
     results = results.filter(result => {
       return result.status !== Status.RETRIEVED;
@@ -326,16 +341,40 @@ class AutoWebPerf {
     this.connector.updateResultList(results);
   }
 
+  getTests(options) {
+    options = options || {};
+    let tests = this.connector.getTestList();
+    tests = this.filterItems(tests, options.filters);
+    tests = this.connector.filterTests(tests, options.filters);
+    return tests;
+  }
+
+  getResults(options) {
+    options = options || {};
+    let results = this.connector.getResultList();
+
+    results = this.filterItems(results, options.filters);
+    results = this.connector.filterResults(results, options.filters);
+    return results;
+  }
+
   cancel(tests) {
     // TODO
   }
 
-  filterAll(items, filters) {
+  filterTests(tests, filters) {
+    return this.filterItems(tests, filters);
+  }
+
+  filterResults(results, filters) {
+    return this.filterItems(results, filters);
+  }
+
+  filterItems(items, filters) {
     filters = filters || {};
     if (filters.id) {
       items = items.filter(item => item.id === filters.id);
     }
-
     return items;
   }
 }

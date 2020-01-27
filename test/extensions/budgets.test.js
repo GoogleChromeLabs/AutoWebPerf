@@ -89,8 +89,6 @@ describe('Budgets unit test', () => {
 
     budgetsExtension.postRetrieve(result);
 
-    console.log(result.budgets.metrics.FCP);
-
     expect(result).toEqual({
       url: 'google.com',
       webpagetest: {
