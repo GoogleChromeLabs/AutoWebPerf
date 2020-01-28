@@ -23,6 +23,7 @@ const Frequency = {
   WEEKLY: 'weekly',
   BIWEEKLY: 'biweekly',
   MONTHLY: 'monthly',
+  TEST: 'test',
 };
 
 // TODO: May need to use MomemtJS for more accurate date offset.
@@ -31,6 +32,7 @@ const FrequencyInMinutes = {
   WEEKLY: 7 * 24 * 60 * 60 * 1000,
   BIWEEKLY: 14 * 24 * 60 * 60 * 1000,
   MONTHLY: 30 * 24 * 60 * 60 * 1000,
+  TEST: 60 * 1000,
 };
 
 class AutoWebPerf {
@@ -191,6 +193,9 @@ class AutoWebPerf {
           Frequency[recurring.frequency.toUpperCase()];
     });
 
+    if (this.debug) console.log(
+        'AutoWebPerf::retrieve, tests.length=\n', tests.length);
+
     let newTests = tests.map(test => {
       if (this.debug) console.log('AutoWebPerf::recurring, test=\n', test);
 
@@ -329,6 +334,10 @@ class AutoWebPerf {
       if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
         newResult.status = Status.RETRIEVED;
       }
+
+      if (this.debug) console.log('AutoWebPerf::retrieve, statuses=\n', statuses);
+      if (this.debug) console.log('AutoWebPerf::retrieve, newResult=\n', newResult);
+
       return newResult;
     });
 
