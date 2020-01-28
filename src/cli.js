@@ -14,6 +14,7 @@ Available Actions:
 Options (*denotes default value if not passed in):
   tests\t\tThe JSON file with the URL list for audit.
   results\t\tThe output JSON file for writing test results.
+  dataSources\t\ttComma-separated list of data sources. Default: webpagetest.
   extensions\t\tComma-separated list of extensions.
   selectedOnly\t\tOnly execute with tests or results with selected=true.
   debug\t\tPrint out debug console logs.
@@ -29,6 +30,7 @@ Examples:
  */
 async function begin() {
   let action = argv['_'][0], output = argv['output'];
+  let dataSources = argv['dataSources'] ? argv['dataSources'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let debug = argv['debug'];
 
@@ -45,6 +47,7 @@ async function begin() {
     results: argv['results'],
     connector: 'JSON',
     helper: 'Node',
+    dataSources: dataSources || ['webpagetest'],
     extensions: extensions,
     debug: debug,
   });

@@ -14,7 +14,22 @@ class GoogleSheetsApiHandler {
 
 const GoogleSheetsHelper = {
   onEdit: (e) => {
+    let range = e.range;
+    let sheet = range.getSheet();
+    let rowIndex = range.getRow();
+    if (sheet.getName() !== 'Tests') return;
 
+    let propertyLookup = getAWP().connector.getPropertyLookup('testsTab');
+    if (propertyLookup[range.getColumn() - 1] !== 'recurring.frequency') return;
+
+    let filters = ['googlesheets.rowIndex===' + rowIndex];
+    let tests = getAWP().getTests({
+      filters: filters
+    });
+    getAWP().recurring({
+      activateOnly: true,
+      filters: filters,
+    });
   },
 
   /**

@@ -15,6 +15,7 @@ describe('AutoWebPerf with node.js and JSON connector', () => {
       results: './test/fakedata/results.json',
       connector: 'JSON',
       helper: 'Node',
+      dataSources: ['webpagetest'],
     });
   });
 });

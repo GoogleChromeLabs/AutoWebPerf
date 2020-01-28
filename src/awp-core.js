@@ -33,18 +33,16 @@ const FrequencyInMinutes = {
   MONTHLY: 30 * 24 * 60 * 60 * 1000,
 };
 
-const DATA_SOURCES = [
-  'webpagetest',
-  'psi',
-];
-
-
 class AutoWebPerf {
   constructor(awpConfig) {
     this.debug = awpConfig.debug || false;
 
+    assert(awpConfig.dataSources, 'awpConfig.dataSources is missing.');
     assert(awpConfig.connector, 'awpConfig.connector is missing.');
     assert(awpConfig.helper, 'awpConfig.helper is missing.');
+
+    // Example data sources: ['webpagetest', 'psi']
+    this.dataSources = awpConfig.dataSources;
 
     switch (awpConfig.connector.toLowerCase()) {
       case 'json':
@@ -266,7 +264,7 @@ class AutoWebPerf {
       modifiedTimestamp: nowtime,
     }
 
-    DATA_SOURCES.forEach(dataSource => {
+    this.dataSources.forEach(dataSource => {
       if (!test[dataSource]) return;
 
       let gatherer = this.getGatherer(dataSource);
@@ -310,7 +308,7 @@ class AutoWebPerf {
       let newResult = result;
       newResult.modifiedTimestamp = Date.now();
 
-      DATA_SOURCES.forEach(dataSource => {
+      this.dataSources.forEach(dataSource => {
         if (!result[dataSource]) return;
         if (result[dataSource].status === Status.RETRIEVED) return;
 
