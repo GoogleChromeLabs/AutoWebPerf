@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('../utils/assert');
+const patternFilter = require('../utils/pattern-filter');
 const Status = require('../common/status');
 const setObject = require('../utils/set-object');
 const transpose = require('../utils/transpose');
@@ -131,16 +132,10 @@ class GoogleSheetsConnector extends Connector {
 
   getTestList(options) {
     options = options || {};
-    let selected = options.selected;
     options.appendRowIndex = true;
 
     let tests = this.getList('testsTab', options);
-
-    // Apply selection.
-    tests = tests.filter(test => {
-      return test.selected;
-    });
-
+    tests = patternFilter(tests, options.filters);
     return tests;
   }
 
@@ -170,23 +165,12 @@ class GoogleSheetsConnector extends Connector {
     options = options || {};
     options.appendRowIndex = true;
 
-    let selected = options.selected;
     let results = this.getList('resultsTab', options);
 
     results = results.filter(result => {
       return result.id;
     });
-
-    // filters example: ['selected', 'webpatestest.metrics.something']
-    (options.filters || []).forEach(filter => {
-      results = results.filter(result => {
-        try {
-          return eval(`result.${filter}`);
-        } catch (error) {
-          return false;
-        }
-      });
-    });
+    results = patternFilter(results, options.filters);
 
     return results;
   }
@@ -249,29 +233,6 @@ class GoogleSheetsConnector extends Connector {
       let range = this.getRowRange('resultsTab', idToRows[result.id]);
       range.setValues([values]);
     });
-  }
-
-  filterTests(tests, filters) {
-    return this.filterItems('testsTab', tests, filters);
-  }
-
-  filterResults(results, filters) {
-    return this.filterItems('resultsTab', results, filters);
-  }
-
-  filterItems(tabName, items, filters) {
-    let tabConfig = this.tabConfigs[tabName];
-
-    filters = filters || {};
-
-    // rowIndex is a GoogleSheet-specific filer property.
-    if (filters.rowIndex) {
-      items = items.filter(item => {
-        return item.googlesheets &&
-            item.googlesheets.rowIndex === filters.rowIndex;
-      });
-    }
-    return items;
   }
 }
 

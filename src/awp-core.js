@@ -144,11 +144,8 @@ class AutoWebPerf {
    * @param  {object} options
    */
   run(options) {
-    let tests = this.connector.getTestList();
+    let tests = this.connector.getTestList(options.filters);
     let newResults = [];
-
-    tests = this.connector.filterTests(tests, options.filters);
-    tests = this.filterTests(tests, options.filters);
 
     tests.filter(test => test.selected).map(test => {
       if (this.debug) console.log('AutoWebPerf::run, test=\n', test);
@@ -182,11 +179,9 @@ class AutoWebPerf {
   recurring(options) {
     options = options || {};
 
-    let tests = this.connector.getTestList();
+    let tests = this.connector.getTestList(options);
     let newResults = [];
 
-    tests = this.connector.filterTests(tests, options.filters);
-    tests = this.filterTests(tests, options.filters);
     tests = tests.filter(test => {
       let recurring = test.recurring;
       return recurring && recurring.frequency &&
@@ -297,9 +292,7 @@ class AutoWebPerf {
   retrieve(options) {
     options = options || {};
 
-    let results = this.connector.getResultList();
-    results = this.connector.filterResults(results, options.filters);
-    results = this.filterResults(results, options.filters);
+    let results = this.connector.getResultList(options);
 
     results = results.filter(result => {
       return result.status !== Status.RETRIEVED;
@@ -343,39 +336,18 @@ class AutoWebPerf {
 
   getTests(options) {
     options = options || {};
-    let tests = this.connector.getTestList();
-    tests = this.filterItems(tests, options.filters);
-    tests = this.connector.filterTests(tests, options.filters);
+    let tests = this.connector.getTestList(options);
     return tests;
   }
 
   getResults(options) {
     options = options || {};
-    let results = this.connector.getResultList();
-
-    results = this.filterItems(results, options.filters);
-    results = this.connector.filterResults(results, options.filters);
+    let results = this.connector.getResultList(options);
     return results;
   }
 
   cancel(tests) {
     // TODO
-  }
-
-  filterTests(tests, filters) {
-    return this.filterItems(tests, filters);
-  }
-
-  filterResults(results, filters) {
-    return this.filterItems(results, filters);
-  }
-
-  filterItems(items, filters) {
-    filters = filters || {};
-    if (filters.id) {
-      items = items.filter(item => item.id === filters.id);
-    }
-    return items;
   }
 }
 

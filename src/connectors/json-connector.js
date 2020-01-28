@@ -83,22 +83,6 @@ class JSONConnector extends Connector {
         "results": results,
       }, null, 2));
   }
-
-  filterTests(items, filters) {
-    return this.filterAll(items, filters);
-  }
-
-  filterResults(items, filters) {
-    return this.filterAll(items, filters);
-  }
-
-  filterAll(items, filters) {
-    filters = filters || {};
-    if (filters.index) {
-      items = [items[index]];
-    }
-    return items;
-  }
 }
 
 module.exports = JSONConnector;

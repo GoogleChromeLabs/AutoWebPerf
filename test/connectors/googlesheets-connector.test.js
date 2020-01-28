@@ -41,12 +41,97 @@ let fakeTestsSheetData = [
   [true, 'web.dev', 'Web.Dev', 'daily', '3G'],
 ];
 
+let fakeTests = [
+  {
+    selected: true,
+    url: 'google.com',
+    label: 'Google',
+    recurring: {
+      frequency: 'daily',
+    },
+    webpagetest: {
+      settings: {
+        connection: '4G',
+      }
+    },
+    googlesheets: {
+      rowIndex: 4,
+    }
+  },
+  {
+    selected: false,
+    url: 'examples.com',
+    label: 'Example',
+    recurring: {
+      frequency: null,
+    },
+    webpagetest: {
+      settings: {
+        connection: '3G',
+      }
+    },
+    googlesheets: {
+      rowIndex: 5,
+    }
+  },
+  {
+    selected: true,
+    url: 'web.dev',
+    label: 'Web.Dev',
+    recurring: {
+      frequency: 'daily',
+    },
+    webpagetest: {
+      settings: {
+        connection: '3G',
+      }
+    },
+    googlesheets: {
+      rowIndex: 6,
+    }
+  }
+];
+
 let fakeResultsSheetData = [
   [],
   [],
   ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FCP'],
   [true, 'id-1234', 'single', 'retrieved', 'google.com', 500],
+  [false, 'id-5678', 'recurring', 'retrieved', 'web.dev', 800],
 ]
+
+let fakeResults = [
+  {
+    selected: true,
+    id: 'id-1234',
+    type: 'single',
+    url: 'google.com',
+    status: 'retrieved',
+    webpagetest: {
+      metrics: {
+        FCP: 500,
+      },
+    },
+    googlesheets: {
+      rowIndex: 4,
+    }
+  },
+  {
+    selected: false,
+    id: 'id-5678',
+    type: 'recurring',
+    url: 'web.dev',
+    status: 'retrieved',
+    webpagetest: {
+      metrics: {
+        FCP: 800,
+      },
+    },
+    googlesheets: {
+      rowIndex: 5,
+    }
+  },
+];
 
 /* eslint-env jest */
 
@@ -85,128 +170,52 @@ describe('GoogleSheetsConnector Tests tab', () => {
     };
   });
 
-  it('returns list of tests from the Tests sheet', async () => {
+  it('returns all tests from the Tests sheet with filters', async () => {
     let tests = connector.getTestList();
+    expect(tests).toEqual(fakeTests);
+  });
+
+  it('returns a selection of tests from the Tests sheet with filters',
+      async () => {
+
+    // Filtering test.selected = true
+    let tests = connector.getTestList({
+      filters: ['selected'],
+    });
     expect(tests).toEqual([
-      {
-        selected: true,
-        url: 'google.com',
-        label: 'Google',
-        recurring: {
-          frequency: 'daily',
-        },
-        webpagetest: {
-          settings: {
-            connection: '4G',
-          }
-        },
-        googlesheets: {
-          rowIndex: 4,
-        }
-      },
-      {
-        selected: true,
-        url: 'web.dev',
-        label: 'Web.Dev',
-        recurring: {
-          frequency: 'daily',
-        },
-        webpagetest: {
-          settings: {
-            connection: '3G',
-          }
-        },
-        googlesheets: {
-          rowIndex: 6,
-        }
-      },
+      fakeTests[0],
+      fakeTests[2],
+    ]);
+
+    // Filtering test.recurring.frequency
+    tests = connector.getTestList({
+      filters: ['recurring.frequency'],
+    });
+    expect(tests).toEqual([
+      fakeTests[0],
+      fakeTests[2],
+    ]);
+
+    // Filtering test.selected = true
+    tests = connector.getTestList({
+      filters: ['webpagetest.settings.connection==="4G"'],
+    });
+    expect(tests).toEqual([
+      fakeTests[0],
     ]);
   });
 
   it('sets a new set of tests to the Tests sheet', async () => {
-    let tests = connector.getTestList();
-    let newTests = tests;
-
-    setObject(newTests[0], 'webpagetest.metadata.lastTestId', 'testid123');
-    setObject(newTests[1], 'webpagetest.metadata.lastTestId', 'testid456');
-
-    connector.getRowRange = (tabName, cellRow) => {
-      return {
-        setValues: (values) => {
-          fakeTestsSheetData[
-              cellRow - connector.tabConfigs[tabName].dataStartRow] = values;
-        }
-      }
-    };
-
-    connector.updateTestList(newTests);
-
-    expect(tests).toEqual([
-      {
-        selected: true,
-        url: 'google.com',
-        label: 'Google',
-        recurring: {
-          frequency: 'daily',
-        },
-        webpagetest: {
-          metadata: {
-            lastTestId: 'testid123',
-          },
-          settings: {
-            connection: '4G',
-          }
-        },
-        googlesheets: {
-          rowIndex: 4,
-        }
-      },
-      {
-        selected: true,
-        url: 'web.dev',
-        label: 'Web.Dev',
-        recurring: {
-          frequency: 'daily',
-        },
-        webpagetest: {
-          metadata: {
-            lastTestId: 'testid456',
-          },
-          settings: {
-            connection: '3G',
-          }
-        },
-        googlesheets: {
-          rowIndex: 6,
-        }
-      },
-    ]);
+    // TODO
   });
 
   it('filters tests based on rowIndex', async () => {
-    let tests = connector.getTestList();
-
-    let newTests = connector.filterTests(tests, {
-      rowIndex: 6,
+    let tests = connector.getTestList({
+      filters: ['googlesheets.rowIndex===6']
     });
 
-    expect(newTests).toEqual([
-      {
-        selected: true,
-        url: 'web.dev',
-        label: 'Web.Dev',
-        recurring: {
-          frequency: 'daily',
-        },
-        webpagetest: {
-          settings: {
-            connection: '3G',
-          }
-        },
-        googlesheets: {
-          rowIndex: 6,
-        }
-      },
+    expect(tests).toEqual([
+      fakeTests[2],
     ]);
   });
 });
@@ -225,22 +234,18 @@ describe('GoogleSheetsConnector Results tab', () => {
 
   it('returns list of results from the Results sheet', async () => {
     let results = connector.getResultList();
+    expect(results).toEqual(fakeResults);
+  });
+
+  it('returns a selection of results from the Results sheet with filters',
+      async () => {
+    let results, expecteResults;
+
+    results = connector.getResultList({
+      filters: ['selected'],
+    });
     expect(results).toEqual([
-      {
-        selected: true,
-        id: 'id-1234',
-        type: 'single',
-        url: 'google.com',
-        status: 'retrieved',
-        webpagetest: {
-          metrics: {
-            FCP: 500,
-          },
-        },
-        googlesheets: {
-          rowIndex: 4,
-        }
-      },
+      fakeResults[0],
     ]);
   });
 
