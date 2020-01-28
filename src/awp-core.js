@@ -43,8 +43,11 @@ class AutoWebPerf {
   constructor(awpConfig) {
     this.debug = awpConfig.debug || false;
 
-    switch (awpConfig.connector) {
-      case 'JSON':
+    assert(awpConfig.connector, 'awpConfig.connector is missing.');
+    assert(awpConfig.helper, 'awpConfig.helper is missing.');
+
+    switch (awpConfig.connector.toLowerCase()) {
+      case 'json':
         let JSONConnector = require('./connectors/json-connector');
         this.connector = new JSONConnector({
           tests: awpConfig.tests,
@@ -52,13 +55,13 @@ class AutoWebPerf {
         });
         break;
 
-      case 'GoogleSheets':
-        assert(awpConfig.googleSheets, 'googleSheets is missing.');
+      case 'googlesheets':
+        assert(awpConfig.googlesheets, 'googlesheets is missing.');
         let GoogleSheetsConnector = require('./connectors/googlesheets-connector');
 
         // TODO: Standardize awpConfig.
         this.connector = new GoogleSheetsConnector(
-            awpConfig.googleSheets);
+            awpConfig.googlesheets);
         break;
 
       default:
@@ -68,13 +71,13 @@ class AutoWebPerf {
     }
     this.apiKeys = this.connector.getConfig().apiKeys;
 
-    switch (awpConfig.helper) {
-      case 'Node':
+    switch (awpConfig.helper.toLowerCase()) {
+      case 'node':
         let {NodeApiHandler} = require('./helpers/node-helper');
         this.apiHandler = new NodeApiHandler();
         break;
 
-      case 'GoogleSheets':
+      case 'googlesheets':
         let {GoogleSheetsApiHandler} = require('./helpers/googlesheets-helper');
         this.apiHandler = new GoogleSheetsApiHandler();
         break;
@@ -144,14 +147,16 @@ class AutoWebPerf {
    * @param  {object} options
    */
   run(options) {
+    options = options || {};
+
     let tests = this.connector.getTestList(options.filters);
     let newResults = [];
 
     tests.filter(test => test.selected).map(test => {
       if (this.debug) console.log('AutoWebPerf::run, test=\n', test);
 
-      // Assign id if none.
-      if (!test.id) test.id = Date.now() + '-' + test.url;
+      // // Assign id if none.
+      // if (!test.id) test.id = Date.now() + '-' + test.url;
 
       let newResult = this.runTest(test, options);
 

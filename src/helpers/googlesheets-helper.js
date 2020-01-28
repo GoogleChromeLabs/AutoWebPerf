@@ -13,8 +13,8 @@ class GoogleSheetsApiHandler {
 }
 
 const GoogleSheetsHelper = {
-  onChange: (e) => {
-    
+  onEdit: (e) => {
+
   },
 
   /**

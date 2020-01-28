@@ -146,7 +146,7 @@ class GoogleSheetsConnector extends Connector {
 
     newTests.forEach(test => {
       let values = [];
-      let cellRow = test.googlesheets.rowIndex + tabConfig.skipRows + 1;
+      let cellRow = test.googlesheets.rowIndex;
       propertyLookup.forEach(lookup => {
         let value = lookup ? eval(`test.${lookup}`) : '';
         values.push(value);
@@ -233,6 +233,13 @@ class GoogleSheetsConnector extends Connector {
       let range = this.getRowRange('resultsTab', idToRows[result.id]);
       range.setValues([values]);
     });
+  }
+
+  getPropertyLookup(tabName) {
+    let tabConfig = this.tabConfigs[tabName];
+    let data = tabConfig.sheet.getDataRange().getValues();
+    let propertyLookup = data[tabConfig.propertyLookup - 1];
+    return propertyLookup;
   }
 }
 
