@@ -9,7 +9,7 @@ export default [
   {
     input: 'src/awp-core.js',
     output: {
-      file: 'build/googlesheets-bundle.js',
+      file: 'build/bundle-googlesheets.js',
       format: 'cjs',
       esModule: false,
     },

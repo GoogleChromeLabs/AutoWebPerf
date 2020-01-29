@@ -23,11 +23,11 @@ class GoogleSheetsConnector extends Connector {
     this.configSheet = this.activeSpreadsheet.getSheetByName(config.configTabName);
     this.testsSheet = this.activeSpreadsheet.getSheetByName(config.testsTabName);
     this.resultsSheet = this.activeSpreadsheet.getSheetByName(config.resultsTabName);
+    this.systemSheet = this.activeSpreadsheet.getSheetByName(config.systemTabName);
     // this.locationsSheet = this.activeSpreadsheet.getSheetByName('Locations');
     // this.compareSheet = this.activeSpreadsheet.getSheetByName('Comparison');
     // this.frequencySheet = this.activeSpreadsheet.getSheetByName('schedule_frequency');
     // this.userApiKeySheet = this.activeSpreadsheet.getSheetByName('User_API_Key');
-    // this.documentPropertiesSheet = this.activeSpreadsheet.getSheetByName('Document_Properties');
     // this.perfBudgetDashSheet = this.activeSpreadsheet.getSheetByName('Perf Budget Dashboard');
 
     this.tabConfigs = {
@@ -52,7 +52,15 @@ class GoogleSheetsConnector extends Connector {
         dataAxis: DataAxis.ROW,
         propertyLookup: 3, // Starts at 1
         skipRows: 3,
-      }
+      },
+      systemTab: {
+        tabName: config.systemTabName,
+        sheet: this.activeSpreadsheet.getSheetByName(config.systemTabName),
+        dataAxis: DataAxis.COLUMN,
+        propertyLookup: 2, // Starts at 1
+        skipRows: 1,
+        skipColumns: 2,
+      },
     };
 
     this.resultColumnConditions = {
@@ -76,15 +84,6 @@ class GoogleSheetsConnector extends Connector {
     };
 
     this.healthCheck();
-  }
-
-  getConfig() {
-    let configValues = this.getList('configTab');
-    return configValues[0];
-  }
-
-  healthCheck() {
-    // TODO: validate data type in sheets, e.g. check string type for propertyLookup.
   }
 
   getList(tabName, options) {
@@ -146,19 +145,19 @@ class GoogleSheetsConnector extends Connector {
 
     newTests.forEach(test => {
       let values = [];
-      let cellRow = test.googlesheets.rowIndex;
+      let rowIndex = test.googlesheets.rowIndex;
       propertyLookup.forEach(lookup => {
         let value = lookup ? eval(`test.${lookup}`) : '';
         values.push(value);
       });
-      let range = this.getRowRange('testsTab', cellRow);
+      let range = this.getRowRange('testsTab', rowIndex);
       range.setValues([values]);
     });
   }
 
-  getRowRange(tabName, cellRow) {
+  getRowRange(tabName, rowIndex) {
     let lastColumn = this.tabConfigs[tabName].sheet.getLastColumn();
-    return this.tabConfigs[tabName].sheet.getRange(cellRow, 1, 1, lastColumn);
+    return this.tabConfigs[tabName].sheet.getRange(rowIndex, 1, 1, lastColumn);
   }
 
   getResultList(options) {
@@ -180,7 +179,7 @@ class GoogleSheetsConnector extends Connector {
     let data = tabConfig.sheet.getDataRange().getValues();
     let propertyLookup = data[tabConfig.propertyLookup - 1];
 
-    let cellRow = this.getResultList().length + 1 + tabConfig.skipRows;
+    let rowIndex = this.getResultList().length + 1 + tabConfig.skipRows;
     newResults.forEach(result => {
       let values = [];
       propertyLookup.forEach(lookup => {
@@ -196,10 +195,10 @@ class GoogleSheetsConnector extends Connector {
         }
       });
 
-      let range = this.getRowRange('resultsTab', cellRow);
+      let range = this.getRowRange('resultsTab', rowIndex);
       range.setValues([values]);
 
-      cellRow++;
+      rowIndex++;
     });
   }
 
@@ -208,11 +207,11 @@ class GoogleSheetsConnector extends Connector {
     let data = tabConfig.sheet.getDataRange().getValues();
     let propertyLookup = data[tabConfig.propertyLookup - 1];
 
-    let idToRows = {}, cellRow = tabConfig.skipRows + 1;
+    let idToRows = {}, rowIndex = tabConfig.skipRows + 1;
     let results = this.getResultList();
     results.forEach(result => {
-      idToRows[result.id] = cellRow;
-      cellRow++;
+      idToRows[result.id] = rowIndex;
+      rowIndex++;
     });
 
     newResults.forEach(result => {
@@ -238,8 +237,47 @@ class GoogleSheetsConnector extends Connector {
   getPropertyLookup(tabName) {
     let tabConfig = this.tabConfigs[tabName];
     let data = tabConfig.sheet.getDataRange().getValues();
+    let skipRows = tabConfig.skipRows || 0;
+    let skipColumns = tabConfig.skipColumns || 0;
+
+    if (tabConfig.dataAxis === DataAxis.COLUMN) {
+      data = transpose(data);
+      skipRows = tabConfig.skipColumns;
+      skipColumns = tabConfig.skipRows;
+    }
     let propertyLookup = data[tabConfig.propertyLookup - 1];
+    propertyLookup = propertyLookup.slice(skipColumns, propertyLookup.length);
     return propertyLookup;
+  }
+
+  getConfig() {
+    let configValues = this.getList('configTab');
+    return configValues ? configValues[0] : null;
+  }
+
+  getSystemVar(key) {
+    let systemVars = (this.getList('systemTab') || [])[0];
+    return (systemVars || {})[key];
+  }
+
+  setSystemVar(key, value) {
+    let tabConfig = this.tabConfigs['systemTab'];
+    let data = tabConfig.sheet.getDataRange().getValues();
+    let propertyLookup = this.getPropertyLookup('systemTab');
+
+    let i = 1;
+    propertyLookup.forEach(propertyKey => {
+      if (propertyKey === key) {
+        let range = tabConfig.sheet.getRange(
+            tabConfig.skipRows + i, tabConfig.skipColumns + 1);
+        range.setValue(value);
+      }
+      i++;
+    });
+  }
+
+  healthCheck() {
+    // TODO: validate data type in sheets, e.g. check string type for propertyLookup.
   }
 }
 

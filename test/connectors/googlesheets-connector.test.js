@@ -13,7 +13,12 @@ global.SpreadsheetApp = {
     return {
       getSheetByName: () => {
         return {
-          getDataRange: () => {},
+          getDataRange: () => {
+            return {setValues: () => {}};
+          },
+          getRange: () => {
+            return {setValue: () => {}};
+          }
         }
       },
     };
@@ -24,12 +29,19 @@ let connector = new GoogleSheetsConnector({
   configTabName: 'config',
   testsTabName: 'tests',
   resultsTabName: 'results',
+  systemTabName: 'system',
 });
 
 let fakeConfigSheetData = [
   ['Name', 'key', 'value', ''],
   ['WPT API Key', 'apiKeys.webpagetest', 'TEST_APIKEY'],
   ['PSI API Key', 'apiKeys.psi', 'TEST_APIKEY'],
+];
+
+let fakeSystemSheetData = [
+  ['Name', 'key', 'value', ''],
+  ['isRecurring', 'isRecurring', true],
+  ['triggerId', 'triggerId', '12345'],
 ];
 
 let fakeTestsSheetData = [
@@ -255,5 +267,27 @@ describe('GoogleSheetsConnector Results tab', () => {
 
   it('updates results to the Results sheet', async () => {
     // TODO
+  });
+});
+
+describe('GoogleSheetsConnector System tab', () => {
+  beforeEach(() => {
+    // Overrides properties for testing.
+    connector.tabConfigs['systemTab'].sheet.getDataRange = function() {
+      return {
+        getValues: function() {
+          return fakeSystemSheetData;
+        }
+      }
+    };
+  });
+
+  it('returns a specific system variable from the System sheet', async () => {
+    expect(connector.getSystemVar('isRecurring')).toEqual(true);
+    expect(connector.getSystemVar('triggerId')).toEqual('12345');
+  });
+
+  it('sets value to a specific system var to the System sheet', async () => {
+    connector.setSystemVar('isRecurring', false);
   });
 });

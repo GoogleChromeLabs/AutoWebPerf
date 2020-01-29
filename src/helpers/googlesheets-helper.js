@@ -89,6 +89,35 @@ const GoogleSheetsHelper = {
   },
 
   /**
+   * Create a trigger to automatically retrieve results every minutes.
+   */
+  createRetrieveTrigger: () => {
+    // Check if trigger exists and create it if not.
+    if (!Helper.getSysVar('TRIGGER_RETRIEVE')) {
+      var thisTrigger = ScriptApp.newTrigger('retrieveResults')
+                            .timeBased()
+                            .everyMinutes(10)
+                            .create();
+      Helper.setSysVar('TRIGGER_RETRIEVE', thisTrigger.getUniqueId());
+    }
+    activeSpreadsheet.toast(
+        'A trigger was created to automatically pull your results every ' +
+        'few minutes. Check your results later!', 'Status', -1);
+  },
+
+  /**
+   * Delete trigger to automatically retrieve results every minutes.
+   */
+  deleteRetrieveTrigger: () => {
+    // Delete trigger if it exists.
+    if (Helper.getSysVar('TRIGGER_RETRIEVE')) {
+      Helper.deleteTrigger(Helper.getSysVar('TRIGGER_RETRIEVE'));
+      Helper.deleteSysVar('TRIGGER_RETRIEVE');
+    }
+    activeSpreadsheet.toast('Your results are ready!', 'Status');
+  },
+
+  /**
    * Return formatted date according to user's calendar setting.
    * @param {!date} dateInput
    * @return {!date}
