@@ -123,7 +123,7 @@ class AutoWebPerf {
     // E.g. partialUpdate = 10 means for every 10 run or retrieve, it will
     // update the data by calling connector.updateTestList or updateResultList.
     // When partialUpdate is 0, it will write back after all iteration.
-    this.partialUpdate = awpConfig.verbose || 0;
+    this.partialUpdate = awpConfig.partialUpdate || 0;
   }
 
   getGatherer(name) {
@@ -402,7 +402,7 @@ class AutoWebPerf {
       if (this.partialUpdate && count >= this.partialUpdate) {
         this.connector.updateResultList(resultsToUpdate);
         this.log(
-            `AutoWebPerf::recurring, partial appends ` +
+            `AutoWebPerf::retrieve, partial appends ` +
             `${resultsToUpdate.length} results.`);
 
         resultsToUpdate = [];
