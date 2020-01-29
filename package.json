@@ -20,6 +20,7 @@
   "homepage": "https://github.com/jonchenn/awp#readme",
   "dependencies": {
     "@babel/core": "^7.8.3",
+    "dayjs": "^1.8.19",
     "fs": "0.0.1-security",
     "fs-extra": "^8.1.0",
     "minimist": "^1.2.0",

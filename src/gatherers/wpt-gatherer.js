@@ -89,7 +89,7 @@ class WebPageTestGatherer extends Gatherer {
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
     let metadata = {};
 
-    if (options.debug) console.log('WPTGatherer::run\n', url);
+    if (this.debug) console.debug('WPTGatherer::run\n', url);
 
     try {
       let json = {};
@@ -98,10 +98,8 @@ class WebPageTestGatherer extends Gatherer {
 
       } else {
         let res = this.apiHelper.fetch(url);
-        if (options.debug) console.log('WPTGatherer::run\n', url);
-
         json = JSON.parse(res);
-        if (options.debug) console.log('WPTGatherer::run\n', json);
+        if (this.debug) console.debug('WPTGatherer::run API response: \n', json);
       }
 
       if (json.statusCode === 200) {
@@ -145,17 +143,17 @@ class WebPageTestGatherer extends Gatherer {
     }
   }
 
-  retrieve(resultObj, options) {
+  retrieve(result, options) {
     options = options || {};
 
-    let gathererData = resultObj.webpagetest;
+    let gathererData = result.webpagetest;
 
     try {
       let urlParams = [
         'test=' + gathererData.metadata.testId,
       ];
       let url = this.resultApiEndpoint + '?' + urlParams.join('&');
-      if (options.debug) console.log('WPTGatherer::run\n', url);
+      if (this.debug) console.log('WPTGatherer::retrieve\n', url);
 
       let res = this.apiHelper.fetch(url);
       let json = JSON.parse(res);

@@ -17,6 +17,7 @@ Options (*denotes default value if not passed in):
   dataSources\t\ttComma-separated list of data sources. Default: webpagetest.
   extensions\t\tComma-separated list of extensions.
   selectedOnly\t\tOnly execute with tests or results with selected=true.
+  verbose\t\tPrint out verbose logs.
   debug\t\tPrint out debug console logs.
 
 Examples:

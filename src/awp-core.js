@@ -38,6 +38,7 @@ const FrequencyInMinutes = {
 class AutoWebPerf {
   constructor(awpConfig) {
     this.debug = awpConfig.debug || false;
+    this.verbose = awpConfig.verbose || false;
 
     assert(awpConfig.dataSources, 'awpConfig.dataSources is missing.');
     assert(awpConfig.connector, 'awpConfig.connector is missing.');
@@ -46,6 +47,7 @@ class AutoWebPerf {
     // Example data sources: ['webpagetest', 'psi']
     this.dataSources = awpConfig.dataSources;
 
+    this.log(`Use connector ${awpConfig.connector}`);
     switch (awpConfig.connector.toLowerCase()) {
       case 'json':
         let JSONConnector = require('./connectors/json-connector');
@@ -53,6 +55,7 @@ class AutoWebPerf {
           tests: awpConfig.tests,
           results: awpConfig.results,
         });
+        this.apiKeys = this.connector.getConfig().apiKeys;
         break;
 
       case 'googlesheets':
@@ -62,6 +65,11 @@ class AutoWebPerf {
         // TODO: Standardize awpConfig.
         this.connector = new GoogleSheetsConnector(
             awpConfig.googlesheets);
+        this.apiKeys = this.connector.getConfig().apiKeys;
+        break;
+
+      case 'fake':
+        // Do nothing. For testing purpose.
         break;
 
       default:
@@ -69,8 +77,8 @@ class AutoWebPerf {
             `Connector ${awpConfig.connector} is not supported.`);
         break;
     }
-    this.apiKeys = this.connector.getConfig().apiKeys;
 
+    this.log(`Use helper ${awpConfig.helper}`);
     switch (awpConfig.helper.toLowerCase()) {
       case 'node':
         let {NodeApiHandler} = require('./helpers/node-helper');
@@ -82,12 +90,19 @@ class AutoWebPerf {
         this.apiHandler = new GoogleSheetsApiHandler();
         break;
 
+      case 'fake':
+        // Do nothing. For testing purpose.
+        break;
+
       default:
         throw new Error(
             `Helper ${awpConfig.helper} is not supported.`);
         break;
     }
 
+    this.log(`Use extensions: ${awpConfig.extensions}`);
+
+    // Initialize extensions.
     this.extensions = {};
     if (awpConfig.extensions) {
       awpConfig.extensions.forEach(extension => {
@@ -103,43 +118,53 @@ class AutoWebPerf {
         }
       });
     }
+
+    // Initialize gatherers.
+    this.gatherers = {};
+
+    // The frequency of when to write data back via a connector.
+    // E.g. partialUpdate = 10 means for every 10 run or retrieve, it will
+    // update the data by calling connector.updateTestList or updateResultList.
+    // When partialUpdate is 0, it will write back after all iteration.
+    this.partialUpdate = awpConfig.verbose || 0;
   }
 
   getGatherer(name) {
+    let options = {
+      verbose: this.verbose,
+      debug: this.debug,
+    };
+
+    let GathererClass = null;
     switch (name) {
       case 'webpagetest':
-        if (!this.wptGatherer) {
-          this.wptGatherer = new WPTGatherer({
-            apiKey: this.apiKeys[name],
-          },
-          this.apiHandler,
-          {
-            debug: this.debug,
-          });
-        }
-        return this.wptGatherer;
+        GathererClass = WPTGatherer;
         break;
 
       case 'psi':
-        if (!this.psiGatherer) {
-          this.psiGatherer = new PSIGatherer({
-            apiKey: this.apiKeys[name],
-          },
-          this.apiHandler,
-          {
-            debug: this.debug,
-          });
-        }
-        return this.psiGatherer;
+        GathererClass = PSIGatherer;
         break;
 
-      case 'crux':
+      // case 'crux':
+      //   break;
+
+      case 'fake':
+        // Do nothing, for testing purpose.
         break;
 
       default:
-        throw new Error(`Gathere ${name} is not supported.`);
+        throw new Error(`Gatherer ${name} is not supported.`);
         break;
     }
+
+    if (!this.gatherers[name]) {
+      this.wptGatherer = new GathererClass({
+          apiKey: this.apiKeys[name],
+        },
+        this.apiHandler,
+        options);
+    }
+    return this.gatherers[name];
   }
 
   /**
@@ -150,30 +175,46 @@ class AutoWebPerf {
     options = options || {};
 
     let tests = this.connector.getTestList(options.filters);
+    let count = 0;
+    let testsToUpdate = [];
     let newResults = [];
 
-    tests.filter(test => test.selected).map(test => {
-      if (this.debug) console.log('AutoWebPerf::run, test=\n', test);
-
-      // // Assign id if none.
-      // if (!test.id) test.id = Date.now() + '-' + test.url;
+    tests.forEach(test => {
+      this.logDebug('AutoWebPerf::run, test=\n', test);
 
       let newResult = this.runTest(test, options);
 
       // Extensions
       Object.keys(this.extensions).forEach(extName => {
-        if (this.debug) console.log('AutoWebPerf::run, extName=\n', extName);
+        this.logDebug('AutoWebPerf::run, extName=\n', extName);
 
         let extension = this.extensions[extName];
         extension.postRun(test, newResult);
       });
 
       newResults.push(newResult);
+      testsToUpdate.push(test);
 
-      if (this.debug) console.log('AutoWebPerf::run, newResult=\n', newResult);
+      this.logDebug('AutoWebPerf::run, newResult=\n', newResult);
+
+      // FIXME: When using JSONConnector, this partial update mechanism will be
+      // inefficient.
+      count++;
+      if (this.partialUpdate && count >= this.partialUpdate) {
+        this.connector.updateTestList(testsToUpdate);
+        this.connector.appendResultList(newResults);
+        this.log(
+            `AutoWebPerf::run, partial update ${testsToUpdate.length} tests` +
+            ` and appends ${newResults.length} results.`);
+
+        testsToUpdate = [];
+        newResults = [];
+        count = 0;
+      }
     });
 
-    this.connector.updateTestList(tests);
+    // Update the remaining.
+    this.connector.updateTestList(testsToUpdate);
     this.connector.appendResultList(newResults);
   }
 
@@ -185,6 +226,7 @@ class AutoWebPerf {
     options = options || {};
 
     let tests = this.connector.getTestList(options);
+    let testsToUpdate = [];
     let newResults = [];
 
     tests = tests.filter(test => {
@@ -193,11 +235,12 @@ class AutoWebPerf {
           Frequency[recurring.frequency.toUpperCase()];
     });
 
-    if (this.debug) console.log(
+    this.logDebug(
         'AutoWebPerf::retrieve, tests.length=\n', tests.length);
 
-    let newTests = tests.map(test => {
-      if (this.debug) console.log('AutoWebPerf::recurring, test=\n', test);
+    let count = 0;
+    tests.forEach(test => {
+      this.logDebug('AutoWebPerf::recurring, test=\n', test);
 
       let nowtime = Date.now();
       let recurring = test.recurring;
@@ -214,14 +257,13 @@ class AutoWebPerf {
           recurring.nextTrigger = new Date(nowtime + offset).toString();
         }
         recurring.activatedFrequency = recurring.frequency;
-        return test;
 
       } else {
         // Run normal recurring tests.
         if (!recurring.nextTriggerTimestamp ||
             recurring.nextTriggerTimestamp <= nowtime) {
 
-          console.log('Triggered curring...');
+          this.log('Triggered curring...');
           let newResult = this.runTest(test, {
             recurring: true,
           });
@@ -240,11 +282,25 @@ class AutoWebPerf {
           recurring.nextTrigger = new Date(nowtime + offset).toString();
         }
       }
+      testsToUpdate.push(test);
 
-      return test;
+      count++;
+      if (this.partialUpdate && count >= this.partialUpdate) {
+        this.connector.updateTestList(testsToUpdate);
+        this.connector.appendResultList(newResults);
+        this.log(
+            `AutoWebPerf::recurring, partial update ${testsToUpdate.length} tests` +
+            ` and appends ${newResults.length} results.`);
+
+        testsToUpdate = [];
+        newResults = [];
+        count = 0;
+
+      }
     });
 
-    this.connector.updateTestList(newTests);
+    // Update the remaining.
+    this.connector.updateTestList(testsToUpdate);
     this.connector.appendResultList(newResults);
   }
 
@@ -274,9 +330,7 @@ class AutoWebPerf {
 
       let gatherer = this.getGatherer(dataSource);
       let settings = test[dataSource].settings;
-      let response = gatherer.run(test, {
-        debug: true,
-      });
+      let response = gatherer.run(test, {} /* options */);
       statuses.push(response.status);
 
       newResult[dataSource] = {
@@ -300,14 +354,17 @@ class AutoWebPerf {
   retrieve(options) {
     options = options || {};
 
+    let resultsToUpdate = [];
     let results = this.connector.getResultList(options);
 
     results = results.filter(result => {
       return result.status !== Status.RETRIEVED;
     });
 
-    results = results.map(result => {
-      if (this.debug) console.log('AutoWebPerf::retrieve, result=\n', result);
+    let count = 0;
+    results.forEach(result => {
+      this.log(`Retrieve: id=${result.id}`);
+      this.logDebug('AutoWebPerf::retrieve, result=\n', result);
 
       let statuses = [];
       let newResult = result;
@@ -323,6 +380,9 @@ class AutoWebPerf {
 
         statuses.push(response.status);
         newResult[dataSource] = response;
+
+        this.log(
+            `Retrieve: ${dataSource} result: status=${response.status}`);
       });
 
       // Extensions
@@ -335,15 +395,25 @@ class AutoWebPerf {
         newResult.status = Status.RETRIEVED;
       }
 
-      if (this.debug) console.log('AutoWebPerf::retrieve, statuses=\n', statuses);
-      if (this.debug) console.log('AutoWebPerf::retrieve, newResult=\n', newResult);
+      this.log(`Retrieve: overall status=${newResult.status}`);
+      this.logDebug('AutoWebPerf::retrieve, statuses=\n', statuses);
+      this.logDebug('AutoWebPerf::retrieve, newResult=\n', newResult);
 
-      return newResult;
+      resultsToUpdate.push(newResult);
+
+      count++;
+      if (this.partialUpdate && count >= this.partialUpdate) {
+        this.connector.updateResultList(resultsToUpdate);
+        this.log(
+            `AutoWebPerf::recurring, partial appends ` +
+            `${resultsToUpdate.length} results.`);
+
+        resultsToUpdate = [];
+        count = 0;
+      }
     });
 
-    // TODO: Update to tests list with webpagetest's lastTestId.
-
-    this.connector.updateResultList(results);
+    this.connector.updateResultList(resultsToUpdate);
   }
 
   getTests(options) {
@@ -360,6 +430,16 @@ class AutoWebPerf {
 
   cancel(tests) {
     // TODO
+  }
+
+  log(message) {
+    if (!this.verbose) return;
+    console.log(message);
+  }
+
+  logDebug(message) {
+    if (!this.debug) return;
+    console.log(message);
   }
 }
 
