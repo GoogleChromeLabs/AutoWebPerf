@@ -158,7 +158,7 @@ class AutoWebPerf {
     }
 
     if (!this.gatherers[name]) {
-      this.wptGatherer = new GathererClass({
+      this.gatherers[name] = new GathererClass({
           apiKey: this.apiKeys[name],
         },
         this.apiHandler,
