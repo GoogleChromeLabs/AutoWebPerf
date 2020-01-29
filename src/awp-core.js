@@ -194,14 +194,14 @@ class AutoWebPerf {
 
       this.logDebug('AutoWebPerf::run, newResult=\n', newResult);
 
-      // FIXME: When using JSONConnector, this partial update mechanism will be
+      // FIXME: When using JSONConnector, this batch update mechanism will be
       // inefficient.
       count++;
       if (this.batchUpdate && count >= this.batchUpdate) {
         this.connector.updateTestList(testsToUpdate);
         this.connector.appendResultList(newResults);
         this.log(
-            `AutoWebPerf::run, partial update ${testsToUpdate.length} tests` +
+            `AutoWebPerf::run, batch update ${testsToUpdate.length} tests` +
             ` and appends ${newResults.length} results.`);
 
         testsToUpdate = [];
@@ -286,7 +286,7 @@ class AutoWebPerf {
         this.connector.updateTestList(testsToUpdate);
         this.connector.appendResultList(newResults);
         this.log(
-            `AutoWebPerf::recurring, partial update ${testsToUpdate.length} tests` +
+            `AutoWebPerf::recurring, batch update ${testsToUpdate.length} tests` +
             ` and appends ${newResults.length} results.`);
 
         testsToUpdate = [];
@@ -402,7 +402,7 @@ class AutoWebPerf {
       if (this.batchUpdate && count >= this.batchUpdate) {
         this.connector.updateResultList(resultsToUpdate);
         this.log(
-            `AutoWebPerf::retrieve, partial appends ` +
+            `AutoWebPerf::retrieve, batch appends ` +
             `${resultsToUpdate.length} results.`);
 
         resultsToUpdate = [];
