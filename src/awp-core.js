@@ -51,10 +51,7 @@ class AutoWebPerf {
     switch (awpConfig.connector.toLowerCase()) {
       case 'json':
         let JSONConnector = require('./connectors/json-connector');
-        this.connector = new JSONConnector({
-          tests: awpConfig.tests,
-          results: awpConfig.results,
-        });
+        this.connector = new JSONConnector(awpConfig.json);
         this.apiKeys = this.connector.getConfig().apiKeys;
         break;
 

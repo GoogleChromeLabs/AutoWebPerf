@@ -34,6 +34,7 @@ async function begin() {
   let dataSources = argv['dataSources'] ? argv['dataSources'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let debug = argv['debug'];
+  let verbose = argv['verbose'];
 
   let filters = [];
   if (argv['selectedOnly']) filters.push('selected');
@@ -44,12 +45,15 @@ async function begin() {
   }
 
   let awp = new AutoWebPerf({
-    tests: argv['tests'],
-    results: argv['results'],
     connector: 'JSON',
     helper: 'Node',
     dataSources: dataSources || ['webpagetest'],
     extensions: extensions,
+    json: { // Config for JSON connector.
+      tests: argv['tests'],
+      results: argv['results'],
+    },
+    verbose: verbose,
     debug: debug,
   });
 
