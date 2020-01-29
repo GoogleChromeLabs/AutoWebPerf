@@ -120,10 +120,10 @@ class AutoWebPerf {
     this.gatherers = {};
 
     // The frequency of when to write data back via a connector.
-    // E.g. partialUpdate = 10 means for every 10 run or retrieve, it will
+    // E.g. batchUpdate = 10 means for every 10 run or retrieve, it will
     // update the data by calling connector.updateTestList or updateResultList.
-    // When partialUpdate is 0, it will write back after all iteration.
-    this.partialUpdate = awpConfig.partialUpdate || 0;
+    // When batchUpdate is 0, it will write back after all iteration.
+    this.batchUpdate = awpConfig.batchUpdate || 0;
   }
 
   getGatherer(name) {
@@ -197,7 +197,7 @@ class AutoWebPerf {
       // FIXME: When using JSONConnector, this partial update mechanism will be
       // inefficient.
       count++;
-      if (this.partialUpdate && count >= this.partialUpdate) {
+      if (this.batchUpdate && count >= this.batchUpdate) {
         this.connector.updateTestList(testsToUpdate);
         this.connector.appendResultList(newResults);
         this.log(
@@ -282,7 +282,7 @@ class AutoWebPerf {
       testsToUpdate.push(test);
 
       count++;
-      if (this.partialUpdate && count >= this.partialUpdate) {
+      if (this.batchUpdate && count >= this.batchUpdate) {
         this.connector.updateTestList(testsToUpdate);
         this.connector.appendResultList(newResults);
         this.log(
@@ -399,7 +399,7 @@ class AutoWebPerf {
       resultsToUpdate.push(newResult);
 
       count++;
-      if (this.partialUpdate && count >= this.partialUpdate) {
+      if (this.batchUpdate && count >= this.batchUpdate) {
         this.connector.updateResultList(resultsToUpdate);
         this.log(
             `AutoWebPerf::retrieve, partial appends ` +

@@ -218,7 +218,7 @@ describe('AutoWebPerf with fake modules', () => {
   it('runs and retrieves all results with partial updates.', async () => {
     let expectedResults;
     awp.connector.tests = generateFakeTests(95);
-    awp.partialUpdate = 10;
+    awp.batchUpdate = 10;
 
     expectedResults = generateFakeResults(95);
     awp.run();
@@ -234,7 +234,7 @@ describe('AutoWebPerf with fake modules', () => {
   it('runs and retrieves all results with partial updates.', async () => {
     let expectedResults;
     awp.connector.tests = generateFakeTests(22);
-    awp.partialUpdate = 5;
+    awp.batchUpdate = 5;
 
     expectedResults = generateFakeResults(22);
     awp.run();
@@ -249,7 +249,7 @@ describe('AutoWebPerf with fake modules', () => {
 
   it('runs and retrieves all recurring results with partial updates.', async () => {
     awp.connector.tests = generateFakeTests(22);
-    awp.partialUpdate = 5;
+    awp.batchUpdate = 5;
     let nowTime = Date.now();
     awp.connector.tests.forEach(test => {
       test.recurring = {
