@@ -8,7 +8,9 @@
 const BudgetsExtension = require('../../src/extensions/budgets');
 
 let budgetsExtension = new BudgetsExtension({
-  dataSource: 'webpagetest',
+  budgets: {
+    dataSource: 'webpagetest',
+  },
 });
 
 describe('Budgets unit test', () => {
@@ -37,7 +39,7 @@ describe('Budgets unit test', () => {
       },
     };
 
-    budgetsExtension.postRun(test, result);
+    budgetsExtension.afterRun({test: test, result: result});
 
     expect(result).toEqual({
       url: 'google.com',
@@ -87,7 +89,7 @@ describe('Budgets unit test', () => {
       }
     };
 
-    budgetsExtension.postRetrieve(result);
+    budgetsExtension.afterRetrieve({result: result});
 
     expect(result).toEqual({
       url: 'google.com',

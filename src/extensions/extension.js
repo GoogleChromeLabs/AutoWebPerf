@@ -1,9 +1,15 @@
 class Extention {
   constructor(config) {}
-  beforeRun(test) {}
-  postRun(test) {}
-  beforeRetrieve(result) {}
-  postRetrieve(result) {}
+  // Run
+  beforeRun(params) {}
+  afterRun(params) {}
+  beforeAllRuns(params) {}
+  afterAllRuns(params) {}
+  // Retrieve
+  beforeRetrieve(params) {}
+  afterRetrieve(params) {}
+  beforeAllRetrieves(params) {}
+  afterAllRetrieves(params) {}
 }
 
 module.exports = Extention;

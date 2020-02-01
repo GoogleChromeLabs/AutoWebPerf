@@ -11,11 +11,12 @@ const Gatherer = require('../src/gatherers/gatherer');
 const Extension = require('../src/extensions/extension');
 const Status = require('../src/common/status');
 
-let generateFakeTests = function(amount) {
+let generateFakeTests = function(amount, options) {
+  options = options || {};
   let tests = [];
   let count = 1;
   while (count <= amount) {
-    tests.push({
+    let test = {
       id: 'test-' + count,
       url: 'url-' + count,
       label: 'label-' + count,
@@ -24,7 +25,14 @@ let generateFakeTests = function(amount) {
           connection: '4G',
         },
       },
-    });
+    };
+    if (options.recurring) {
+      test.recurring = {
+        frequency: options.recurring.frequency,
+      };
+    }
+
+    tests.push(test);
     count ++;
   }
   return tests;
@@ -136,9 +144,13 @@ class FakeGatherer extends Gatherer {
 
 class FakeExtension extends Extension {
   beforeRun(test) {}
-  postRun(test) {}
+  afterRun(test, result) {}
+  beforeAllRuns(tests, results) {}
+  afterAllRuns(tests, results) {}
   beforeRetrieve(result) {}
-  postRetrieve(result) {}
+  afterRetrieve(result) {}
+  beforeAllRetrieves(results) {}
+  afterAllRetrieves(results) {}
 }
 
 const fakeApiHandler = function(url) {
@@ -160,8 +172,15 @@ describe('AutoWebPerf with fake modules', () => {
       fake: new FakeGatherer(),
     }
     awp.extensions = {
-      fakeExtension: new FakeExtension(),
+      fake: new FakeExtension(),
     };
+
+    // Mock functions
+    ['beforeRun', 'afterRun', 'beforeRetrieve', 'afterRetrieve',
+        'beforeAllRuns', 'afterAllRuns', 'beforeAllRetrieves',
+        'afterAllRetrieves'].forEach(funcName => {
+          awp.extensions.fake[funcName] = jest.fn();
+        });
   });
 
   it('initializes normally.', async () => {
@@ -267,5 +286,36 @@ describe('AutoWebPerf with fake modules', () => {
     let expectedResults = generateFakeResults(22);
     expectedResults.forEach(result => {result.type = 'Recurring'});
     expect(awp.getResults()).toEqual(expectedResults);
+  });
+
+  it('runs through a list of tests and executes extensions.', async () => {
+    awp.connector.tests = generateFakeTests(10);
+    awp.run();
+    expect(awp.extensions.fake.beforeAllRuns.mock.calls.length).toBe(1);
+    expect(awp.extensions.fake.afterAllRuns.mock.calls.length).toBe(1);
+    expect(awp.extensions.fake.beforeRun.mock.calls.length).toBe(10);
+    expect(awp.extensions.fake.afterRun.mock.calls.length).toBe(10);
+  });
+
+  it('runs recurring through a list of tests and executes extensions.', async () => {
+    awp.connector.tests = generateFakeTests(10, {
+      recurring: {frequency: 'daily'},
+    });
+
+    awp.recurring();
+    expect(awp.extensions.fake.beforeAllRuns.mock.calls.length).toBe(1);
+    expect(awp.extensions.fake.afterAllRuns.mock.calls.length).toBe(1);
+    expect(awp.extensions.fake.beforeRun.mock.calls.length).toBe(10);
+    expect(awp.extensions.fake.afterRun.mock.calls.length).toBe(10);
+  });
+
+  it('retrieves a list of results and executes extensions.', async () => {
+    awp.connector.tests = generateFakeTests(10);
+    awp.run();
+    awp.retrieve();
+    expect(awp.extensions.fake.beforeAllRetrieves.mock.calls.length).toBe(1);
+    expect(awp.extensions.fake.afterAllRetrieves.mock.calls.length).toBe(1);
+    expect(awp.extensions.fake.beforeRetrieve.mock.calls.length).toBe(10);
+    expect(awp.extensions.fake.afterRetrieve.mock.calls.length).toBe(10);
   });
 });

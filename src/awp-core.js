@@ -6,9 +6,6 @@
 
 'use strict';
 
-const WPTGatherer = require('./gatherers/wpt-gatherer');
-const PSIGatherer = require('./gatherers/psi-gatherer');
-const BudgetsExtension = require('./extensions/budgets');
 const Status = require('./common/status');
 const assert = require('./utils/assert');
 
@@ -103,16 +100,26 @@ class AutoWebPerf {
     this.extensions = {};
     if (awpConfig.extensions) {
       awpConfig.extensions.forEach(extension => {
+        // let ExtensionClass = require('./extensions/' + extension);
+        let config = {
+          connector: this.connector,
+        }
+        config[extension] = awpConfig[extension];
+
         switch (extension) {
           case 'budgets':
-            this.extensions.budgets = new BudgetsExtension(awpConfig.budgets);
+            ExtensionClass = require('./extensions/budgets');
             break;
+
+          case 'googlesheetstrigger':
+            ExtensionClass = require('./extensions/googlesheets-trigger');
 
           default:
             throw new Error(
                 `Extension ${extension} is not supported.`);
             break;
         }
+        this.extensions[extension] = new ExtensionClass(config);
       });
     }
 
@@ -135,11 +142,11 @@ class AutoWebPerf {
     let GathererClass = null;
     switch (name) {
       case 'webpagetest':
-        GathererClass = WPTGatherer;
+        GathererClass = require('./gatherers/wpt-gatherer');
         break;
 
       case 'psi':
-        GathererClass = PSIGatherer;
+        GathererClass = require('./gatherers/psi-gatherer');
         break;
 
       // case 'crux':
@@ -172,24 +179,23 @@ class AutoWebPerf {
     options = options || {};
 
     let tests = this.connector.getTestList(options.filters);
+    this.runExtensions('beforeAllRuns', tests, [] /* results */);
+
     let count = 0;
     let testsToUpdate = [];
+    let resultsToUpdate = [];
     let newResults = [];
 
     tests.forEach(test => {
       this.logDebug('AutoWebPerf::run, test=\n', test);
+      this.runExtensions('beforeRun', {test: test});
 
+      // Run test.
       let newResult = this.runTest(test, options);
-
-      // Extensions
-      Object.keys(this.extensions).forEach(extName => {
-        this.logDebug('AutoWebPerf::run, extName=\n', extName);
-
-        let extension = this.extensions[extName];
-        extension.postRun(test, newResult);
-      });
+      this.runExtensions('afterRun', {test: test, result: newResult});
 
       newResults.push(newResult);
+      resultsToUpdate.push(newResult);
       testsToUpdate.push(test);
 
       this.logDebug('AutoWebPerf::run, newResult=\n', newResult);
@@ -199,20 +205,26 @@ class AutoWebPerf {
       count++;
       if (this.batchUpdate && count >= this.batchUpdate) {
         this.connector.updateTestList(testsToUpdate);
-        this.connector.appendResultList(newResults);
+        this.connector.appendResultList(resultsToUpdate);
         this.log(
             `AutoWebPerf::run, batch update ${testsToUpdate.length} tests` +
-            ` and appends ${newResults.length} results.`);
+            ` and appends ${resultsToUpdate.length} results.`);
 
         testsToUpdate = [];
-        newResults = [];
+        resultsToUpdate = [];
         count = 0;
       }
     });
 
     // Update the remaining.
     this.connector.updateTestList(testsToUpdate);
-    this.connector.appendResultList(newResults);
+    this.connector.appendResultList(resultsToUpdate);
+
+    // After all runs.
+    this.runExtensions('afterAllRuns', {
+      tests: tests,
+      results: newResults,
+    });
   }
 
   /**
@@ -223,7 +235,7 @@ class AutoWebPerf {
     options = options || {};
 
     let tests = this.connector.getTestList(options);
-    let testsToUpdate = [];
+    let testsToUpdate = [], resultsToUpdate = [];
     let newResults = [];
 
     tests = tests.filter(test => {
@@ -232,18 +244,21 @@ class AutoWebPerf {
           Frequency[recurring.frequency.toUpperCase()];
     });
 
-    this.logDebug(
-        'AutoWebPerf::retrieve, tests.length=\n', tests.length);
+    this.logDebug('AutoWebPerf::retrieve, tests.length=\n', tests.length);
+    this.runExtensions('beforeAllRuns', {tests: tests});
 
     let count = 0;
     tests.forEach(test => {
       this.logDebug('AutoWebPerf::recurring, test=\n', test);
+      this.runExtensions('beforeRun', {test: test});
 
       let nowtime = Date.now();
       let recurring = test.recurring;
 
       if (options.activateOnly &&
           recurring.frequency !== recurring.activatedFrequency) {
+        this.logDebug('AutoWebPerf::recurring with activateOnly.');
+
         let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
 
         if (!offset) {
@@ -260,18 +275,19 @@ class AutoWebPerf {
         if (!recurring.nextTriggerTimestamp ||
             recurring.nextTriggerTimestamp <= nowtime) {
 
-          this.log('Triggered curring...');
+          this.log('AutoWebPerf::Triggered recurring.');
+
+          // Run all recurring tests.
           let newResult = this.runTest(test, {
             recurring: true,
           });
-
-          // Extensions
-          Object.keys(this.extensions).forEach(extName => {
-            let extension = this.extensions[extName];
-            extension.postRetrieve(newResult);
+          this.runExtensions('afterRun', {
+            test: test,
+            result: newResult,
           });
 
           newResults.push(newResult);
+          resultsToUpdate.push(newResult);
 
           // Update Test item.
           let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
@@ -284,21 +300,26 @@ class AutoWebPerf {
       count++;
       if (this.batchUpdate && count >= this.batchUpdate) {
         this.connector.updateTestList(testsToUpdate);
-        this.connector.appendResultList(newResults);
+        this.connector.appendResultList(resultsToUpdate);
         this.log(
             `AutoWebPerf::recurring, batch update ${testsToUpdate.length} tests` +
-            ` and appends ${newResults.length} results.`);
+            ` and appends ${resultsToUpdate.length} results.`);
 
         testsToUpdate = [];
-        newResults = [];
+        resultsToUpdate = [];
         count = 0;
-
       }
     });
 
     // Update the remaining.
     this.connector.updateTestList(testsToUpdate);
-    this.connector.appendResultList(newResults);
+    this.connector.appendResultList(resultsToUpdate);
+
+    // After all runs.
+    this.runExtensions('afterAllRuns', {
+      tests: tests,
+      results: newResults,
+    });
   }
 
   /**
@@ -353,6 +374,7 @@ class AutoWebPerf {
 
     let resultsToUpdate = [];
     let results = this.connector.getResultList(options);
+    this.runExtensions('beforeAllRetrieves', [] /* tests */, results);
 
     results = results.filter(result => {
       return result.status !== Status.RETRIEVED;
@@ -362,6 +384,8 @@ class AutoWebPerf {
     results.forEach(result => {
       this.log(`Retrieve: id=${result.id}`);
       this.logDebug('AutoWebPerf::retrieve, result=\n', result);
+
+      this.runExtensions('beforeRetrieve', {result: result});
 
       let statuses = [];
       let newResult = result;
@@ -378,15 +402,11 @@ class AutoWebPerf {
         statuses.push(response.status);
         newResult[dataSource] = response;
 
-        this.log(
-            `Retrieve: ${dataSource} result: status=${response.status}`);
+        this.log(`Retrieve: ${dataSource} result: status=${response.status}`);
       });
 
-      // Extensions
-      Object.keys(this.extensions).forEach(extName => {
-        let extension = this.extensions[extName];
-        extension.postRetrieve(newResult);
-      });
+      // After retrieving the result.
+      this.runExtensions('afterRetrieve', {result: newResult});
 
       if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
         newResult.status = Status.RETRIEVED;
@@ -411,6 +431,18 @@ class AutoWebPerf {
     });
 
     this.connector.updateResultList(resultsToUpdate);
+    this.runExtensions('afterAllRetrieves', {results: results});
+  }
+
+  /**
+   * Run through all extensions
+   * @param  {object} options
+   */
+  runExtensions(functionName, params) {
+    Object.keys(this.extensions).forEach(extName => {
+      let extension = this.extensions[extName];
+      if (extension[functionName]) extension[functionName](params);
+    });
   }
 
   getTests(options) {

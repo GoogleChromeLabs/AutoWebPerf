@@ -9,7 +9,7 @@ class BudgetsExtension extends Extension {
   constructor(config) {
     super();
     config = config || {};
-    this.dataSource = config.dataSource || 'webpagetest';
+    this.dataSource = config.budgets.dataSource || 'webpagetest';
     this.budgetMetrics = {
       'FCP': ['ms', 'seconds', 'overRatio'],
       'FMP': ['ms', 'seconds', 'overRatio'],
@@ -23,19 +23,19 @@ class BudgetsExtension extends Extension {
     };
   }
 
-  postRun(test, result) {
-    assert(test, 'test is missing.');
-    assert(result, 'result is missing.');
+  afterRun(params) {
+    assert(params.test, 'test is missing.');
+    assert(params.result, 'result is missing.');
 
-    let budgets = (test.budgets || {}).metrics;
-    this.processResult(result, budgets);
+    let budgets = (params.test.budgets || {}).metrics;
+    this.processResult(params.result, budgets);
   }
 
-  postRetrieve(result) {
-    assert(result, 'result is missing.');
+  afterRetrieve(params) {
+    assert(params.result, 'result is missing.');
 
-    let budgets = (result.budgets || {}).metrics;
-    this.processResult(result, budgets);
+    let budgets = (params.result.budgets || {}).metrics;
+    this.processResult(params.result, budgets);
   }
 
   processResult(result, budgets) {

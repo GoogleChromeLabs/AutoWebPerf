@@ -61,6 +61,18 @@ const GoogleSheetsHelper = {
   },
 
   /**
+   * Create a trigger to automatically retrieve results every minutes.
+   */
+  createTrigger: (functionName, minutes) => {
+    // Check if trigger exists and create it if not.
+    var trigger = ScriptApp.newTrigger(functionName)
+                          .timeBased()
+                          .everyMinutes(minutes || 10)
+                          .create();
+    return trigger.getUniqueId();
+  },
+
+  /**
    * Deletes a trigger.
    * @param {string} triggerId The Trigger ID.
    */
