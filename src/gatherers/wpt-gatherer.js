@@ -157,6 +157,9 @@ class WebPageTestGatherer extends Gatherer {
 
       let res = this.apiHelper.fetch(url);
       let json = JSON.parse(res);
+      if (this.debug) console.log(
+          'WPTGatherer::retrieve json.statusCode=\n', json.statusCode);
+      if (this.debug) console.log('WPTGatherer::retrieve\n', json);
 
       if (json.statusCode === 200) {
         let metrics = {}, metadata = {};
@@ -169,6 +172,7 @@ class WebPageTestGatherer extends Gatherer {
         });
         return {
           status: Status.RETRIEVED,
+          lastRunNote: 'Success',
           metadata: gathererData.metadata,
           settings: gathererData.settings,
           metrics: metrics,
@@ -176,7 +180,7 @@ class WebPageTestGatherer extends Gatherer {
       } else if (json.statusCode === 400) {
         return {
           status: Status.ERROR,
-          statusText: json.statusText,
+          lastRunNote: json.statusText,
           metadata: gathererData.metadata,
           settings: gathererData.settings,
         };
@@ -191,7 +195,7 @@ class WebPageTestGatherer extends Gatherer {
 
       return {
         status: Status.ERROR,
-        statusText: error.toString(),
+        lastRunNote: error.toString(),
         metadata: gathererData.metadata,
         settings: gathererData.settings,
       };
