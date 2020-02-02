@@ -100,7 +100,7 @@ class AutoWebPerf {
     this.extensions = {};
     if (awpConfig.extensions) {
       awpConfig.extensions.forEach(extension => {
-        // let ExtensionClass = require('./extensions/' + extension);
+        let ExtensionClass;
         let config = {
           connector: this.connector,
         }
@@ -113,6 +113,7 @@ class AutoWebPerf {
 
           case 'googlesheetstrigger':
             ExtensionClass = require('./extensions/googlesheets-trigger');
+            break;
 
           default:
             throw new Error(
@@ -177,22 +178,23 @@ class AutoWebPerf {
    */
   run(options) {
     options = options || {};
-
-    let tests = this.connector.getTestList(options.filters);
-    this.runExtensions('beforeAllRuns', tests, [] /* results */);
+    let testsToUpdate = [], resultsToUpdate = [], newResults = [];
+    let extensions = options.extensions || Object.keys(this.extensions);
 
     let count = 0;
-    let testsToUpdate = [];
-    let resultsToUpdate = [];
-    let newResults = [];
+    let tests = this.connector.getTestList(options.filters);
+    this.runExtensions(extensions, 'beforeAllRuns', tests, [] /* results */);
 
     tests.forEach(test => {
       this.logDebug('AutoWebPerf::run, test=\n', test);
-      this.runExtensions('beforeRun', {test: test});
+      this.runExtensions(extensions, 'beforeRun', {test: test});
 
       // Run test.
       let newResult = this.runTest(test, options);
-      this.runExtensions('afterRun', {test: test, result: newResult});
+      this.runExtensions(extensions, 'afterRun', {
+          test: test,
+          result: newResult
+      });
 
       newResults.push(newResult);
       resultsToUpdate.push(newResult);
@@ -221,7 +223,7 @@ class AutoWebPerf {
     this.connector.appendResultList(resultsToUpdate);
 
     // After all runs.
-    this.runExtensions('afterAllRuns', {
+    this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
     });
@@ -233,11 +235,11 @@ class AutoWebPerf {
    */
   recurring(options) {
     options = options || {};
-
-    let tests = this.connector.getTestList(options);
+    let extensions = options.extensions || Object.keys(this.extensions);
     let testsToUpdate = [], resultsToUpdate = [];
     let newResults = [];
 
+    let tests = this.connector.getTestList(options);
     tests = tests.filter(test => {
       let recurring = test.recurring;
       return recurring && recurring.frequency &&
@@ -245,12 +247,12 @@ class AutoWebPerf {
     });
 
     this.logDebug('AutoWebPerf::retrieve, tests.length=\n', tests.length);
-    this.runExtensions('beforeAllRuns', {tests: tests});
+    this.runExtensions(extensions, 'beforeAllRuns', {tests: tests});
 
     let count = 0;
     tests.forEach(test => {
       this.logDebug('AutoWebPerf::recurring, test=\n', test);
-      this.runExtensions('beforeRun', {test: test});
+      this.runExtensions(extensions, 'beforeRun', {test: test});
 
       let nowtime = Date.now();
       let recurring = test.recurring;
@@ -281,7 +283,7 @@ class AutoWebPerf {
           let newResult = this.runTest(test, {
             recurring: true,
           });
-          this.runExtensions('afterRun', {
+          this.runExtensions(extensions, 'afterRun', {
             test: test,
             result: newResult,
           });
@@ -316,7 +318,7 @@ class AutoWebPerf {
     this.connector.appendResultList(resultsToUpdate);
 
     // After all runs.
-    this.runExtensions('afterAllRuns', {
+    this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
     });
@@ -353,6 +355,7 @@ class AutoWebPerf {
 
       newResult[dataSource] = {
         status: response.status,
+        lastRunNote: response.lastRunNote,
         metadata: response.metadata,
         settings: test[dataSource].settings,
         metrics: response.metrics,
@@ -371,21 +374,25 @@ class AutoWebPerf {
    */
   retrieve(options) {
     options = options || {};
-
+    let extensions = options.extensions || Object.keys(this.extensions);
     let resultsToUpdate = [];
-    let results = this.connector.getResultList(options);
-    this.runExtensions('beforeAllRetrieves', [] /* tests */, results);
 
-    results = results.filter(result => {
-      return result.status !== Status.RETRIEVED;
-    });
+    let results = this.connector.getResultList(options);
+    this.runExtensions(extensions, 'beforeAllRetrieves', [] /* tests */, results);
+
+    // Default filter for penging results only.
+    if (!options.filters) {
+      results = results.filter(result => {
+        return result.status !== Status.RETRIEVED;
+      });
+    }
 
     let count = 0;
     results.forEach(result => {
       this.log(`Retrieve: id=${result.id}`);
       this.logDebug('AutoWebPerf::retrieve, result=\n', result);
 
-      this.runExtensions('beforeRetrieve', {result: result});
+      this.runExtensions(extensions, 'beforeRetrieve', {result: result});
 
       let statuses = [];
       let newResult = result;
@@ -406,7 +413,7 @@ class AutoWebPerf {
       });
 
       // After retrieving the result.
-      this.runExtensions('afterRetrieve', {result: newResult});
+      this.runExtensions(extensions, 'afterRetrieve', {result: newResult});
 
       if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
         newResult.status = Status.RETRIEVED;
@@ -431,15 +438,16 @@ class AutoWebPerf {
     });
 
     this.connector.updateResultList(resultsToUpdate);
-    this.runExtensions('afterAllRetrieves', {results: results});
+    this.runExtensions(extensions, 'afterAllRetrieves', {results: results});
   }
 
   /**
    * Run through all extensions
    * @param  {object} options
    */
-  runExtensions(functionName, params) {
-    Object.keys(this.extensions).forEach(extName => {
+  runExtensions(extensions, functionName, params) {
+    extensions.forEach(extName => {
+      if (!this.extensions[extName]) return;
       let extension = this.extensions[extName];
       if (extension[functionName]) extension[functionName](params);
     });

@@ -16,24 +16,42 @@ class GoogleSheetsTriggerExtension extends Extension {
     this.recurringTriggerSystemVar = 'RECURRING_TRIGGER_ID';
   }
 
-  beforeAllRun(tests, results) {
-    let triggerId = this.connector.getSystemVar(this.recieveTriggerSystemVar);
-  }
+  beforeAllRun(params) {}
 
-  afterAllRun(tests, results) {
-    let triggerId = this.connector.getSystemVar(this.recieveTriggerSystemVar);
-    if (!triggerId) {
-      triggerId = GoogleSheetsHelper.createTrigger('retrieveResults', 10 /* minutes */);
-      this.connector.setSystemVar(this.recieveTriggerSystemVar, triggerId);
+  afterAllRuns(params) {
+    let tests = params.tests || [];
+
+    if (tests.length > 0) {
+      let triggerId = this.connector.getSystemVar(this.recieveTriggerSystemVar);
+      console.log(`${this.recieveTriggerSystemVar} = ${triggerId}`);
+
+      if (!triggerId) {
+        console.log('Creating Trigger for retrieveResults...');
+
+        triggerId = GoogleSheetsHelper.createTrigger('retrieveResults', 10 /* minutes */);
+        this.connector.setSystemVar(this.recieveTriggerSystemVar, triggerId);
+      }
     }
   }
 
-  afterAllRetrieve(tests, results) {
-    let triggerId = this.connector.getSystemVar(this.recieveTriggerSystemVar);
-    if (triggerId) {
-      GoogleSheetsHelper.deleteTrigger(this.recieveTriggerSystemVar);
+  afterAllRetrieves(params) {
+    let results = params.results || [];
+    let pendingResults = results.filter(result => {
+      return result.status !== Status.RETRIEVED;
+    });
+
+    // Delete trigger if all results are retrieved.
+    if (pendingResults.length === 0) {
+      let triggerId = this.connector.getSystemVar(this.recieveTriggerSystemVar);
+      console.log(`${this.recieveTriggerSystemVar} = ${triggerId}`);
+
+      if (triggerId) {
+        console.log('Deleting Trigger for retrieveResults...');
+        GoogleSheetsHelper.deleteTrigger(triggerId);
+        this.connector.setSystemVar(this.recieveTriggerSystemVar, '');
+      }
     }
   }
 }
 
-module.exports = BudgetsExtension;
+module.exports = GoogleSheetsTriggerExtension;
