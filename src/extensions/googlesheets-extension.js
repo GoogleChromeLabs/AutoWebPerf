@@ -6,14 +6,45 @@ const setObject = require('../utils/set-object');
 const Extension = require('./extension');
 const {GoogleSheetsHelper} = require('../helpers/googlesheets-helper');
 
-class GoogleSheetsTriggerExtension extends Extension {
+class GoogleSheetsExtension extends Extension {
   constructor(config) {
     super();
     assert(config.connector, 'connector is missing in config.');
     this.connector = config.connector;
+    this.locations = null;
 
     this.recieveTriggerSystemVar = 'RETRIEVE_TRIGGER_ID';
     this.recurringTriggerSystemVar = 'RECURRING_TRIGGER_ID';
+  }
+
+  /**
+   * beforeRun - Convert location name to id based on location tab.
+   * @param {object} params
+   */
+  beforeRun(params) {
+    this.locations = this.locations || this.connector.getLocationList();
+
+    let test = params.test;
+    this.locations.forEach(location => {
+      if (test.webpagetest.settings.locationId === location.name) {
+        test.webpagetest.settings.locationId = location.id;
+      }
+    });
+  }
+
+  /**
+   * afterRun - Convert location id to name based on location tab.
+   * @param {object} params
+   */
+  afterRun(params) {
+    this.locations = this.locations || this.connector.getLocations();
+
+    let test = params.test;
+    this.locations.forEach(location => {
+      if (test.webpagetest.settings.locationId === location.id) {
+        test.webpagetest.settings.locationId = location.name;
+      }
+    });
   }
 
   beforeAllRun(params) {}
@@ -54,4 +85,4 @@ class GoogleSheetsTriggerExtension extends Extension {
   }
 }
 
-module.exports = GoogleSheetsTriggerExtension;
+module.exports = GoogleSheetsExtension;

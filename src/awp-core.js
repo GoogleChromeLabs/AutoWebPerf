@@ -112,8 +112,8 @@ class AutoWebPerf {
             ExtensionClass = require('./extensions/budgets');
             break;
 
-          case 'googlesheetstrigger':
-            ExtensionClass = require('./extensions/googlesheets-trigger');
+          case 'googlesheets':
+            ExtensionClass = require('./extensions/googlesheets-extension');
             break;
 
           default:

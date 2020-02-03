@@ -99,7 +99,7 @@ class GoogleSheetsConnector extends Connector {
   }
 
   init() {
-    this.updateLocations();
+    this.updateLocationList();
   }
 
   getList(tabName, options) {
@@ -257,7 +257,12 @@ class GoogleSheetsConnector extends Connector {
     return configValues ? configValues[0] : null;
   }
 
-  updateLocations() {
+  getLocationList() {
+    let locations = this.getList('locationsTab');
+    return locations;
+  }
+
+  updateLocationList() {
     // Reset locations tab.
     this.clearList('locationsTab');
 
@@ -268,7 +273,7 @@ class GoogleSheetsConnector extends Connector {
     Object.keys(json.data).forEach(key => {
       let data = json.data[key];
       let newLocation = {
-        key: key,
+        id: key,
         name: `${data.labelShort} (${key})`,
         pendingTests: data.PendingTests.Total,
         browsers: data.Browsers,
