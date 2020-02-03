@@ -89,7 +89,7 @@ class WebPageTestGatherer extends Gatherer {
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
     let metadata = {};
 
-    if (this.debug) console.debug('WPTGatherer::run\n', url);
+    if (this.debug) console.log('WPTGatherer::run\n', url);
 
     try {
       let json = {};
@@ -99,7 +99,7 @@ class WebPageTestGatherer extends Gatherer {
       } else {
         let res = this.apiHelper.fetch(url);
         json = JSON.parse(res);
-        if (this.debug) console.debug('WPTGatherer::run API response: \n', json);
+        if (this.debug) console.log('WPTGatherer::run API response: \n', json);
       }
 
       if (json.statusCode === 200) {

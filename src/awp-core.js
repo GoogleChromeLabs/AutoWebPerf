@@ -183,12 +183,16 @@ class AutoWebPerf {
     let extensions = options.extensions || Object.keys(this.extensions);
 
     let count = 0;
-    let tests = this.connector.getTestList(options.filters);
+    let tests = this.connector.getTestList(options);
     this.runExtensions(extensions, 'beforeAllRuns', tests, [] /* results */);
 
     tests.forEach(test => {
       this.logDebug('AutoWebPerf::run, test=\n', test);
       this.runExtensions(extensions, 'beforeRun', {test: test});
+
+      // Only run test when URL is defined.
+      // TODO: Throw error back.
+      if (!test.url) return;
 
       // Run test.
       let newResult = this.runTest(test, options);

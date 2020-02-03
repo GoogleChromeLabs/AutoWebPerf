@@ -112,6 +112,7 @@ let fakeResultsSheetData = [
   [true, 'id-1234', 'single', 'retrieved', 'google.com', 500],
   [false, 'id-5678', 'recurring', 'retrieved', 'web.dev', 800],
 ]
+let fakeResultsSheetDataOrigin = [...fakeResultsSheetData];
 
 let fakeResults = [
   {
@@ -235,6 +236,8 @@ describe('GoogleSheetsConnector Tests tab', () => {
 
 describe('GoogleSheetsConnector Results tab', () => {
   beforeEach(() => {
+    fakeResultsSheetData = [...fakeResultsSheetDataOrigin];
+
     // Overrides properties for testing.
     connector.tabConfigs['resultsTab'].sheet.getDataRange = function() {
       return {
@@ -263,11 +266,67 @@ describe('GoogleSheetsConnector Results tab', () => {
   });
 
   it('appends a new set of results to the Results sheet', async () => {
-    // TODO
+    let results, expecteResults;
+
+    results = connector.getResultList();
+    connector.getRowRange = (tabName, rowIndex) => {
+      return {
+        setValues: (values) => {
+          fakeResultsSheetData.push(values[0]);
+        }
+      }
+    };
+
+    let newResult = {
+      selected: true,
+      id: 'id-9999',
+      type: 'single',
+      url: 'google.com',
+      status: 'retrieved',
+      webpagetest: {
+        metrics: {
+          FCP: 500,
+        },
+      },
+      googlesheets: {
+        rowIndex: 4,
+      }
+    };
+    connector.appendResultList([newResult]);
+    expecteResults = connector.getResultList();
+    expect(expecteResults.length).toEqual(3);
   });
 
   it('updates results to the Results sheet', async () => {
-    // TODO
+    let results, expecteResults;
+    results = connector.getResultList();
+    connector.getRowRange = (tabName, rowIndex) => {
+      return {
+        setValues: (values) => {
+          fakeResultsSheetData[rowIndex - 1] = values[0];
+        }
+      }
+    };
+    let result = {
+      selected: true,
+      id: 'id-1234',
+      type: 'single',
+      url: 'test.com',
+      status: 'retrieved',
+      webpagetest: {
+        metrics: {
+          FCP: 500,
+        },
+      },
+      googlesheets: {
+        rowIndex: 4,
+      }
+    };
+    connector.updateResultList([result]);
+    expecteResults = connector.getResultList();
+
+    expect(expecteResults.length).toEqual(2);
+    expect(expecteResults[0].url).toEqual('test.com');
   });
 });
 

@@ -192,37 +192,38 @@ class GoogleSheetsConnector extends Connector {
 
   appendResultList(newResults) {
     let tabConfig = this.tabConfigs['resultsTab'];
-    let data = tabConfig.sheet.getDataRange().getValues();
-    let propertyLookup = data[tabConfig.propertyLookup - 1];
+    let lastRowIndex = this.getResultList().length + 1 + tabConfig.skipRows;
+    this.updateList('resultsTab', newResults, (result, rowIndex) => {
+      rowIndex = lastRowIndex;
+      lastRowIndex++;
+      return rowIndex;
+    } /* rowIndexFunc */);
 
-    let rowIndex = this.getResultList().length + 1 + tabConfig.skipRows;
-    newResults.forEach(result => {
-      let values = [];
-      propertyLookup.forEach(lookup => {
-        if (typeof lookup !== 'string') {
-          throw new Error(
-              `Results Tab: Property lookup ${lookup} is not a string`);
-        }
-        try {
-          let value = lookup ? eval(`result.${lookup}`) : '';
-          values.push(value);
-        } catch (error) {
-          values.push('');
-        }
-      });
-
-      let range = this.getRowRange('resultsTab', rowIndex);
-      range.setValues([values]);
-
-      rowIndex++;
-    });
+    //
+    // newResults.forEach(result => {
+    //   let values = [];
+    //   propertyLookup.forEach(lookup => {
+    //     if (typeof lookup !== 'string') {
+    //       throw new Error(
+    //           `Results Tab: Property lookup ${lookup} is not a string`);
+    //     }
+    //     try {
+    //       let value = lookup ? eval(`result.${lookup}`) : '';
+    //       values.push(value);
+    //     } catch (error) {
+    //       values.push('');
+    //     }
+    //   });
+    //
+    //   let range = this.getRowRange('resultsTab', rowIndex);
+    //   range.setValues([values]);
+    //
+    //   rowIndex++;
+    // });
   }
 
   updateResultList(newResults) {
     let tabConfig = this.tabConfigs['resultsTab'];
-    let data = tabConfig.sheet.getDataRange().getValues();
-    let propertyLookup = data[tabConfig.propertyLookup - 1];
-
     let idToRows = {}, rowIndex = tabConfig.skipRows + 1;
     let results = this.getResultList();
     results.forEach(result => {
@@ -230,24 +231,9 @@ class GoogleSheetsConnector extends Connector {
       rowIndex++;
     });
 
-    newResults.forEach(result => {
-      let values = [];
-      propertyLookup.forEach(lookup => {
-        if (typeof lookup !== 'string') {
-          throw new Error(
-              `Results Tab: Property lookup ${lookup} is not a string`);
-        }
-        try {
-          let value = lookup ? eval(`result.${lookup}`) : '';
-          values.push(value);
-        } catch (error) {
-          values.push('');
-        }
-      });
-
-      let range = this.getRowRange('resultsTab', idToRows[result.id]);
-      range.setValues([values]);
-    });
+    this.updateList('resultsTab', newResults, (result, rowIndex) => {
+      return idToRows[result.id];
+    } /* rowIndexFunc */);
   }
 
   getPropertyLookup(tabName) {
@@ -296,7 +282,7 @@ class GoogleSheetsConnector extends Connector {
     });
   }
 
-  updateList(tabName, items, indexFunc) {
+  updateList(tabName, items, rowIndexFunc) {
     let tabConfig = this.tabConfigs[tabName];
     let data = tabConfig.sheet.getDataRange().getValues();
     let propertyLookup = data[tabConfig.propertyLookup - 1];
@@ -307,7 +293,7 @@ class GoogleSheetsConnector extends Connector {
       propertyLookup.forEach(lookup => {
         if (typeof lookup !== 'string') {
           throw new Error(
-              `Location Tab: Property lookup ${lookup} is not a string`);
+              `${tabName} Tab: Property lookup ${lookup} is not a string`);
         }
         try {
           let value = lookup ? eval(`item.${lookup}`) : '';
@@ -317,7 +303,7 @@ class GoogleSheetsConnector extends Connector {
         }
       });
 
-      let range = this.getRowRange(tabName, indexFunc(item, rowIndex));
+      let range = this.getRowRange(tabName, rowIndexFunc(item, rowIndex));
       range.setValues([values]);
       rowIndex++;
     });
