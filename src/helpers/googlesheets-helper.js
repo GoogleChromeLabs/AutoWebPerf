@@ -14,32 +14,6 @@ class GoogleSheetsApiHandler {
 
 const GoogleSheetsHelper = {
   /**
-   * Return a system variable.
-   * @param {string} key
-   * @return {string}
-   */
-  getSysVar: (key) => {
-    return documentPropertiesSheet.getRange(SYSVARS[key] + 1, 2).getValue();
-  },
-
-  /**
-   * Set a system variable.
-   * @param {string} key
-   * @param {string} value
-   */
-  setSysVar: (key, value) => {
-    documentPropertiesSheet.getRange(SYSVARS[key] + 1, 2).setValue(value);
-  },
-
-  /**
-   * Set a system variable.
-   * @param {string} key
-   */
-  deleteSysVar: (key) => {
-    documentPropertiesSheet.getRange(SYSVARS[key] + 1, 2).clearContent();
-  },
-
-  /**
    * Encrypt a string to MD5.
    * @param {string} message
    * @return {string}
@@ -101,32 +75,27 @@ const GoogleSheetsHelper = {
   },
 
   /**
-   * Create a trigger to automatically retrieve results every minutes.
+   * Function to get client email. This will always set clientEmail to anonymous
+   * if called from a simple trigger like onOpen(), even if the sheet is authorized
+   * @return {string}
    */
-  createRetrieveTrigger: () => {
-    // Check if trigger exists and create it if not.
-    if (!Helper.getSysVar('TRIGGER_RETRIEVE')) {
-      var thisTrigger = ScriptApp.newTrigger('retrieveResults')
-                            .timeBased()
-                            .everyMinutes(10)
-                            .create();
-      Helper.setSysVar('TRIGGER_RETRIEVE', thisTrigger.getUniqueId());
-    }
-    activeSpreadsheet.toast(
-        'A trigger was created to automatically pull your results every ' +
-        'few minutes. Check your results later!', 'Status', -1);
+  getClientEmail: () => {
+    //Set email
+    let clientEmail = Session.getActiveUser().getEmail();
+    return clientEmail ? GoogleSheetsHelper.toMD5(clientEmail) : 'anonymous';
   },
 
   /**
-   * Delete trigger to automatically retrieve results every minutes.
+   * Get user timezone from calendar and set it as system var.
    */
-  deleteRetrieveTrigger: () => {
-    // Delete trigger if it exists.
-    if (Helper.getSysVar('TRIGGER_RETRIEVE')) {
-      Helper.deleteTrigger(Helper.getSysVar('TRIGGER_RETRIEVE'));
-      Helper.deleteSysVar('TRIGGER_RETRIEVE');
+  getUserTimeZone: () => {
+    let userTimeZone;
+    try {
+      userTimeZone = CalendarApp.getDefaultCalendar().getTimeZone();
+    } catch (e) {
+      userTimeZone = 'GMT';
     }
-    activeSpreadsheet.toast('Your results are ready!', 'Status');
+    return userTimeZone || 'GMT';
   },
 
   /**
@@ -134,10 +103,9 @@ const GoogleSheetsHelper = {
    * @param {!date} dateInput
    * @return {!date}
    */
-  getFormattedDate: (dateInput) => {
-    return Utilities.formatDate(
-        dateInput, this.getSysVar('USER_TIMEZONE'),
-        defaultTestSettings.timeFormat);
+  getFormattedDate: (dateInput, timeZone, format) => {
+    return Utilities.formatDate(dateInput, timeZone,
+        format || 'MM/dd/YY HH:mm');
   },
 }
 

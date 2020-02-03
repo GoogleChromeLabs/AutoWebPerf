@@ -13,18 +13,22 @@ const DataAxis = {
 };
 
 class GoogleSheetsConnector extends Connector {
-  constructor(config) {
+  constructor(config, apiHelper) {
     super();
     assert(config.configTabName, 'configTabName is missing in config.');
     assert(config.testsTabName, 'testsTabName is missing in config.');
     assert(config.resultsTabName, 'resultsTabName is missing in config.');
+    assert(config.locationsTabName, 'locationsTabName is missing in config.');
+
+    this.apiHelper = apiHelper;
+    this.locationApiEndpoint = 'http://www.webpagetest.org/getLocations.php?f=json&k=A';
 
     this.activeSpreadsheet = SpreadsheetApp.getActive();
     this.configSheet = this.activeSpreadsheet.getSheetByName(config.configTabName);
     this.testsSheet = this.activeSpreadsheet.getSheetByName(config.testsTabName);
     this.resultsSheet = this.activeSpreadsheet.getSheetByName(config.resultsTabName);
     this.systemSheet = this.activeSpreadsheet.getSheetByName(config.systemTabName);
-    // this.locationsSheet = this.activeSpreadsheet.getSheetByName('Locations');
+    this.locationsSheet = this.activeSpreadsheet.getSheetByName(config.locationsTabName);
     // this.compareSheet = this.activeSpreadsheet.getSheetByName('Comparison');
     // this.frequencySheet = this.activeSpreadsheet.getSheetByName('schedule_frequency');
     // this.userApiKeySheet = this.activeSpreadsheet.getSheetByName('User_API_Key');
@@ -61,6 +65,14 @@ class GoogleSheetsConnector extends Connector {
         skipRows: 1,
         skipColumns: 2,
       },
+      locationsTab: {
+        tabName: config.locationsTabName,
+        sheet: this.activeSpreadsheet.getSheetByName(config.locationsTabName),
+        dataAxis: DataAxis.ROW,
+        propertyLookup: 2, // Starts at 1
+        skipRows: 2,
+        skipColumns: 0,
+      },
     };
 
     this.resultColumnConditions = {
@@ -84,6 +96,10 @@ class GoogleSheetsConnector extends Connector {
     };
 
     this.healthCheck();
+  }
+
+  init() {
+    this.updateLocations();
   }
 
   getList(tabName, options) {
@@ -253,6 +269,65 @@ class GoogleSheetsConnector extends Connector {
   getConfig() {
     let configValues = this.getList('configTab');
     return configValues ? configValues[0] : null;
+  }
+
+  updateLocations() {
+    // Reset locations tab.
+    this.clearList('locationsTab');
+
+    let res = this.apiHelper.fetch(this.locationApiEndpoint);
+    let json = JSON.parse(res);
+
+    let locations = [];
+    Object.keys(json.data).forEach(key => {
+      let data = json.data[key];
+      let newLocation = {
+        key: key,
+        name: `${data.labelShort} (${key})`,
+        pendingTests: data.PendingTests.Total,
+        browsers: data.Browsers,
+      };
+      newLocation.key = key;
+      locations.push(newLocation);
+    });
+
+    this.updateList('locationsTab', locations, (location, rowIndex) => {
+      return rowIndex; // No need to modify rowIndex.
+    });
+  }
+
+  updateList(tabName, items, indexFunc) {
+    let tabConfig = this.tabConfigs[tabName];
+    let data = tabConfig.sheet.getDataRange().getValues();
+    let propertyLookup = data[tabConfig.propertyLookup - 1];
+
+    let rowIndex = tabConfig.skipRows + 1;
+    items.forEach(item => {
+      let values = [];
+      propertyLookup.forEach(lookup => {
+        if (typeof lookup !== 'string') {
+          throw new Error(
+              `Location Tab: Property lookup ${lookup} is not a string`);
+        }
+        try {
+          let value = lookup ? eval(`item.${lookup}`) : '';
+          values.push(value);
+        } catch (error) {
+          values.push('');
+        }
+      });
+
+      let range = this.getRowRange(tabName, indexFunc(item, rowIndex));
+      range.setValues([values]);
+      rowIndex++;
+    });
+  }
+
+  clearList(tabName) {
+    let tabConfig = this.tabConfigs[tabName];
+    let lastRow = tabConfig.sheet.getLastRow();
+    tabConfig.sheet.deleteRows(
+        tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
   }
 
   getSystemVar(key) {

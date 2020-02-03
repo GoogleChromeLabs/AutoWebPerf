@@ -30,6 +30,7 @@ let connector = new GoogleSheetsConnector({
   testsTabName: 'tests',
   resultsTabName: 'results',
   systemTabName: 'system',
+  locationsTabName: 'locations',
 });
 
 let fakeConfigSheetData = [

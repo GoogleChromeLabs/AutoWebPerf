@@ -44,34 +44,6 @@ class AutoWebPerf {
     // Example data sources: ['webpagetest', 'psi']
     this.dataSources = awpConfig.dataSources;
 
-    this.log(`Use connector ${awpConfig.connector}`);
-    switch (awpConfig.connector.toLowerCase()) {
-      case 'json':
-        let JSONConnector = require('./connectors/json-connector');
-        this.connector = new JSONConnector(awpConfig.json);
-        this.apiKeys = this.connector.getConfig().apiKeys;
-        break;
-
-      case 'googlesheets':
-        assert(awpConfig.googlesheets, 'googlesheets is missing.');
-        let GoogleSheetsConnector = require('./connectors/googlesheets-connector');
-
-        // TODO: Standardize awpConfig.
-        this.connector = new GoogleSheetsConnector(
-            awpConfig.googlesheets);
-        this.apiKeys = this.connector.getConfig().apiKeys;
-        break;
-
-      case 'fake':
-        // Do nothing. For testing purpose.
-        break;
-
-      default:
-        throw new Error(
-            `Connector ${awpConfig.connector} is not supported.`);
-        break;
-    }
-
     this.log(`Use helper ${awpConfig.helper}`);
     switch (awpConfig.helper.toLowerCase()) {
       case 'node':
@@ -93,6 +65,35 @@ class AutoWebPerf {
             `Helper ${awpConfig.helper} is not supported.`);
         break;
     }
+
+    this.log(`Use connector ${awpConfig.connector}`);
+    switch (awpConfig.connector.toLowerCase()) {
+      case 'json':
+        let JSONConnector = require('./connectors/json-connector');
+        this.connector = new JSONConnector(awpConfig.json, this.apiHandler);
+        this.apiKeys = this.connector.getConfig().apiKeys;
+        break;
+
+      case 'googlesheets':
+        assert(awpConfig.googlesheets, 'googlesheets is missing.');
+        let GoogleSheetsConnector = require('./connectors/googlesheets-connector');
+
+        // TODO: Standardize awpConfig.
+        this.connector = new GoogleSheetsConnector(
+            awpConfig.googlesheets, this.apiHandler);
+        this.apiKeys = this.connector.getConfig().apiKeys;
+        break;
+
+      case 'fake':
+        // Do nothing. For testing purpose.
+        break;
+
+      default:
+        throw new Error(
+            `Connector ${awpConfig.connector} is not supported.`);
+        break;
+    }
+
 
     this.log(`Use extensions: ${awpConfig.extensions}`);
 
