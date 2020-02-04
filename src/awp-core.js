@@ -116,6 +116,10 @@ class AutoWebPerf {
             ExtensionClass = require('./extensions/googlesheets-extension');
             break;
 
+          case 'gatracker':
+            ExtensionClass = require('./extensions/gatracker');
+            break;
+
           default:
             throw new Error(
                 `Extension ${extension} is not supported.`);

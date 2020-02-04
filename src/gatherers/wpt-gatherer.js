@@ -80,6 +80,8 @@ class WebPageTestGatherer extends Gatherer {
       'timeline': settings.hasTimeline || false,
       'block': settings.block || '',
       'script': settings.script || '',
+      'location': `${settings.location}.${settings.connection}` || '',
+      'mobile': settings.mobile || '',
     }
 
     let urlParams = [];
