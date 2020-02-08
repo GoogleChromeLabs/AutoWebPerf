@@ -6,6 +6,7 @@ const Status = require('../common/status');
 const setObject = require('../utils/set-object');
 const transpose = require('../utils/transpose');
 const Connector = require('./connector');
+const {GoogleSheetsHelper} = require('../helpers/googlesheets-helper');
 
 const DataAxis = {
   ROW: 'row',
@@ -22,6 +23,8 @@ class GoogleSheetsConnector extends Connector {
 
     this.apiHelper = apiHelper;
     this.locationApiEndpoint = 'http://www.webpagetest.org/getLocations.php?f=json&k=A';
+    this.retrieveTriggerSystemVar = 'RETRIEVE_TRIGGER_ID';
+    this.recurringTriggerSystemVar = 'RECURRING_TRIGGER_ID';
 
     this.activeSpreadsheet = SpreadsheetApp.getActive();
     this.configSheet = this.activeSpreadsheet.getSheetByName(config.configTabName);
@@ -35,19 +38,12 @@ class GoogleSheetsConnector extends Connector {
     // this.perfBudgetDashSheet = this.activeSpreadsheet.getSheetByName('Perf Budget Dashboard');
 
     this.tabConfigs = {
-      configTab: {
-        tabName: config.configTabName,
-        sheet: this.activeSpreadsheet.getSheetByName(config.configTabName),
-        dataAxis: DataAxis.COLUMN,
-        propertyLookup: 2, // Starts at 1
-        skipRows: 1,
-        skipColumns: 2,
-      },
       testsTab: {
         tabName: config.testsTabName,
         sheet: this.activeSpreadsheet.getSheetByName(config.testsTabName),
         dataAxis: DataAxis.ROW,
         propertyLookup: 3, // Starts at 1
+        skipColumns: 0,
         skipRows: 3,
       },
       resultsTab: {
@@ -55,7 +51,16 @@ class GoogleSheetsConnector extends Connector {
         sheet: this.activeSpreadsheet.getSheetByName(config.resultsTabName),
         dataAxis: DataAxis.ROW,
         propertyLookup: 3, // Starts at 1
+        skipColumns: 0,
         skipRows: 3,
+      },
+      configTab: {
+        tabName: config.configTabName,
+        sheet: this.activeSpreadsheet.getSheetByName(config.configTabName),
+        dataAxis: DataAxis.COLUMN,
+        propertyLookup: 2, // Starts at 1
+        skipRows: 1,
+        skipColumns: 2,
       },
       systemTab: {
         tabName: config.systemTabName,
@@ -99,7 +104,21 @@ class GoogleSheetsConnector extends Connector {
   }
 
   init() {
+    // Delete all previous triggers, and create submitting recurring trigger.
+    GoogleSheetsHelper.deleteAllTriggers();
+    this.setSystemVar(this.retrieveTriggerSystemVar, '');
+    let triggerId = GoogleSheetsHelper.createTrigger(
+        'createTrigger', 10 /* minutes */);
+    this.setSystemVar(this.recurringTriggerSystemVar, '');
+
+    // Refresh location list.
     this.updateLocationList();
+
+    // Init condition formatting.
+    this.initConditionalFormat();
+
+    // Request for WebPageTest API Key.
+    this.requestApiKey();
   }
 
   getList(tabName, options) {
@@ -155,20 +174,9 @@ class GoogleSheetsConnector extends Connector {
   }
 
   updateTestList(newTests, options) {
-    let tabConfig = this.tabConfigs['testsTab'];
-    let data = tabConfig.sheet.getDataRange().getValues();
-    let propertyLookup = data[tabConfig.propertyLookup - 1];
-
-    newTests.forEach(test => {
-      let values = [];
-      let rowIndex = test.googlesheets.rowIndex;
-      propertyLookup.forEach(lookup => {
-        let value = lookup ? eval(`test.${lookup}`) : '';
-        values.push(value);
-      });
-      let range = this.getRowRange('testsTab', rowIndex);
-      range.setValues([values]);
-    });
+    this.updateList('testsTab', newTests, (test, rowIndex) => {
+      return test.googlesheets.rowIndex;
+    } /* rowIndexFunc */);
   }
 
   getRowRange(tabName, rowIndex) {
@@ -198,28 +206,6 @@ class GoogleSheetsConnector extends Connector {
       lastRowIndex++;
       return rowIndex;
     } /* rowIndexFunc */);
-
-    //
-    // newResults.forEach(result => {
-    //   let values = [];
-    //   propertyLookup.forEach(lookup => {
-    //     if (typeof lookup !== 'string') {
-    //       throw new Error(
-    //           `Results Tab: Property lookup ${lookup} is not a string`);
-    //     }
-    //     try {
-    //       let value = lookup ? eval(`result.${lookup}`) : '';
-    //       values.push(value);
-    //     } catch (error) {
-    //       values.push('');
-    //     }
-    //   });
-    //
-    //   let range = this.getRowRange('resultsTab', rowIndex);
-    //   range.setValues([values]);
-    //
-    //   rowIndex++;
-    // });
   }
 
   updateResultList(newResults) {
@@ -238,23 +224,22 @@ class GoogleSheetsConnector extends Connector {
 
   getPropertyLookup(tabName) {
     let tabConfig = this.tabConfigs[tabName];
-    let data = tabConfig.sheet.getDataRange().getValues();
+    let sheet = tabConfig.sheet;
     let skipRows = tabConfig.skipRows || 0;
     let skipColumns = tabConfig.skipColumns || 0;
 
-    if (tabConfig.dataAxis === DataAxis.COLUMN) {
-      data = transpose(data);
-      skipRows = tabConfig.skipColumns;
-      skipColumns = tabConfig.skipRows;
-    }
-    let propertyLookup = data[tabConfig.propertyLookup - 1];
-    propertyLookup = propertyLookup.slice(skipColumns, propertyLookup.length);
-    return propertyLookup;
-  }
+    if (tabConfig.dataAxis === DataAxis.ROW) {
+      let data = sheet.getRange(
+          tabConfig.propertyLookup, skipColumns + 1,
+          1, sheet.getLastColumn() - skipColumns).getValues();
+      return data[0];
 
-  getConfig() {
-    let configValues = this.getList('configTab');
-    return configValues ? configValues[0] : null;
+    } else {
+      let data = sheet.getRange(
+          skipRows + 1, tabConfig.propertyLookup,
+          sheet.getLastRow() - skipRows, 1).getValues();
+      return data.map(x => x[0]);
+    }
   }
 
   getLocationList() {
@@ -321,15 +306,107 @@ class GoogleSheetsConnector extends Connector {
         tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
   }
 
+  initConditionalFormat() {
+    let rules = [];
+    let tabConfig = this.tabConfigs['resultsTab'];
+    let sheet = tabConfig.sheet;
+    let propertyLookup = this.getPropertyLookup('resultsTab');
+
+    let columnIndex = 1;
+    for (const propertyKey in propertyLookup) {
+      let conditions = this.resultColumnConditions[propertyKey];
+      if (conditions && conditions.length > 0) {
+        let range = sheet.getRange(tabConfig.skipRows + 1, columnIndex,
+            sheet.getMaxRows(), 1);
+        let maxpoint = conditions[2], midpoint = conditions[1],
+            minpoint = conditions[0];
+        let maxcolor = '#68bb50', mincolor = '#e06666';
+        if (maxpoint < minpoint) {
+          maxpoint = conditions[0];
+          maxcolor = '#e06666';
+          minpoint = conditions[2];
+          mincolor = '#68bb50';
+        }
+
+        let rule =
+            SpreadsheetApp.newConditionalFormatRule()
+                .setGradientMaxpointWithValue(
+                    maxcolor, SpreadsheetApp.InterpolationType.NUMBER, maxpoint)
+                .setGradientMidpointWithValue(
+                    '#ffd666', SpreadsheetApp.InterpolationType.NUMBER, midpoint)
+                .setGradientMinpointWithValue(
+                    mincolor, SpreadsheetApp.InterpolationType.NUMBER, minpoint)
+                .setRanges([range])
+                .build();
+        rules.push(rule);
+      }
+      columnIndex++;
+    }
+    sheet.setConditionalFormatRules(rules);
+  }
+
+  /**
+   * Request WPT API Key.
+   * @param {string} message
+   */
+  requestApiKey(message) {
+    let apiKey = this.getConfigVar('apiKeys.webpagetest');
+    message = message || 'Enter your WebPageTest API Key';
+    let requestCount = 0;
+    while (!apiKey && requestCount < 3) {
+      let input = Browser.inputBox(
+          message + ' (register at https://www.webpagetest.org/getkey.php)');
+      // The input will be 'cancel' if the user uses the close button on top
+      if (input !== 'cancel') {
+        apiKey = input;
+      } else {
+        break;
+      }
+      requestCount++;
+    }
+    if (apiKey) {
+      this.setConfigVar('apiKeys.webpagetest', apiKey);
+    } else {
+      Browser.msgBox('A WebPageTest API Key is required for this tool to' +
+                     ' function. Please enter one on the hidden User_API_Key' +
+                     ' tab to continue using this tool.');
+    }
+  }
+
+  getConfig() {
+    let configValues = this.getList('configTab');
+    return configValues ? configValues[0] : null;
+  }
+
+  getConfigVar(key) {
+    return this.getVarFromTab('configTab', key);
+  }
+
+  setConfigVar(key, value) {
+    this.setVarToTab('configTab', key, value);
+  }
+
   getSystemVar(key) {
-    let systemVars = (this.getList('systemTab') || [])[0];
-    return (systemVars || {})[key];
+    return this.getVarFromTab('systemTab', key);
   }
 
   setSystemVar(key, value) {
-    let tabConfig = this.tabConfigs['systemTab'];
+    this.setVarToTab('systemTab', key, value);
+  }
+
+  getVarFromTab(tabName, key) {
+    let object = (this.getList(tabName) || [])[0];
+    try {
+      return eval('object.' + key);
+    } catch(e) {
+      return null;
+    }
+  }
+
+  setVarToTab(tabName, key, value) {
+    let tabConfig = this.tabConfigs[tabName];
     let data = tabConfig.sheet.getDataRange().getValues();
-    let propertyLookup = this.getPropertyLookup('systemTab');
+    let propertyLookup = this.getPropertyLookup(tabName);
 
     let i = 1;
     propertyLookup.forEach(propertyKey => {

@@ -52,11 +52,11 @@ const GoogleSheetsHelper = {
    */
   deleteTrigger: (triggerId) => {
     // Loop over all triggers.
-    var allTriggers = ScriptApp.getProjectTriggers();
-    for (var i = 0; i < allTriggers.length; i++) {
+    let triggers = ScriptApp.getProjectTriggers();
+    for (const i in triggers) {
       // If the current trigger is the correct one, delete it.
-      if (allTriggers[i].getUniqueId() === triggerId) {
-        ScriptApp.deleteTrigger(allTriggers[i]);
+      if (triggers[i].getUniqueId === triggerId) {
+        ScriptApp.deleteTrigger(triggers[i]);
         break;
       }
     }
@@ -64,14 +64,13 @@ const GoogleSheetsHelper = {
 
   /**
    * Deletes all triggers.
-   * @param {string} triggerId The Trigger ID.
    */
-  deleteAllTriggers: (triggerId) => {
+  deleteAllTriggers: () => {
     // Loop over all triggers.
-    var allTriggers = ScriptApp.getProjectTriggers();
-    for (var i = 0; i < allTriggers.length; i++) {
-      ScriptApp.deleteTrigger(allTriggers[i]);
-    }
+    let triggers = ScriptApp.getProjectTriggers();
+    triggers.forEach(trigger => {
+      ScriptApp.deleteTrigger(trigger);
+    });
   },
 
   /**
@@ -109,7 +108,7 @@ const GoogleSheetsHelper = {
   },
 }
 
-export default {
+module.exports = {
   GoogleSheetsApiHandler,
   GoogleSheetsHelper,
 };

@@ -1,5 +1,6 @@
 class Connector {
   constructor(config, apiHandler) {}
+  init() {}
   healthCheck() {}
   getConfig() {}
   getTestList() {}

@@ -13,7 +13,7 @@ class GoogleSheetsExtension extends Extension {
     this.connector = config.connector;
     this.locations = null;
 
-    this.recieveTriggerSystemVar = 'RETRIEVE_TRIGGER_ID';
+    this.retrieveTriggerSystemVar = 'RETRIEVE_TRIGGER_ID';
     this.recurringTriggerSystemVar = 'RECURRING_TRIGGER_ID';
   }
 
@@ -53,14 +53,14 @@ class GoogleSheetsExtension extends Extension {
     let tests = params.tests || [];
 
     if (tests.length > 0) {
-      let triggerId = this.connector.getSystemVar(this.recieveTriggerSystemVar);
-      console.log(`${this.recieveTriggerSystemVar} = ${triggerId}`);
+      let triggerId = this.connector.getSystemVar(this.retrieveTriggerSystemVar);
+      console.log(`${this.retrieveTriggerSystemVar} = ${triggerId}`);
 
       if (!triggerId) {
         console.log('Creating Trigger for retrieveResults...');
 
         triggerId = GoogleSheetsHelper.createTrigger('retrieveResults', 10 /* minutes */);
-        this.connector.setSystemVar(this.recieveTriggerSystemVar, triggerId);
+        this.connector.setSystemVar(this.retrieveTriggerSystemVar, triggerId);
       }
     }
   }
@@ -73,13 +73,13 @@ class GoogleSheetsExtension extends Extension {
 
     // Delete trigger if all results are retrieved.
     if (pendingResults.length === 0) {
-      let triggerId = this.connector.getSystemVar(this.recieveTriggerSystemVar);
-      console.log(`${this.recieveTriggerSystemVar} = ${triggerId}`);
+      let triggerId = this.connector.getSystemVar(this.retrieveTriggerSystemVar);
+      console.log(`${this.retrieveTriggerSystemVar} = ${triggerId}`);
 
       if (triggerId) {
         console.log('Deleting Trigger for retrieveResults...');
         GoogleSheetsHelper.deleteTrigger(triggerId);
-        this.connector.setSystemVar(this.recieveTriggerSystemVar, '');
+        this.connector.setSystemVar(this.retrieveTriggerSystemVar, '');
       }
     }
   }

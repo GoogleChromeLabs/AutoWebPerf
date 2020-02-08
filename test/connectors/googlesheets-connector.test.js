@@ -12,17 +12,48 @@ global.SpreadsheetApp = {
   getActive: () => {
     return {
       getSheetByName: () => {
-        return {
-          getDataRange: () => {
-            return {setValues: () => {}};
-          },
-          getRange: () => {
-            return {setValue: () => {}};
-          }
-        }
+        return {}
       },
     };
   },
+};
+
+const initFakeSheet = (tabName, fakeData) => {
+  let sheet = connector.tabConfigs[tabName].sheet;
+  sheet.fakeData = [...fakeData];
+  sheet.getDataRange = () => {
+    return {
+      getValues: () => {
+        return sheet.fakeData;
+      }
+    }
+  };
+  sheet.getRange = (row, column, numRows, numColumns) => {
+    return {
+      getValues: () => {
+        let data = sheet.fakeData.slice(row - 1, row + numRows - 1);
+        data = data.map(row => {
+          return row.slice(column - 1, column + numColumns);
+        });
+        return data;
+      },
+      setValue: (value) => {
+        sheet.fakeData[row - 1][column - 1] = value;
+      },
+      setValues: (values) => {
+        while(sheet.fakeData.length < row) {
+          sheet.fakeData.push([]);
+        }
+        sheet.fakeData[row - 1] = values[0];
+      }
+    }
+  };
+  sheet.getLastRow = () => {
+    return sheet.fakeData.length;
+  };
+  sheet.getLastColumn = () => {
+    return sheet.fakeData[0].length;
+  };
 };
 
 let connector = new GoogleSheetsConnector({
@@ -34,20 +65,20 @@ let connector = new GoogleSheetsConnector({
 });
 
 let fakeConfigSheetData = [
-  ['Name', 'key', 'value', ''],
-  ['WPT API Key', 'apiKeys.webpagetest', 'TEST_APIKEY'],
-  ['PSI API Key', 'apiKeys.psi', 'TEST_APIKEY'],
+  ['Name', 'key', 'value'],
+  ['WPT API Key', 'apiKeys.webpagetest', 'WPT_KEY'],
+  ['PSI API Key', 'apiKeys.psi', 'PSI_KEY'],
 ];
 
 let fakeSystemSheetData = [
-  ['Name', 'key', 'value', ''],
+  ['Name', 'key', 'value'],
   ['isRecurring', 'isRecurring', true],
   ['triggerId', 'triggerId', '12345'],
 ];
 
 let fakeTestsSheetData = [
-  [],
-  [],
+  ['', '', '', '', ''],
+  ['', '', '', '', ''],
   ['selected', 'url', 'label', 'recurring.frequency', 'webpagetest.settings.connection'],
   [true, 'google.com', 'Google', 'daily', '4G'],
   [false, 'examples.com', 'Example', null, '3G'],
@@ -106,13 +137,12 @@ let fakeTests = [
 ];
 
 let fakeResultsSheetData = [
-  [],
-  [],
+  ['', '', '', '', '', ''],
+  ['', '', '', '', '', ''],
   ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FCP'],
   [true, 'id-1234', 'single', 'retrieved', 'google.com', 500],
   [false, 'id-5678', 'recurring', 'retrieved', 'web.dev', 800],
 ]
-let fakeResultsSheetDataOrigin = [...fakeResultsSheetData];
 
 let fakeResults = [
   {
@@ -152,36 +182,35 @@ let fakeResults = [
 describe('GoogleSheetsConnector Config tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    connector.tabConfigs['configTab'].sheet.getDataRange = function() {
-      return {
-        getValues: function() {
-          return fakeConfigSheetData;
-        }
-      }
-    };
+    initFakeSheet('configTab', fakeConfigSheetData);
   });
 
   it('returns list of config values from the Config sheet', async () => {
     let config = connector.getConfig();
     expect(config).toEqual({
       apiKeys: {
-        webpagetest: 'TEST_APIKEY',
-        psi: 'TEST_APIKEY',
+        webpagetest: 'WPT_KEY',
+        psi: 'PSI_KEY',
       }
     });
+  });
+
+  it('get a value from Config sheet via getConfigVar', async () => {
+    expect(connector.getConfigVar('apiKeys.webpagetest')).toEqual('WPT_KEY');
+    expect(connector.getConfigVar('apiKeys.psi')).toEqual('PSI_KEY');
+  });
+
+  it('set a value to Config sheet via setConfigVar', async () => {
+    connector.setConfigVar('apiKeys.webpagetest', 'TEST');
+    expect(connector.getConfigVar('apiKeys.webpagetest')).toEqual('TEST');
+    expect(connector.getConfigVar('apiKeys.psi')).toEqual('PSI_KEY');
   });
 });
 
 describe('GoogleSheetsConnector Tests tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    connector.tabConfigs['testsTab'].sheet.getDataRange = function() {
-      return {
-        getValues: function() {
-          return fakeTestsSheetData;
-        }
-      }
-    };
+    initFakeSheet('testsTab', fakeTestsSheetData);
   });
 
   it('returns all tests from the Tests sheet with filters', async () => {
@@ -219,8 +248,14 @@ describe('GoogleSheetsConnector Tests tab', () => {
     ]);
   });
 
-  it('sets a new set of tests to the Tests sheet', async () => {
-    // TODO
+  it('updates tests to the Tests sheet', async () => {
+    let tests = connector.getTestList();
+    tests[0].label = 'Updated Label';
+
+    connector.updateTestList(tests);
+    let updatedTests = connector.getTestList();
+
+    expect(updatedTests).toEqual(tests);
   });
 
   it('filters tests based on rowIndex', async () => {
@@ -236,16 +271,7 @@ describe('GoogleSheetsConnector Tests tab', () => {
 
 describe('GoogleSheetsConnector Results tab', () => {
   beforeEach(() => {
-    fakeResultsSheetData = [...fakeResultsSheetDataOrigin];
-
-    // Overrides properties for testing.
-    connector.tabConfigs['resultsTab'].sheet.getDataRange = function() {
-      return {
-        getValues: function() {
-          return fakeResultsSheetData;
-        }
-      }
-    };
+    initFakeSheet('resultsTab', fakeResultsSheetData);
   });
 
   it('returns list of results from the Results sheet', async () => {
@@ -267,15 +293,7 @@ describe('GoogleSheetsConnector Results tab', () => {
 
   it('appends a new set of results to the Results sheet', async () => {
     let results, expecteResults;
-
     results = connector.getResultList();
-    connector.getRowRange = (tabName, rowIndex) => {
-      return {
-        setValues: (values) => {
-          fakeResultsSheetData.push(values[0]);
-        }
-      }
-    };
 
     let newResult = {
       selected: true,
@@ -289,24 +307,18 @@ describe('GoogleSheetsConnector Results tab', () => {
         },
       },
       googlesheets: {
-        rowIndex: 4,
+        rowIndex: 6,
       }
     };
     connector.appendResultList([newResult]);
     expecteResults = connector.getResultList();
     expect(expecteResults.length).toEqual(3);
+    expect(expecteResults).toEqual(results.concat(newResult));
   });
 
   it('updates results to the Results sheet', async () => {
     let results, expecteResults;
     results = connector.getResultList();
-    connector.getRowRange = (tabName, rowIndex) => {
-      return {
-        setValues: (values) => {
-          fakeResultsSheetData[rowIndex - 1] = values[0];
-        }
-      }
-    };
     let result = {
       selected: true,
       id: 'id-1234',
@@ -333,13 +345,7 @@ describe('GoogleSheetsConnector Results tab', () => {
 describe('GoogleSheetsConnector System tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    connector.tabConfigs['systemTab'].sheet.getDataRange = function() {
-      return {
-        getValues: function() {
-          return fakeSystemSheetData;
-        }
-      }
-    };
+    initFakeSheet('systemTab', fakeSystemSheetData);
   });
 
   it('returns a specific system variable from the System sheet', async () => {
@@ -349,5 +355,33 @@ describe('GoogleSheetsConnector System tab', () => {
 
   it('sets value to a specific system var to the System sheet', async () => {
     connector.setSystemVar('isRecurring', false);
+    expect(connector.getSystemVar('isRecurring')).toEqual(false);
+    expect(connector.getSystemVar('triggerId')).toEqual('12345');
+  });
+});
+
+describe('GoogleSheetsConnector getPropertyLookup', () => {
+  beforeEach(() => {
+    // Overrides properties for testing.
+    initFakeSheet('systemTab', fakeSystemSheetData);
+    initFakeSheet('resultsTab', fakeResultsSheetData);
+  });
+
+  it('returns property lookup values for sheet with DataAxis.ROW', async () => {
+    let propertyLookup;
+    propertyLookup = connector.getPropertyLookup('testsTab');
+    expect(propertyLookup).toEqual(fakeTestsSheetData[2]);
+
+    propertyLookup = connector.getPropertyLookup('resultsTab');
+    expect(propertyLookup).toEqual(fakeResultsSheetData[2]);
+  });
+
+  it('returns property lookup values for sheet with DataAxis.COLUMN', async () => {
+    let propertyLookup;
+    propertyLookup = connector.getPropertyLookup('configTab');
+    expect(propertyLookup).toEqual(['apiKeys.webpagetest', 'apiKeys.psi']);
+
+    propertyLookup = connector.getPropertyLookup('systemTab');
+    expect(propertyLookup).toEqual(['isRecurring', 'triggerId']);
   });
 });
