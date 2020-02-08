@@ -16,6 +16,15 @@ global.SpreadsheetApp = {
       },
     };
   },
+  newDataValidation: () => {
+    return {
+      requireValueInRange: () => {
+        return {
+          build: () => {},
+        }
+      }
+    }
+  }
 };
 
 const initFakeSheet = (tabName, fakeData) => {
@@ -45,7 +54,8 @@ const initFakeSheet = (tabName, fakeData) => {
           sheet.fakeData.push([]);
         }
         sheet.fakeData[row - 1] = values[0];
-      }
+      },
+      setDataValidation: () => {},
     }
   };
   sheet.getLastRow = () => {
@@ -53,6 +63,15 @@ const initFakeSheet = (tabName, fakeData) => {
   };
   sheet.getLastColumn = () => {
     return sheet.fakeData[0].length;
+  };
+  sheet.deleteRows = (row, numRows) => {
+    let newFakeData = [];
+    for (let i=0; i<sheet.fakeData.length; i++) {
+      if (i < row - 1 || i > row + numRows - 1) {
+        newFakeData.push(sheet.fakeData[i]);
+      }
+    }
+    sheet.fakeData = newFakeData;
   };
 };
 
@@ -62,7 +81,7 @@ let connector = new GoogleSheetsConnector({
   resultsTabName: 'results',
   systemTabName: 'system',
   locationsTabName: 'locations',
-});
+}, {} /* apiHelper */);
 
 let fakeConfigSheetData = [
   ['Name', 'key', 'value'],
@@ -84,6 +103,20 @@ let fakeTestsSheetData = [
   [false, 'examples.com', 'Example', null, '3G'],
   [true, 'web.dev', 'Web.Dev', 'daily', '3G'],
 ];
+
+let fakeResultsSheetData = [
+  ['', '', '', '', '', ''],
+  ['', '', '', '', '', ''],
+  ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FCP'],
+  [true, 'id-1234', 'single', 'retrieved', 'google.com', 500],
+  [false, 'id-5678', 'recurring', 'retrieved', 'web.dev', 800],
+]
+
+let fakeLocationsSheetData = [
+  ['Name', 'ID', 'Pending Tests', 'Browsers'],
+  ['name', 'id', 'pendingTests', 'browsers'],
+  ['Old location', 'location-old', '0', 'should-be-deleted'],
+]
 
 let fakeTests = [
   {
@@ -135,14 +168,6 @@ let fakeTests = [
     }
   }
 ];
-
-let fakeResultsSheetData = [
-  ['', '', '', '', '', ''],
-  ['', '', '', '', '', ''],
-  ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FCP'],
-  [true, 'id-1234', 'single', 'retrieved', 'google.com', 500],
-  [false, 'id-5678', 'recurring', 'retrieved', 'web.dev', 800],
-]
 
 let fakeResults = [
   {
@@ -357,6 +382,50 @@ describe('GoogleSheetsConnector System tab', () => {
     connector.setSystemVar('isRecurring', false);
     expect(connector.getSystemVar('isRecurring')).toEqual(false);
     expect(connector.getSystemVar('triggerId')).toEqual('12345');
+  });
+});
+
+describe('GoogleSheetsConnector Locations tab', () => {
+  beforeEach(() => {
+    // Overrides properties for testing.
+    initFakeSheet('locationsTab', fakeLocationsSheetData);
+  });
+
+  it('updates locations to LocationsTab', async () => {
+    connector.apiHelper.fetch = () => {
+      return JSON.stringify({
+        'data': {
+          'location-1': {
+            labelShort: 'Location 1',
+            PendingTests: {Total: 10},
+            Browsers: 'chrome',
+          },
+          'location-2': {
+            labelShort: 'Location 2',
+            PendingTests: {Total: 20},
+            Browsers: 'firefox',
+          }
+        }
+      });
+    };
+
+    connector.updateLocationList();
+    let locations = connector.getLocationList();
+
+    expect(locations).toEqual([
+      {
+        id: 'location-1',
+        name: 'Location 1 (location-1)',
+        pendingTests: 10,
+        browsers: 'chrome',
+      },
+      {
+        id: 'location-2',
+        name: 'Location 2 (location-2)',
+        pendingTests: 20,
+        browsers: 'firefox',
+      },
+    ]);
   });
 });
 

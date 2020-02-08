@@ -242,6 +242,14 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
+  getPropertyIndex(propertyLookup, lookupKey) {
+    for (const i of propertyLookup) {
+      if (propertyLookup[i] === lookupKey) {
+        return i;
+      }
+    }
+  }
+
   getLocationList() {
     let locations = this.getList('locationsTab');
     return locations;
@@ -251,6 +259,8 @@ class GoogleSheetsConnector extends Connector {
     // Reset locations tab.
     this.clearList('locationsTab');
 
+    let tabConfig = this.tabConfigs['locationsTab'];
+    let sheet = tabConfig.sheet;
     let res = this.apiHelper.fetch(this.locationApiEndpoint);
     let json = JSON.parse(res);
 
@@ -270,6 +280,18 @@ class GoogleSheetsConnector extends Connector {
     this.updateList('locationsTab', locations, (location, rowIndex) => {
       return rowIndex; // No need to modify rowIndex.
     });
+
+    // Re-wire location drop list validation.
+    let locationsColumnInTests = this.getPropertyIndex(
+        'testsTab', 'webpagetest.settings.location');
+    let locationsNameInLocations = this.getPropertyIndex(
+        'locationsTab', 'name');
+    let range = sheet.getRange(tabConfig.skipRows + 1, locationsColumnInTests,
+          sheet.getLastRow(), 1);
+    let validation = sheet.getRange(tabConfig.skipRows + 1, locationsNameInLocations,
+          sheet.getLastRow(), 1);
+    let rule = SpreadsheetApp.newDataValidation().requireValueInRange(validation).build();
+    range.setDataValidation(rule);
   }
 
   updateList(tabName, items, rowIndexFunc) {
@@ -409,8 +431,8 @@ class GoogleSheetsConnector extends Connector {
     let propertyLookup = this.getPropertyLookup(tabName);
 
     let i = 1;
-    propertyLookup.forEach(propertyKey => {
-      if (propertyKey === key) {
+    propertyLookup.forEach(property => {
+      if (property === key) {
         let range = tabConfig.sheet.getRange(
             tabConfig.skipRows + i, tabConfig.skipColumns + 1);
         range.setValue(value);
