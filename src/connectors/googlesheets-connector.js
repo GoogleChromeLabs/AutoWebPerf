@@ -242,10 +242,11 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
-  getPropertyIndex(propertyLookup, lookupKey) {
-    for (const i of propertyLookup) {
+  getPropertyIndex(tabName, lookupKey) {
+    let propertyLookup = this.getPropertyLookup(tabName);
+    for (let i = 0; i < propertyLookup.length; i++) {
       if (propertyLookup[i] === lookupKey) {
-        return i;
+        return i + 1;
       }
     }
   }

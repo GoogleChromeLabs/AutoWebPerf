@@ -429,9 +429,10 @@ describe('GoogleSheetsConnector Locations tab', () => {
   });
 });
 
-describe('GoogleSheetsConnector getPropertyLookup', () => {
+describe('GoogleSheetsConnector getPropertyLookup and getPropertyIndex', () => {
   beforeEach(() => {
     // Overrides properties for testing.
+    initFakeSheet('configTab', fakeConfigSheetData);
     initFakeSheet('systemTab', fakeSystemSheetData);
     initFakeSheet('resultsTab', fakeResultsSheetData);
   });
@@ -452,5 +453,14 @@ describe('GoogleSheetsConnector getPropertyLookup', () => {
 
     propertyLookup = connector.getPropertyLookup('systemTab');
     expect(propertyLookup).toEqual(['isRecurring', 'triggerId']);
+  });
+
+  it('returns property index with given property key', async () => {
+    let index;
+    index = connector.getPropertyIndex('configTab', 'apiKeys.webpagetest');
+    expect(index).toEqual(1);
+
+    index = connector.getPropertyIndex('resultsTab', 'status');
+    expect(index).toEqual(4);
   });
 });
