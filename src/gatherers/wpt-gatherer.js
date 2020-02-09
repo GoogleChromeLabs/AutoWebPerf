@@ -54,6 +54,7 @@ class WebPageTestGatherer extends Gatherer {
       'DCL': 'data.median.firstView.domContentLoadedEventStart',
       'Bytes': 'data.median.firstView.bytesIn',
       'DOMElements': 'data.median.firstView.domElements',
+      'Connections': 'data.median.firstView.connections',
 
       'CSS': 'data.median.firstView.breakdown.css.bytes',
       'Fonts': 'data.median.firstView.breakdown.font.bytes',

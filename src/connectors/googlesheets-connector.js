@@ -97,14 +97,12 @@ class GoogleSheetsConnector extends Connector {
       'webpagetest.metrics.FMP': [5500, 4500, 2500],
       'webpagetest.metrics.DCL': [7000, 3500, 2000],
       'webpagetest.metrics.TTI': [8000, 7000, 5000],
-      'webpagetest.metrics.Speed Index': [8000, 4500, 3000],
+      'webpagetest.metrics.SpeedIndex': [8000, 4500, 3000],
       'webpagetest.metrics.TTFB': [4000, 2000, 1000],
-      'webpagetest.metrics.Start Render Time': [4500, 3000, 1500],
-      'webpagetest.metrics.Visually Complete Time': [8000, 4500, 3000],
-      'webpagetest.metrics.TTI (LH)': [8000, 7000, 5000],
-      'webpagetest.metrics.TTI (WPT)': [8000, 7000, 5000],
-      'webpagetest.metrics.Load Time': [10000, 6500, 5000],
-      'webpagetest.metrics.Connection': [30, 20, 10],
+      'webpagetest.metrics.FirstPaint': [4500, 3000, 1500],
+      'webpagetest.metrics.VisualComplete': [8000, 4500, 3000],
+      'webpagetest.metrics.onLoad': [10000, 6500, 5000],
+      'webpagetest.metrics.Connections': [30, 20, 10],
     };
 
     this.healthCheck();
@@ -367,11 +365,11 @@ class GoogleSheetsConnector extends Connector {
     let propertyLookup = this.getPropertyLookup('resultsTab');
 
     let columnIndex = 1;
-    for (const propertyKey in propertyLookup) {
+    propertyLookup.forEach(propertyKey => {
       let conditions = this.resultColumnConditions[propertyKey];
       if (conditions && conditions.length > 0) {
         let range = sheet.getRange(tabConfig.skipRows + 1, columnIndex,
-            sheet.getMaxRows(), 1);
+            sheet.getMaxRows() - tabConfig.skipRows, 1);
         let maxpoint = conditions[2], midpoint = conditions[1],
             minpoint = conditions[0];
         let maxcolor = '#68bb50', mincolor = '#e06666';
@@ -395,7 +393,7 @@ class GoogleSheetsConnector extends Connector {
         rules.push(rule);
       }
       columnIndex++;
-    }
+    });
     sheet.setConditionalFormatRules(rules);
   }
 
