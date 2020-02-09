@@ -125,6 +125,9 @@ class GoogleSheetsConnector extends Connector {
     // Init condition formatting.
     this.initConditionalFormat();
 
+    // Init user timezone.
+    this.initUserTimeZone();
+
     // Request for WebPageTest API Key.
     this.requestApiKey();
   }
@@ -248,13 +251,13 @@ class GoogleSheetsConnector extends Connector {
     if (tabConfig.dataAxis === DataAxis.ROW) {
       let data = sheet.getRange(
           tabConfig.propertyLookup, skipColumns + 1,
-          1, sheet.getLastColumn() - skipColumns -1).getValues();
+          1, sheet.getLastColumn() - skipColumns - 1).getValues();
       return data[0];
 
     } else {
       let data = sheet.getRange(
           skipRows + 1, tabConfig.propertyLookup,
-          sheet.getLastRow() - skipRows - 1, 1).getValues();
+          sheet.getLastRow() - skipRows, 1).getValues();
       return data.map(x => x[0]);
     }
   }
@@ -395,6 +398,11 @@ class GoogleSheetsConnector extends Connector {
       columnIndex++;
     });
     sheet.setConditionalFormatRules(rules);
+  }
+
+  initUserTimeZone() {
+    let userTimeZone = GoogleSheetsHelper.getUserTimeZone();
+    this.setSystemVar('USER_TIMEZONE', userTimeZone);
   }
 
   /**

@@ -409,7 +409,7 @@ describe('GoogleSheetsConnector Locations tab', () => {
       });
     };
 
-    connector.updateLocationList();
+    connector.initLocations();
     let locations = connector.getLocationList();
 
     expect(locations).toEqual([
