@@ -80,6 +80,13 @@ class GoogleSheetsConnector extends Connector {
       },
     };
 
+    this.validationsMaps = [{
+      fromTab: 'testsTab',
+      fromProperty: 'webpagetest.settings.location',
+      toTab: 'locationsTab',
+      toProperty: 'name',
+    }];
+
     this.resultColumnConditions = {
       'webpagetest.metrics.lighthouse.Performance': [0.4, 0.74, 0.75],
       'webpagetest.metrics.lighthouse.PWA': [0.4, 0.74, 0.75],
@@ -112,7 +119,10 @@ class GoogleSheetsConnector extends Connector {
     this.setSystemVar(this.recurringTriggerSystemVar, '');
 
     // Refresh location list.
-    this.updateLocationList();
+    this.initLocations();
+
+    // Init all validations.
+    this.initValidations();
 
     // Init condition formatting.
     this.initConditionalFormat();
@@ -184,6 +194,15 @@ class GoogleSheetsConnector extends Connector {
     return this.tabConfigs[tabName].sheet.getRange(rowIndex, 1, 1, lastColumn);
   }
 
+  getColumnRange(tabName, propertyKey) {
+    let tabConfig = awp.connector.tabConfigs[tabName];
+    let sheet = tabConfig.sheet;
+    let columnIndex = this.getPropertyIndex(tabName, propertyKey);
+    let range = sheet.getRange(tabConfig.skipRows + 1,
+        columnIndex, sheet.getLastRow() - tabConfig.skipRows, 1);
+    return range;
+  }
+
   getResultList(options) {
     options = options || {};
     options.appendRowIndex = true;
@@ -231,13 +250,13 @@ class GoogleSheetsConnector extends Connector {
     if (tabConfig.dataAxis === DataAxis.ROW) {
       let data = sheet.getRange(
           tabConfig.propertyLookup, skipColumns + 1,
-          1, sheet.getLastColumn() - skipColumns).getValues();
+          1, sheet.getLastColumn() - skipColumns -1).getValues();
       return data[0];
 
     } else {
       let data = sheet.getRange(
           skipRows + 1, tabConfig.propertyLookup,
-          sheet.getLastRow() - skipRows, 1).getValues();
+          sheet.getLastRow() - skipRows - 1, 1).getValues();
       return data.map(x => x[0]);
     }
   }
@@ -256,7 +275,7 @@ class GoogleSheetsConnector extends Connector {
     return locations;
   }
 
-  updateLocationList() {
+  initLocations() {
     // Reset locations tab.
     this.clearList('locationsTab');
 
@@ -266,6 +285,7 @@ class GoogleSheetsConnector extends Connector {
     let json = JSON.parse(res);
 
     let locations = [];
+    let pendingByLocation = {}
     Object.keys(json.data).forEach(key => {
       let data = json.data[key];
       let newLocation = {
@@ -275,6 +295,7 @@ class GoogleSheetsConnector extends Connector {
         browsers: data.Browsers,
       };
       newLocation.key = key;
+      pendingByLocation[newLocation.name] = newLocation.pendingTests;
       locations.push(newLocation);
     });
 
@@ -282,17 +303,15 @@ class GoogleSheetsConnector extends Connector {
       return rowIndex; // No need to modify rowIndex.
     });
 
-    // Re-wire location drop list validation.
-    let locationsColumnInTests = this.getPropertyIndex(
-        'testsTab', 'webpagetest.settings.location');
-    let locationsNameInLocations = this.getPropertyIndex(
-        'locationsTab', 'name');
-    let range = sheet.getRange(tabConfig.skipRows + 1, locationsColumnInTests,
-          sheet.getLastRow(), 1);
-    let validation = sheet.getRange(tabConfig.skipRows + 1, locationsNameInLocations,
-          sheet.getLastRow(), 1);
-    let rule = SpreadsheetApp.newDataValidation().requireValueInRange(validation).build();
-    range.setDataValidation(rule);
+    // Overrides pending tests to property 'webpagetest.pendingTests'.
+    let propertyKey = 'webpagetest.pendingTests';
+    let tests = this.getTestList();
+    tests.forEach(test => {
+      if (!test.webpagetest || !test.webpagetest.settings.location) return;
+      test.webpagetest.pendingTests =
+          pendingByLocation[test.webpagetest.settings.location];
+    });
+    this.updateTestList(tests);
   }
 
   updateList(tabName, items, rowIndexFunc) {
@@ -327,6 +346,18 @@ class GoogleSheetsConnector extends Connector {
     let lastRow = tabConfig.sheet.getLastRow();
     tabConfig.sheet.deleteRows(
         tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
+  }
+
+  initValidations() {
+    this.validationsMaps.forEach(mapping => {
+      let targetRange = this.getColumnRange(
+          mapping.fromTab, mapping.fromProperty);
+      let validationRange = this.getColumnRange(
+          mapping.toTab, mapping.toProperty);
+      let rule = SpreadsheetApp.newDataValidation().requireValueInRange(
+          validationRange).build();
+      targetRange.setDataValidation(rule);
+    });
   }
 
   initConditionalFormat() {

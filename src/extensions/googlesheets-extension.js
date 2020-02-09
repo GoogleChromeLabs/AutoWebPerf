@@ -22,6 +22,8 @@ class GoogleSheetsExtension extends Extension {
    * @param {object} params
    */
   beforeRun(params) {
+    this.connector.initLocations();
+    this.connector.initValidations();
     this.locations = this.locations || this.connector.getLocationList();
 
     let test = params.test;
