@@ -81,7 +81,7 @@ class WebPageTestGatherer extends Gatherer {
       'timeline': settings.hasTimeline || false,
       'block': settings.block || '',
       'script': settings.script || '',
-      'location': `${settings.location}.${settings.connection}` || '',
+      'location': `${settings.locationId}.${settings.connection}` || '',
       'mobile': settings.mobile || '',
     }
 
@@ -179,7 +179,16 @@ class WebPageTestGatherer extends Gatherer {
           metadata: gathererData.metadata,
           settings: gathererData.settings,
           metrics: metrics,
-        }
+        };
+
+      } else if (json.statusCode === 100) {
+        return {
+          status: Status.PENDING,
+          lastRunNote: json.statusText,
+          metadata: gathererData.metadata,
+          settings: gathererData.settings,
+        };
+
       } else if (json.statusCode === 400) {
         return {
           status: Status.ERROR,

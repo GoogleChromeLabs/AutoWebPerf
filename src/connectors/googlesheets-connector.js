@@ -25,15 +25,6 @@ class GoogleSheetsConnector extends Connector {
     this.locationApiEndpoint = 'http://www.webpagetest.org/getLocations.php?f=json&k=A';
 
     this.activeSpreadsheet = SpreadsheetApp.getActive();
-    this.configSheet = this.activeSpreadsheet.getSheetByName(config.configTabName);
-    this.testsSheet = this.activeSpreadsheet.getSheetByName(config.testsTabName);
-    this.resultsSheet = this.activeSpreadsheet.getSheetByName(config.resultsTabName);
-    this.systemSheet = this.activeSpreadsheet.getSheetByName(config.systemTabName);
-    this.locationsSheet = this.activeSpreadsheet.getSheetByName(config.locationsTabName);
-    // this.compareSheet = this.activeSpreadsheet.getSheetByName('Comparison');
-    // this.frequencySheet = this.activeSpreadsheet.getSheetByName('schedule_frequency');
-    // this.userApiKeySheet = this.activeSpreadsheet.getSheetByName('User_API_Key');
-    // this.perfBudgetDashSheet = this.activeSpreadsheet.getSheetByName('Perf Budget Dashboard');
 
     this.tabConfigs = {
       testsTab: {
@@ -47,6 +38,14 @@ class GoogleSheetsConnector extends Connector {
       resultsTab: {
         tabName: config.resultsTabName,
         sheet: this.activeSpreadsheet.getSheetByName(config.resultsTabName),
+        dataAxis: DataAxis.ROW,
+        propertyLookup: 3, // Starts at 1
+        skipColumns: 0,
+        skipRows: 3,
+      },
+      latestResultsTab: {
+        tabName: config.latestResultsTabName,
+        sheet: this.activeSpreadsheet.getSheetByName(config.latestResultsTabName),
         dataAxis: DataAxis.ROW,
         propertyLookup: 3, // Starts at 1
         skipColumns: 0,
@@ -350,7 +349,8 @@ class GoogleSheetsConnector extends Connector {
         }
       });
 
-      let range = this.getRowRange(tabId, rowIndexFunc(item, rowIndex));
+      let targetRowIndex = rowIndexFunc ? rowIndexFunc(item, rowIndex) : rowIndex;
+      let range = this.getRowRange(tabId, targetRowIndex);
       range.setValues([values]);
       rowIndex++;
     });

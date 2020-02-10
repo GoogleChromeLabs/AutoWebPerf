@@ -82,6 +82,22 @@ const GoogleSheetsHelper = {
   },
 
   /**
+   * Deletes all triggers that match the trigger function name.
+   * @param {string} triggerId The Trigger ID.
+   */
+  deleteTriggerByFunction: (functionName) => {
+    // Loop over all triggers.
+    let triggers = ScriptApp.getProjectTriggers();
+    for (const i in triggers) {
+      // If the current trigger is the correct one, delete it.
+      if (triggers[i].getHandlerFunction() === functionName) {
+        ScriptApp.deleteTrigger(triggers[i]);
+        break;
+      }
+    }
+  },
+
+  /**
    * Deletes all triggers.
    */
   deleteAllTriggers: () => {

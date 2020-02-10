@@ -373,8 +373,11 @@ class AutoWebPerf {
       }
     });
 
-    if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
+    if (statuses.filter(s => s === Status.RETRIEVED).length === statuses.length) {
       newResult.status = Status.RETRIEVED;
+    }
+    if (statuses.filter(s => s === Status.PENDING).length > 0) {
+      newResult.status = Status.PENDING;
     }
     return newResult;
   }

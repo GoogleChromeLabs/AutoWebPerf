@@ -24,7 +24,7 @@ class GoogleSheetsExtension extends Extension {
 
     let test = params.test;
     this.locations.forEach(location => {
-      if (test.webpagetest.settings.locationId === location.name) {
+      if (test.webpagetest.settings.location === location.name) {
         test.webpagetest.settings.locationId = location.id;
       }
     });
@@ -37,11 +37,12 @@ class GoogleSheetsExtension extends Extension {
   afterRun(params) {
     this.locations = this.locations || this.connector.getLocations();
     let test = params.test;
+    let result = params.result;
 
     // Replace locationId with location name.
     this.locations.forEach(location => {
       if (test.webpagetest.settings.locationId === location.id) {
-        test.webpagetest.settings.locationId = location.name;
+        test.webpagetest.settings.location = location.name;
       }
     });
 
@@ -51,6 +52,12 @@ class GoogleSheetsExtension extends Extension {
           new Date(test.recurring.nextTriggerTimestamp), this.userTimeZone);
     } else {
       test.recurring.nextTriggerTime = '';
+    }
+
+    // Format createdDate
+    if (result && result.createdTimestamp) {
+      result.createdDate = GoogleSheetsHelper.getFormattedDate(
+          new Date(result.createdTimestamp), this.userTimeZone, 'MM/dd/YYYY');
     }
   }
 
@@ -76,17 +83,35 @@ class GoogleSheetsExtension extends Extension {
     let pendingResults = results.filter(result => {
       return result.status !== Status.RETRIEVED;
     });
+    let retrievedResults = results.filter(result => {
+      return result.status === Status.RETRIEVED;
+    });
+
+    // Collect all latest retrieved results by labels.
+    let labels = retrievedResults.map(result => result.label);
+    let resultsByLabel = {};
+
+    let latestResults = this.connector.getList('latestResultsTab');
+    latestResults.forEach(result => {
+      resultsByLabel[result.label] = result;
+    });
+    retrievedResults.forEach(result => {
+      resultsByLabel[result.label] = result;
+    });
+
+    let newLatestResults = [];
+    Object.keys(resultsByLabel).forEach(label => {
+      newLatestResults.push(resultsByLabel[label]);
+    });
+
+    this.connector.updateList('latestResultsTab', newLatestResults,
+        null /* use default rowIndex */);
 
     // Delete trigger if all results are retrieved.
     if (pendingResults.length === 0) {
-      let triggerId = this.connector.getSystemVar(SystemVars.RETRIEVE_TRIGGER_ID);
-      console.log(`${SystemVars.RETRIEVE_TRIGGER_ID} = ${triggerId}`);
-
-      if (triggerId) {
-        console.log('Deleting Trigger for retrieveResults...');
-        GoogleSheetsHelper.deleteTrigger(triggerId);
-        this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, '');
-      }
+      console.log('Deleting Trigger for retrieveResults...');
+      GoogleSheetsHelper.deleteTriggerByFunction('retrieveResults');
+      this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, '');
     }
   }
 }
