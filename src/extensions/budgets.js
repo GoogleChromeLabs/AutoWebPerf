@@ -41,8 +41,8 @@ class BudgetsExtension extends Extension {
   processResult(result, budgets) {
     assert(result, 'result is missing.');
 
-    let metricValues = result[this.dataSource].metrics;
-    if (!budgets || budgets === {}) return;
+    let metricValues = (result[this.dataSource] || {}).metrics;
+    if (!budgets || budgets === {} || !metricValues) return;
 
     result.budgets = {
       metrics: {},
