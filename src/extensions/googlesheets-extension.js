@@ -20,7 +20,7 @@ class GoogleSheetsExtension extends Extension {
    * @param {object} params
    */
   beforeRun(params) {
-    this.locations = this.locations || this.connector.getLocationList();
+    this.locations = this.locations || this.connector.getList('locationsTab');
 
     let test = params.test;
     this.locations.forEach(location => {
@@ -35,7 +35,7 @@ class GoogleSheetsExtension extends Extension {
    * @param {object} params
    */
   afterRun(params) {
-    this.locations = this.locations || this.connector.getLocations();
+    this.locations = this.locations || this.connector.getList('locationsTab');
     let test = params.test;
     let result = params.result;
 
