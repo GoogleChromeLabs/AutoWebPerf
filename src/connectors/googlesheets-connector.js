@@ -267,11 +267,6 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
-  getLocationList() {
-    let locations = this.getList('locationsTab');
-    return locations;
-  }
-
   initTriggers() {
     GoogleSheetsHelper.deleteAllTriggers();
     Object.keys(SystemVars).forEach(key => {
@@ -291,14 +286,15 @@ class GoogleSheetsConnector extends Connector {
 
   initLocations() {
     // Reset locations tab.
-    // this.clearList('locationsTab');
-
+    let locations = this.getList('locationsTab');
     let tabConfig = this.tabConfigs['locationsTab'];
     let sheet = tabConfig.sheet;
+
+    // Get new locations from remote API.
     let res = this.apiHelper.fetch(this.locationApiEndpoint);
     let json = JSON.parse(res);
 
-    let locations = [];
+    let newLocations = [];
     let pendingByLocation = {}
     Object.keys(json.data).forEach(key => {
       let data = json.data[key];
@@ -310,12 +306,14 @@ class GoogleSheetsConnector extends Connector {
       };
       newLocation.key = key;
       pendingByLocation[newLocation.name] = newLocation.pendingTests;
-      locations.push(newLocation);
+      newLocations.push(newLocation);
     });
 
-    this.updateList('locationsTab', locations, (location, rowIndex) => {
-      return rowIndex; // No need to modify rowIndex.
-    });
+    // Add empty rows if the original location list was longer than the new one.
+    for (let i=newLocations.length; i<locations.length; i++) {
+      newLocations.push({});
+    }
+    this.updateList('locationsTab', newLocations);
 
     // Overrides pending tests to property 'webpagetest.pendingTests'.
     let propertyKey = 'webpagetest.pendingTests';
