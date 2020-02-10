@@ -4,17 +4,15 @@ const assert = require('../utils/assert');
 const Status = require('../common/status');
 const setObject = require('../utils/set-object');
 const Extension = require('./extension');
-const {GoogleSheetsHelper} = require('../helpers/googlesheets-helper');
+const {GoogleSheetsHelper, SystemVars} = require('../helpers/googlesheets-helper');
 
 class GoogleSheetsExtension extends Extension {
   constructor(config) {
     super();
     assert(config.connector, 'connector is missing in config.');
     this.connector = config.connector;
+    this.userTimeZone = GoogleSheetsHelper.getUserTimeZone();
     this.locations = null;
-
-    this.retrieveTriggerSystemVar = 'RETRIEVE_TRIGGER_ID';
-    this.recurringTriggerSystemVar = 'RECURRING_TRIGGER_ID';
   }
 
   /**
@@ -22,8 +20,6 @@ class GoogleSheetsExtension extends Extension {
    * @param {object} params
    */
   beforeRun(params) {
-    this.connector.initLocations();
-    this.connector.initValidations();
     this.locations = this.locations || this.connector.getLocationList();
 
     let test = params.test;
@@ -40,29 +36,37 @@ class GoogleSheetsExtension extends Extension {
    */
   afterRun(params) {
     this.locations = this.locations || this.connector.getLocations();
-
     let test = params.test;
+
+    // Replace locationId with location name.
     this.locations.forEach(location => {
       if (test.webpagetest.settings.locationId === location.id) {
         test.webpagetest.settings.locationId = location.name;
       }
     });
+
+    // Format recurring.nextTrigger with user's timezone.
+    if (test.recurring.nextTriggerTimestamp) {
+      test.recurring.nextTriggerTime = GoogleSheetsHelper.getFormattedDate(
+          new Date(test.recurring.nextTriggerTimestamp), this.userTimeZone);
+    } else {
+      test.recurring.nextTriggerTime = '';
+    }
   }
 
   beforeAllRun(params) {}
 
   afterAllRuns(params) {
+    // Create trigger for retrieving results.
     let tests = params.tests || [];
-
     if (tests.length > 0) {
-      let triggerId = this.connector.getSystemVar(this.retrieveTriggerSystemVar);
-      console.log(`${this.retrieveTriggerSystemVar} = ${triggerId}`);
+      let triggerId = this.connector.getSystemVar(SystemVars.RETRIEVE_TRIGGER_ID);
+      console.log(`${SystemVars.RETRIEVE_TRIGGER_ID} = ${triggerId}`);
 
       if (!triggerId) {
         console.log('Creating Trigger for retrieveResults...');
-
-        triggerId = GoogleSheetsHelper.createTrigger('retrieveResults', 10 /* minutes */);
-        this.connector.setSystemVar(this.retrieveTriggerSystemVar, triggerId);
+        triggerId = GoogleSheetsHelper.createTimeBasedTrigger('retrieveResults', 10 /* minutes */);
+        this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, triggerId);
       }
     }
   }
@@ -75,13 +79,13 @@ class GoogleSheetsExtension extends Extension {
 
     // Delete trigger if all results are retrieved.
     if (pendingResults.length === 0) {
-      let triggerId = this.connector.getSystemVar(this.retrieveTriggerSystemVar);
-      console.log(`${this.retrieveTriggerSystemVar} = ${triggerId}`);
+      let triggerId = this.connector.getSystemVar(SystemVars.RETRIEVE_TRIGGER_ID);
+      console.log(`${SystemVars.RETRIEVE_TRIGGER_ID} = ${triggerId}`);
 
       if (triggerId) {
         console.log('Deleting Trigger for retrieveResults...');
         GoogleSheetsHelper.deleteTrigger(triggerId);
-        this.connector.setSystemVar(this.retrieveTriggerSystemVar, '');
+        this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, '');
       }
     }
   }

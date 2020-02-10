@@ -272,7 +272,7 @@ class AutoWebPerf {
 
         let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
         if (!offset) {
-          recurring.nextTriggerTimestamp = null;
+          recurring.nextTriggerTimestamp = '';
         } else {
           recurring.nextTriggerTimestamp = nowtime + offset;
         }

@@ -12,6 +12,13 @@ class GoogleSheetsApiHandler {
   }
 }
 
+const SystemVars = {
+  RETRIEVE_TRIGGER_ID: 'RETRIEVE_TRIGGER_ID',
+  RECURRING_TRIGGER_ID: 'RECURRING_TRIGGER_ID',
+  ONEDIT_TRIGGER_ID: 'ONEDIT_TRIGGER_ID',
+  LAST_INIT_TIMESTAMP: 'LAST_INIT_TIMESTAMP',
+}
+
 const GoogleSheetsHelper = {
   /**
    * Encrypt a string to MD5.
@@ -35,9 +42,21 @@ const GoogleSheetsHelper = {
   },
 
   /**
+   * Create a trigger to run when editing a cell.
+   */
+  createOnEditTrigger: (functionName) => {
+    // Check if trigger exists and create it if not.
+    var trigger = ScriptApp.newTrigger(functionName)
+                          .forSpreadsheet(SpreadsheetApp.getActive())
+                          .onEdit()
+                          .create();
+    return trigger.getUniqueId();
+  },
+
+  /**
    * Create a trigger to automatically retrieve results every minutes.
    */
-  createTrigger: (functionName, minutes) => {
+  createTimeBasedTrigger: (functionName, minutes) => {
     // Check if trigger exists and create it if not.
     var trigger = ScriptApp.newTrigger(functionName)
                           .timeBased()
@@ -104,11 +123,12 @@ const GoogleSheetsHelper = {
    */
   getFormattedDate: (dateInput, timeZone, format) => {
     return Utilities.formatDate(dateInput, timeZone,
-        format || 'MM/dd/YY HH:mm');
+        format || 'MM/dd/YYYY HH:mm (Z)');
   },
 }
 
 module.exports = {
   GoogleSheetsApiHandler,
   GoogleSheetsHelper,
+  SystemVars,
 };

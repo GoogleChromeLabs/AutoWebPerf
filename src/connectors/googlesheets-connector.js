@@ -6,7 +6,7 @@ const Status = require('../common/status');
 const setObject = require('../utils/set-object');
 const transpose = require('../utils/transpose');
 const Connector = require('./connector');
-const {GoogleSheetsHelper} = require('../helpers/googlesheets-helper');
+const {GoogleSheetsHelper, SystemVars} = require('../helpers/googlesheets-helper');
 
 const DataAxis = {
   ROW: 'row',
@@ -23,8 +23,6 @@ class GoogleSheetsConnector extends Connector {
 
     this.apiHelper = apiHelper;
     this.locationApiEndpoint = 'http://www.webpagetest.org/getLocations.php?f=json&k=A';
-    this.retrieveTriggerSystemVar = 'RETRIEVE_TRIGGER_ID';
-    this.recurringTriggerSystemVar = 'RECURRING_TRIGGER_ID';
 
     this.activeSpreadsheet = SpreadsheetApp.getActive();
     this.configSheet = this.activeSpreadsheet.getSheetByName(config.configTabName);
@@ -110,11 +108,7 @@ class GoogleSheetsConnector extends Connector {
 
   init() {
     // Delete all previous triggers, and create submitting recurring trigger.
-    GoogleSheetsHelper.deleteAllTriggers();
-    this.setSystemVar(this.retrieveTriggerSystemVar, '');
-    let triggerId = GoogleSheetsHelper.createTrigger(
-        'createTrigger', 10 /* minutes */);
-    this.setSystemVar(this.recurringTriggerSystemVar, '');
+    this.initTriggers();
 
     // Refresh location list.
     this.initLocations();
@@ -130,11 +124,14 @@ class GoogleSheetsConnector extends Connector {
 
     // Request for WebPageTest API Key.
     this.requestApiKey();
+
+    // Record the last timestamp of init.
+    this.setSystemVar(SystemVars.LAST_INIT_TIMESTAMP, Date.now());
   }
 
-  getList(tabName, options) {
+  getList(tabId, options) {
     options = options || {};
-    let tabConfig = this.tabConfigs[tabName];
+    let tabConfig = this.tabConfigs[tabId];
     let data = tabConfig.sheet.getDataRange().getValues();
 
     let skipRows = tabConfig.skipRows || 0;
@@ -156,7 +153,7 @@ class GoogleSheetsConnector extends Connector {
         if (propertyLookup[j]) {
           if (typeof propertyLookup[j] !== 'string') {
             throw new Error(
-                `${tabName} Tab: Property lookup ${propertyLookup[j]} is not a string`);
+                `${tabId} Tab: Property lookup ${propertyLookup[j]} is not a string`);
           }
 
           setObject(newItem, propertyLookup[j], data[i][j]);
@@ -190,15 +187,15 @@ class GoogleSheetsConnector extends Connector {
     } /* rowIndexFunc */);
   }
 
-  getRowRange(tabName, rowIndex) {
-    let lastColumn = this.tabConfigs[tabName].sheet.getLastColumn();
-    return this.tabConfigs[tabName].sheet.getRange(rowIndex, 1, 1, lastColumn);
+  getRowRange(tabId, rowIndex) {
+    let lastColumn = this.tabConfigs[tabId].sheet.getLastColumn();
+    return this.tabConfigs[tabId].sheet.getRange(rowIndex, 1, 1, lastColumn);
   }
 
-  getColumnRange(tabName, propertyKey) {
-    let tabConfig = awp.connector.tabConfigs[tabName];
+  getColumnRange(tabId, propertyKey) {
+    let tabConfig = awp.connector.tabConfigs[tabId];
     let sheet = tabConfig.sheet;
-    let columnIndex = this.getPropertyIndex(tabName, propertyKey);
+    let columnIndex = this.getPropertyIndex(tabId, propertyKey);
     let range = sheet.getRange(tabConfig.skipRows + 1,
         columnIndex, sheet.getLastRow() - tabConfig.skipRows, 1);
     return range;
@@ -242,8 +239,8 @@ class GoogleSheetsConnector extends Connector {
     } /* rowIndexFunc */);
   }
 
-  getPropertyLookup(tabName) {
-    let tabConfig = this.tabConfigs[tabName];
+  getPropertyLookup(tabId) {
+    let tabConfig = this.tabConfigs[tabId];
     let sheet = tabConfig.sheet;
     let skipRows = tabConfig.skipRows || 0;
     let skipColumns = tabConfig.skipColumns || 0;
@@ -262,8 +259,8 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
-  getPropertyIndex(tabName, lookupKey) {
-    let propertyLookup = this.getPropertyLookup(tabName);
+  getPropertyIndex(tabId, lookupKey) {
+    let propertyLookup = this.getPropertyLookup(tabId);
     for (let i = 0; i < propertyLookup.length; i++) {
       if (propertyLookup[i] === lookupKey) {
         return i + 1;
@@ -276,9 +273,26 @@ class GoogleSheetsConnector extends Connector {
     return locations;
   }
 
+  initTriggers() {
+    GoogleSheetsHelper.deleteAllTriggers();
+    Object.keys(SystemVars).forEach(key => {
+      this.setSystemVar(key, '');
+    });
+
+    // Create recurring trigger.
+    let triggerId;
+    triggerId = GoogleSheetsHelper.createTimeBasedTrigger(
+        'submitRecurringTests', 10 /* minutes */);
+    this.setSystemVar(SystemVars.RECURRING_TRIGGER_ID, triggerId);
+
+    // Create onEdit trigger.
+    triggerId = GoogleSheetsHelper.createOnEditTrigger('onEditFunc');
+    this.setSystemVar(SystemVars.ONEDIT_TRIGGER_ID, triggerId);
+  }
+
   initLocations() {
     // Reset locations tab.
-    this.clearList('locationsTab');
+    // this.clearList('locationsTab');
 
     let tabConfig = this.tabConfigs['locationsTab'];
     let sheet = tabConfig.sheet;
@@ -315,8 +329,8 @@ class GoogleSheetsConnector extends Connector {
     this.updateTestList(tests);
   }
 
-  updateList(tabName, items, rowIndexFunc) {
-    let tabConfig = this.tabConfigs[tabName];
+  updateList(tabId, items, rowIndexFunc) {
+    let tabConfig = this.tabConfigs[tabId];
     let data = tabConfig.sheet.getDataRange().getValues();
     let propertyLookup = data[tabConfig.propertyLookup - 1];
 
@@ -326,7 +340,7 @@ class GoogleSheetsConnector extends Connector {
       propertyLookup.forEach(lookup => {
         if (typeof lookup !== 'string') {
           throw new Error(
-              `${tabName} Tab: Property lookup ${lookup} is not a string`);
+              `${tabId} Tab: Property lookup ${lookup} is not a string`);
         }
         try {
           let value = lookup ? eval(`item.${lookup}`) : '';
@@ -336,14 +350,14 @@ class GoogleSheetsConnector extends Connector {
         }
       });
 
-      let range = this.getRowRange(tabName, rowIndexFunc(item, rowIndex));
+      let range = this.getRowRange(tabId, rowIndexFunc(item, rowIndex));
       range.setValues([values]);
       rowIndex++;
     });
   }
 
-  clearList(tabName) {
-    let tabConfig = this.tabConfigs[tabName];
+  clearList(tabId) {
+    let tabConfig = this.tabConfigs[tabId];
     let lastRow = tabConfig.sheet.getLastRow();
     tabConfig.sheet.deleteRows(
         tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
@@ -405,6 +419,10 @@ class GoogleSheetsConnector extends Connector {
     this.setSystemVar('USER_TIMEZONE', userTimeZone);
   }
 
+  onEditCell(tabId, propertyKey) {
+
+  }
+
   /**
    * Request WPT API Key.
    * @param {string} message
@@ -454,8 +472,8 @@ class GoogleSheetsConnector extends Connector {
     this.setVarToTab('systemTab', key, value);
   }
 
-  getVarFromTab(tabName, key) {
-    let object = (this.getList(tabName) || [])[0];
+  getVarFromTab(tabId, key) {
+    let object = (this.getList(tabId) || [])[0];
     try {
       return eval('object.' + key);
     } catch(e) {
@@ -463,10 +481,10 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
-  setVarToTab(tabName, key, value) {
-    let tabConfig = this.tabConfigs[tabName];
+  setVarToTab(tabId, key, value) {
+    let tabConfig = this.tabConfigs[tabId];
     let data = tabConfig.sheet.getDataRange().getValues();
-    let propertyLookup = this.getPropertyLookup(tabName);
+    let propertyLookup = this.getPropertyLookup(tabId);
 
     let i = 1;
     propertyLookup.forEach(property => {
