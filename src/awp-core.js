@@ -271,15 +271,18 @@ class AutoWebPerf {
         this.logDebug('AutoWebPerf::recurring with activateOnly.');
 
         let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
-
         if (!offset) {
           recurring.nextTriggerTimestamp = null;
-          recurring.nextTrigger = null;
         } else {
           recurring.nextTriggerTimestamp = nowtime + offset;
-          recurring.nextTrigger = new Date(nowtime + offset).toString();
         }
         recurring.activatedFrequency = recurring.frequency;
+
+        // Run extension with empty result.
+        this.runExtensions(extensions, 'afterRun', {
+          test: test,
+          result: {},
+        });
 
       } else {
         // Run normal recurring tests.
@@ -303,7 +306,6 @@ class AutoWebPerf {
           // Update Test item.
           let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
           recurring.nextTriggerTimestamp = nowtime + offset;
-          recurring.nextTrigger = new Date(nowtime + offset).toString();
         }
       }
       testsToUpdate.push(test);

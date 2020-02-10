@@ -297,6 +297,18 @@ describe('AutoWebPerf with fake modules', () => {
     expect(awp.extensions.fake.afterRun.mock.calls.length).toBe(10);
   });
 
+  it('runs activateOnly recurring and executes extensions.', async () => {
+    awp.connector.tests = generateFakeTests(10, {
+      recurring: {frequency: 'daily'},
+    });
+
+    awp.recurring({activateOnly: true});
+    expect(awp.extensions.fake.beforeAllRuns.mock.calls.length).toBe(1);
+    expect(awp.extensions.fake.afterAllRuns.mock.calls.length).toBe(1);
+    expect(awp.extensions.fake.beforeRun.mock.calls.length).toBe(10);
+    expect(awp.extensions.fake.afterRun.mock.calls.length).toBe(10);
+  });
+
   it('runs recurring through a list of tests and executes extensions.', async () => {
     awp.connector.tests = generateFakeTests(10, {
       recurring: {frequency: 'daily'},
