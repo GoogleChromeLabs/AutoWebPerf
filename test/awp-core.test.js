@@ -57,12 +57,13 @@ let generateFakeResults = function(amount, options) {
         settings: {
           connection: '4G',
         },
+        lastRunNote: undefined,
       },
     };
 
-    if (options.retrieved) {
-      result.status = Status.RETRIEVED;
-      result.fake.status = Status.RETRIEVED;
+    if (options.status) {
+      result.status = options.status;
+      result.fake.status = options.status;
       result.fake.metrics = {
         FCP: 500,
       };
@@ -120,13 +121,8 @@ class FakeConnector extends Connector {
 
 class FakeGatherer extends Gatherer {
   run(test) {
-    let result = test;
-    result.id = 'result-' + test.id;
-    result.type = 'single';
-    result.status = Status.SUBMITTED;
     return {
       status: Status.SUBMITTED,
-      settings: result.fake.settings,
     };
   }
   retrieve(result) {
@@ -230,7 +226,7 @@ describe('AutoWebPerf with fake modules', () => {
     awp.retrieve();
 
     cleanFakeResults(awp.connector.results);
-    let expectedResults = generateFakeResults(10, {retrieved: true});
+    let expectedResults = generateFakeResults(10, {status: Status.RETRIEVED});
     expect(awp.getResults()).toEqual(expectedResults);
   });
 
@@ -246,7 +242,7 @@ describe('AutoWebPerf with fake modules', () => {
 
     awp.retrieve();
     cleanFakeResults(awp.connector.results);
-    expectedResults = generateFakeResults(95, {retrieved: true});
+    expectedResults = generateFakeResults(95, {status: Status.RETRIEVED});
     expect(awp.getResults()).toEqual(expectedResults);
   });
 
@@ -262,7 +258,7 @@ describe('AutoWebPerf with fake modules', () => {
 
     awp.retrieve();
     cleanFakeResults(awp.connector.results);
-    expectedResults = generateFakeResults(22, {retrieved: true});
+    expectedResults = generateFakeResults(22, {status: Status.RETRIEVED});
     expect(awp.getResults()).toEqual(expectedResults);
   });
 
@@ -329,5 +325,105 @@ describe('AutoWebPerf with fake modules', () => {
     expect(awp.extensions.fake.afterAllRetrieves.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.beforeRetrieve.mock.calls.length).toBe(10);
     expect(awp.extensions.fake.afterRetrieve.mock.calls.length).toBe(10);
+  });
+
+  it('updates overall status based on responses from data sources.', async () => {
+    let result;
+    let fakeGatherer1 = new FakeGatherer();
+    let fakeGatherer2 = new FakeGatherer();
+    let fakeGatherer3 = new FakeGatherer();
+
+    let genGatherer = (expectedStatus) => {
+      return {
+        run: (test) => {
+          return {
+            status: expectedStatus,
+          };
+        },
+        retrieve: (result) => {
+          return {
+            status: expectedStatus,
+          };
+        }
+      }
+    };
+    awp.apiKeys = {
+      fake1: 'TEST_APIKEY',
+      fake2: 'TEST_APIKEY',
+      fake3: 'TEST_APIKEY',
+    }
+    awp.dataSources = ['fake1', 'fake2', 'fake3'];
+
+    // When all gatherers return submitted.
+    awp.connector.tests = generateFakeTests(1);
+    awp.connector.tests[0].fake1 = {};
+    awp.connector.tests[0].fake2 = {};
+    awp.connector.tests[0].fake3 = {};
+    fakeGatherer1 = genGatherer(Status.SUBMITTED);
+    fakeGatherer2 = genGatherer(Status.SUBMITTED);
+    fakeGatherer3 = genGatherer(Status.SUBMITTED);
+    awp.gatherers = {
+      fake1: fakeGatherer1,
+      fake2: fakeGatherer2,
+      fake3: fakeGatherer3,
+    }
+    awp.run();
+
+    result = awp.getResults()[0];
+    expect(result.status).toEqual(Status.SUBMITTED);
+
+    // When some gatherers return submitted.
+    awp.connector.tests = generateFakeTests(1);
+    awp.connector.tests[0].fake1 = {};
+    awp.connector.tests[0].fake2 = {};
+    awp.connector.tests[0].fake3 = {};
+    fakeGatherer1 = genGatherer(Status.RETRIEVED);
+    fakeGatherer2 = genGatherer(Status.RETRIEVED);
+    fakeGatherer3 = genGatherer(Status.SUBMITTED);
+    awp.gatherers = {
+      fake1: fakeGatherer1,
+      fake2: fakeGatherer2,
+      fake3: fakeGatherer3,
+    }
+    awp.run();
+
+    result = awp.getResults()[1];
+    expect(result.status).toEqual(Status.SUBMITTED);
+
+    // When all gatherers return retrieved.
+    awp.connector.tests = generateFakeTests(1);
+    awp.connector.tests[0].fake1 = {};
+    awp.connector.tests[0].fake2 = {};
+    awp.connector.tests[0].fake3 = {};
+    fakeGatherer1 = genGatherer(Status.RETRIEVED);
+    fakeGatherer2 = genGatherer(Status.RETRIEVED);
+    fakeGatherer3 = genGatherer(Status.RETRIEVED);
+    awp.gatherers = {
+      fake1: fakeGatherer1,
+      fake2: fakeGatherer2,
+      fake3: fakeGatherer3,
+    }
+    awp.run();
+
+    result = awp.getResults()[2];
+    expect(result.status).toEqual(Status.RETRIEVED);
+
+    // When any gatherer returns error.
+    awp.connector.tests = generateFakeTests(1);
+    awp.connector.tests[0].fake1 = {};
+    awp.connector.tests[0].fake2 = {};
+    awp.connector.tests[0].fake3 = {};
+    fakeGatherer1 = genGatherer(Status.RETRIEVED);
+    fakeGatherer2 = genGatherer(Status.ERROR);
+    fakeGatherer3 = genGatherer(Status.RETRIEVED);
+    awp.gatherers = {
+      fake1: fakeGatherer1,
+      fake2: fakeGatherer2,
+      fake3: fakeGatherer3,
+    }
+    awp.run();
+
+    result = awp.getResults()[3];
+    expect(result.status).toEqual(Status.ERROR);
   });
 });

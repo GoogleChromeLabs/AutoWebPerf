@@ -88,6 +88,7 @@ class GoogleSheetsConnector extends Connector {
       'webpagetest.metrics.lighthouse.Performance': [0.4, 0.74, 0.75],
       'webpagetest.metrics.lighthouse.PWA': [0.4, 0.74, 0.75],
       'webpagetest.metrics.lighthouse.FCP': [5000, 4000, 2000],
+      'webpagetest.metrics.lighthouse.FMP': [5500, 4500, 2500],
       'webpagetest.metrics.lighthouse.FID': [300, 250, 50],
       'webpagetest.metrics.lighthouse.TTI': [8000, 7000, 5000],
       'webpagetest.metrics.FCP': [5000, 4000, 2000],

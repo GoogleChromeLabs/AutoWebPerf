@@ -16,20 +16,20 @@ const TestType = {
 
 const Frequency = {
   NONE: 'none',
+  HOURLY: 'hourly', // TODO: Hourly is for development testing.
   DAILY: 'daily',
   WEEKLY: 'weekly',
   BIWEEKLY: 'biweekly',
   MONTHLY: 'monthly',
-  TEST: 'test',
 };
 
 // TODO: May need to use MomemtJS for more accurate date offset.
 const FrequencyInMinutes = {
+  HOURLY: 60 * 60 * 1000, // TODO: Hourly is for development testing.
   DAILY: 24 * 60 * 60 * 1000,
   WEEKLY: 7 * 24 * 60 * 60 * 1000,
   BIWEEKLY: 14 * 24 * 60 * 60 * 1000,
   MONTHLY: 30 * 24 * 60 * 60 * 1000,
-  TEST: 60 * 1000,
 };
 
 class AutoWebPerf {
@@ -102,10 +102,10 @@ class AutoWebPerf {
     if (awpConfig.extensions) {
       awpConfig.extensions.forEach(extension => {
         let ExtensionClass;
-        let config = {
+        let extConfig = {
           connector: this.connector,
         }
-        config[extension] = awpConfig[extension];
+        extConfig[extension] = awpConfig[extension];
 
         switch (extension) {
           case 'budgets':
@@ -125,7 +125,7 @@ class AutoWebPerf {
                 `Extension ${extension} is not supported.`);
             break;
         }
-        this.extensions[extension] = new ExtensionClass(config);
+        this.extensions[extension] = new ExtensionClass(extConfig);
       });
     }
 
@@ -145,29 +145,29 @@ class AutoWebPerf {
       debug: this.debug,
     };
 
-    let GathererClass = null;
-    switch (name) {
-      case 'webpagetest':
-        GathererClass = require('./gatherers/wpt-gatherer');
-        break;
-
-      case 'psi':
-        GathererClass = require('./gatherers/psi-gatherer');
-        break;
-
-      // case 'crux':
-      //   break;
-
-      case 'fake':
-        // Do nothing, for testing purpose.
-        break;
-
-      default:
-        throw new Error(`Gatherer ${name} is not supported.`);
-        break;
-    }
-
     if (!this.gatherers[name]) {
+      let GathererClass = null;
+      switch (name) {
+        case 'webpagetest':
+          GathererClass = require('./gatherers/wpt-gatherer');
+          break;
+
+        case 'psi':
+          GathererClass = require('./gatherers/psi-gatherer');
+          break;
+
+        // case 'crux':
+        //   break;
+
+        case 'fake':
+          // Do nothing, for testing purpose.
+          break;
+
+        default:
+          throw new Error(`Gatherer ${name} is not supported.`);
+          break;
+      }
+
       this.gatherers[name] = new GathererClass({
           apiKey: this.apiKeys[name],
         },
@@ -373,12 +373,8 @@ class AutoWebPerf {
       }
     });
 
-    if (statuses.filter(s => s === Status.RETRIEVED).length === statuses.length) {
-      newResult.status = Status.RETRIEVED;
-    }
-    if (statuses.filter(s => s === Status.PENDING).length > 0) {
-      newResult.status = Status.PENDING;
-    }
+    // Update overall status.
+    newResult.status =  this.updateOverallStatus(statuses);
     return newResult;
   }
 
@@ -429,9 +425,8 @@ class AutoWebPerf {
       // After retrieving the result.
       this.runExtensions(extensions, 'afterRetrieve', {result: newResult});
 
-      if (statuses.filter(s => s !== Status.RETRIEVED).length === 0) {
-        newResult.status = Status.RETRIEVED;
-      }
+      // Update overall status.
+      newResult.status =  this.updateOverallStatus(statuses);
 
       this.log(`Retrieve: overall status=${newResult.status}`);
       this.logDebug('AutoWebPerf::retrieve, statuses=\n', statuses);
@@ -477,6 +472,20 @@ class AutoWebPerf {
     options = options || {};
     let results = this.connector.getResultList(options);
     return results;
+  }
+
+  updateOverallStatus(statuses) {
+    // The overall status depends on the aggregation of all data sources.
+    // If all data sources returne retrieved, the overall status is retrieved.
+    // If any of the data source return error, the overall status is error.
+    // Otherwise, it's pending.
+    if (statuses.filter(s => s === Status.RETRIEVED).length === statuses.length) {
+      return Status.RETRIEVED;
+    } else if (statuses.filter(s => s === Status.ERROR).length > 0) {
+      return Status.ERROR;
+    } else {
+      return Status.SUBMITTED;
+    }
   }
 
   cancel(tests) {

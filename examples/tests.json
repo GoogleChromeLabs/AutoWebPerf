@@ -18,7 +18,7 @@
       },
       "webpagetest": {
         "settings": {
-          "locationId": "Dulles_MotoG4",
+          "location": "Dulles_MotoG4",
           "device": "Pixel",
           "connection": "4G",
           "runs": 1,

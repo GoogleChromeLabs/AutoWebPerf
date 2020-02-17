@@ -32,15 +32,15 @@ class WebPageTestGatherer extends Gatherer {
     };
 
     this.metricsMap = {
-      'lighthouse.Performance': 'data.median.firstView[\'lighthouse.Performance\']',
-      'lighthouse.PWA': 'data.median.firstView[\'lighthouse.ProgressiveWebApp\']',
-      'lighthouse.FCP': 'data.median.firstView[\'lighthouse.Performance.first-contentful-paint\']',
-      'lighthouse.FMP': 'data.median.firstView[\'lighthouse.Performance.first-meaningful-paint\']',
-      'lighthouse.SpeedIndex': 'data.median.firstView[\'lighthouse.Performance.speed-index\']',
-      'lighthouse.TTI': 'data.median.firstView[\'lighthouse.Performance.interactive\']',
-      'lighthouse.FID': 'data.median.firstView[\'lighthouse.Performance.max-potential-fid\']',
-      'lighthouse.FirstCPUIdle': 'data.median.firstView[\'lighthouse.Performance.first-cpu-idle\']',
-      'lighthouse.TBT': 'data.lighthouse.\'total-blocking-time\'.numbericValue',
+      'lighthouse.Performance': 'data.median.firstView["lighthouse.Performance"]',
+      'lighthouse.PWA': 'data.median.firstView["lighthouse.ProgressiveWebApp"]',
+      'lighthouse.FCP': 'data.median.firstView["lighthouse.Performance.first-contentful-paint"]',
+      'lighthouse.FMP': 'data.median.firstView["lighthouse.Performance.first-meaningful-paint"]',
+      'lighthouse.SpeedIndex': 'data.median.firstView["lighthouse.Performance.speed-index"]',
+      'lighthouse.TTI': 'data.median.firstView["lighthouse.Performance.interactive"]',
+      'lighthouse.FID': 'data.median.firstView["lighthouse.Performance.max-potential-fid"]',
+      'lighthouse.FirstCPUIdle': 'data.median.firstView["lighthouse.Performance.first-cpu-idle"]',
+      'lighthouse.TBT': 'data.lighthouse.audits["total-blocking-time"].numbericValue',
 
       'TTFB': 'data.median.firstView.TTFB',
       'FirstPaint': 'data.median.firstView.render',
@@ -91,6 +91,7 @@ class WebPageTestGatherer extends Gatherer {
     });
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
     let metadata = {};
+    let errors = [];
 
     if (this.debug) console.log('WPTGatherer::run\n', url);
 
@@ -106,32 +107,44 @@ class WebPageTestGatherer extends Gatherer {
       }
 
       if (json.statusCode === 200) {
+        // Parse json resopnse and writes to metadata accordingly.
         Object.keys(this.metadataMap).forEach(key => {
           try {
-            metadata[key] = eval('json.' + this.metadataMap[key]);
+            let object = metadata;
+            key.split('.').forEach(property => {
+              object[property] = object[property] || {}
+              object = object[property]
+            });
+            eval(`metadata.${key} = json.${this.metadataMap[key]}`);
           } catch (error) {
+            errors.push(`Unable to assign ${key} to metadata: metadata.${key} = json.${this.metadataMap[key]}`);
             metadata[key] = null;
           }
         });
 
-        // Update Test's metadata with the lastTestId.
-        if (metadata.testId) {
-          setObject(test, 'webpagetest.metadata.lastTestId', metadata.testId);
+        // Throw error if there's no testId.
+        if (!metadata.testId) {
+          return {
+            status: Status.ERROR,
+            lastRunNote: json.statusText,
+            metadata: metadata,
+            errors: errors,
+          };
         }
 
+        setObject(test, 'webpagetest.metadata.lastTestId', metadata.testId);
         return {
           status: Status.SUBMITTED,
           settings: test.webpagetest.settings,
           metadata: metadata,
+          errors: errors,
         }
-      } else if (json.statusCode === 400) {
+      } else {
         return {
           status: Status.ERROR,
-          statusText: json.statusText,
+          lastRunNote: json.statusText || 'Unknown Error',
           metadata: metadata,
         };
-      } else {
-        throw new Error('Unknown error');
       }
     } catch (error) {
       if (this.debug) {
@@ -140,7 +153,7 @@ class WebPageTestGatherer extends Gatherer {
       }
       return {
         status: Status.ERROR,
-        statusText: error.toString(),
+        lastRunNote: error.toString(),
         metadata: metadata,
       };
     }
@@ -148,6 +161,7 @@ class WebPageTestGatherer extends Gatherer {
 
   retrieve(result, options) {
     options = options || {};
+    let errors = [];
 
     let gathererData = result.webpagetest;
 
@@ -168,11 +182,26 @@ class WebPageTestGatherer extends Gatherer {
         let metrics = {}, metadata = {};
         Object.keys(this.metricsMap).forEach(key => {
           try {
-            metrics[key] = eval('json.' + this.metricsMap[key]);
+            let object = metrics;
+            key.split('.').forEach(property => {
+              object[property] = object[property] || {}
+              object = object[property]
+            });
+            eval(`metrics.${key} = json.${this.metricsMap[key]}`);
           } catch (error) {
+            errors.push(`Unable to assign ${key} to metrics.`);
             metrics[key] = null;
           }
         });
+        if (errors.length > 0) {
+          return {
+            status: Status.ERROR,
+            lastRunNote: errors.join(', '),
+            metadata: gathererData.metadata,
+            settings: gathererData.settings,
+            metrics: metrics,
+          };
+        }
         return {
           status: Status.RETRIEVED,
           lastRunNote: 'Success',
@@ -217,7 +246,7 @@ class WebPageTestGatherer extends Gatherer {
   fakeJsonResponse() {
     return {
       statusCode: 200,
-      statusText: 'Ok',
+      lastRunNote: 'Ok',
       data: {
         testId: '200118_KA_4022ee20eaf1deebb393585731de6576',
         ownerKey: '9c58809d442152143c04bb7f1a711224aac3cfde',
