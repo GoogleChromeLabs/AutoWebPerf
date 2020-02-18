@@ -37,7 +37,9 @@ class BudgetsExtension extends Extension {
     assert(result, 'result is missing.');
     if (!budgets || budgets === {}) return;
 
-    let metricValues = (result[budgets.dataSource] || {}).metrics;
+    // Use webpagetest as default data source.
+    let dataSource = budgets.dataSource || 'webpagetest';
+    let metricValues = (result[dataSource] || {}).metrics;
     if (!metricValues) metricValues = {};
 
     result.budgets = {...budgets};
