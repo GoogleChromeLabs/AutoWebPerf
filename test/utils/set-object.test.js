@@ -8,6 +8,20 @@
 const setObject = require('../../src/utils/set-object');
 
 describe('setObject test', () => {
+  it('sets simple properties to the object.', async () => {
+    let newObj = {};
+    setObject(newObj, 'a', 'A');
+    expect(newObj).toEqual({
+      a: 'A',
+    });
+
+    setObject(newObj, 'b', 'B');
+    expect(newObj).toEqual({
+      a: 'A',
+      b: 'B',
+    });
+  });
+
   it('sets nested properties to the object.', async () => {
     let newObj = {};
 

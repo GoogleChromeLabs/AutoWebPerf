@@ -32,7 +32,9 @@ function setObject(obj, path, value) {
   }
 
   if (typeof value === 'string') value = `"${value}"`;
-  eval(`previousObj.${properties[len - 1]} = ${value};`);
+  if (previousObj) {
+    eval(`previousObj.${properties[len - 1]} = ${value};`);
+  }
 }
 
 module.exports = setObject;
