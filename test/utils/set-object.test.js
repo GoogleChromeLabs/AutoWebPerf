@@ -44,13 +44,55 @@ describe('setObject test', () => {
       a: 'A',
       b: 'B',
     });
-
   });
 
   it('sets nothing when setting without property path.', async () => {
     let newObj = {};
-
     setObject(newObj, null, 'A');
     expect(newObj).toEqual({});
+  });
+
+  it('sets value in an array to the object.', async () => {
+    let newObj = {};
+    setObject(newObj, 'a.b[0]', 'C');
+    expect(newObj).toEqual({
+      a: {
+        b: ['C']
+      }
+    });
+  });
+
+  it('sets object in an array to the object.', async () => {
+    let newObj = {};
+    setObject(newObj, 'a.b[0].c', 'C');
+    expect(newObj).toEqual({
+      a: {
+        b: [{
+          c: 'C'
+        }]
+      }
+    });
+
+    setObject(newObj, 'a.b[0].d[1]', 'D');
+    expect(newObj).toEqual({
+      a: {
+        b: [{
+          c: 'C',
+          d: [undefined, 'D']
+        }]
+      }
+    });
+
+    setObject(newObj, 'a.b[0].d[2].e', 'E');
+    expect(newObj).toEqual({
+      a: {
+        b: [{
+          c: 'C',
+          d: [undefined, 'D', {
+            e: 'E'
+          }]
+        }]
+      }
+    });
   });
 });
