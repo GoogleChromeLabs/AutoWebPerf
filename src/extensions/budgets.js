@@ -9,17 +9,16 @@ class BudgetsExtension extends Extension {
   constructor(config) {
     super();
     config = config || {};
-    this.dataSource = config.budgets.dataSource || 'webpagetest';
-    this.budgetMetrics = {
-      'FCP': ['ms', 'seconds', 'overRatio'],
-      'FMP': ['ms', 'seconds', 'overRatio'],
-      'SpeedIndex': ['ms', 'seconds', 'overRatio'],
-      'TTI': ['ms', 'seconds', 'overRatio'],
-      'Javascript': ['kb', 'overRatio'],
-      'CSS': ['kb', 'overRatio'],
-      'Fonts': ['kb', 'overRatio'],
-      'Images': ['kb', 'overRatio'],
-      'Videos': ['kb', 'overRatio'],
+    this.budgetMetricMap = {
+      'FCP': ['milliseconds', 'seconds', 'overRatio'],
+      'FMP': ['milliseconds', 'seconds', 'overRatio'],
+      'SpeedIndex': ['milliseconds', 'seconds', 'overRatio'],
+      'TTI': ['milliseconds', 'seconds', 'overRatio'],
+      'Javascript': ['KB', 'overRatio'],
+      'CSS': ['KB', 'overRatio'],
+      'Fonts': ['KB', 'overRatio'],
+      'Images': ['KB', 'overRatio'],
+      'Videos': ['KB', 'overRatio'],
     };
   }
 
@@ -27,76 +26,65 @@ class BudgetsExtension extends Extension {
     assert(params.test, 'test is missing.');
     assert(params.result, 'result is missing.');
 
-    let budgets = (params.test.budgets || {}).metrics;
+    let budgets = (params.test.budgets || {});
     this.processResult(params.result, budgets);
   }
 
   afterRetrieve(params) {
     assert(params.result, 'result is missing.');
 
-    let budgets = (params.result.budgets || {}).metrics;
+    let budgets = (params.result.budgets || {});
     this.processResult(params.result, budgets);
   }
 
   processResult(result, budgets) {
     assert(result, 'result is missing.');
+    if (!budgets || budgets === {}) return;
 
-    let metricValues = (result[this.dataSource] || {}).metrics;
-    if (!budgets || budgets === {} || !metricValues) return;
+    let metricValues = (result[budgets.dataSource] || {}).metrics;
+    if (!metricValues) return;
 
-    result.budgets = {
-      metrics: {},
-    };
+    result.budgets = {...budgets};
+    result.budgets.metrics = {};
 
-    Object.keys(this.budgetMetrics).forEach(metric => {
-      let budget = budgets[metric];
-      let targets = this.budgetMetrics[metric];
-      if (!budget || budget === {} || !targets) return;
+    Object.keys(this.budgetMetricMap).forEach(metric => {
+      let budget = budgets.budget[metric] || null;
+      let targets = this.budgetMetricMap[metric];
+      if (!budget || !targets) return;
 
       result.budgets.metrics[metric] = {};
       let resultMetric = result.budgets.metrics[metric];
+      let metricValue;
 
       targets.forEach(target => {
         switch (target) {
-          case 'ms':
-            if (!budget.ms && !budget.seconds) return;
-            resultMetric[target] = budget.ms || budget.seconds  * 1000;
+          case 'milliseconds':
+            setObject(resultMetric, `budget.milliseconds`, budget);
             break;
 
           case 'seconds':
-            if (!budget.ms && !budget.seconds) return;
-            resultMetric[target] = budget.seconds ||
-                this.round(budget.ms / 1000, 2);
+            setObject(resultMetric, `budget.seconds`,
+                this.round(budget / 1000, 2));
             break;
 
           case 'overRatio':
-            if (!metricValues) return;
-            let metricValue = metricValues[metric];
-
-            if (budget.ms || budget.seconds) {
-              let budgetValue = budget.ms || budget.seconds  * 1000;
-              resultMetric[target] =
-                  this.round((metricValue - budgetValue) / budgetValue, 4);
-            };
-            if (budget.bytes || budget.kb) {
-              let budgetValue = budget.bytes || budget.kb  * 1000;
-              resultMetric[target] =
-                  this.round((metricValue - budgetValue) / budgetValue, 4);
-            };
+            metricValue = metricValues[metric];
+            resultMetric[target] =
+                this.round((metricValue - budget) / budget, 4);
             break;
 
-          case 'kb':
-            if (!budget.kb && !budget.bytes) return;
-            resultMetric[target] = budget.kb || this.round(budget.bytes / 1000, 2);
+          case 'over':
+            metricValue = metricValues[metric];
+            resultMetric[target] = metricValue - budget;
             break;
 
-          case 'bytes':
-            if (!budget.kb && !budget.bytes) return;
-            resultMetric[target] = budget.bytes || budget.kb * 1000;
+          case 'KB':
+            setObject(resultMetric, `budget.KB`, budget);
             break;
 
           default:
-            throw new Error(`Target ${target} is not supported in BudgetsExtension`);
+            throw new Error(
+                `Target ${target} is not supported in BudgetsExtension`);
             break;
         }
       });
