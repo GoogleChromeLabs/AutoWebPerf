@@ -4,7 +4,7 @@
   "description": "AutoWebPerf",
   "main": "index.js",
   "scripts": {
-    "test": "jest \"test\"",
+    "test": "jest ./test/",
     "build": "rollup -c",
     "parcel": "parcel src/core.js"
   },

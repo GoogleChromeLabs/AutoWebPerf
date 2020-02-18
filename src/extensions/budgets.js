@@ -25,16 +25,12 @@ class BudgetsExtension extends Extension {
   afterRun(params) {
     assert(params.test, 'test is missing.');
     assert(params.result, 'result is missing.');
-
-    let budgets = (params.test.budgets || {});
-    this.processResult(params.result, budgets);
+    this.processResult(params.result, params.test.budgets);
   }
 
   afterRetrieve(params) {
     assert(params.result, 'result is missing.');
-
-    let budgets = (params.result.budgets || {});
-    this.processResult(params.result, budgets);
+    this.processResult(params.result, params.result.budgets);
   }
 
   processResult(result, budgets) {
@@ -42,7 +38,7 @@ class BudgetsExtension extends Extension {
     if (!budgets || budgets === {}) return;
 
     let metricValues = (result[budgets.dataSource] || {}).metrics;
-    if (!metricValues) return;
+    if (!metricValues) metricValues = {};
 
     result.budgets = {...budgets};
     result.budgets.metrics = {};
@@ -69,13 +65,8 @@ class BudgetsExtension extends Extension {
 
           case 'overRatio':
             metricValue = metricValues[metric];
-            resultMetric[target] =
-                this.round((metricValue - budget) / budget, 4);
-            break;
-
-          case 'over':
-            metricValue = metricValues[metric];
-            resultMetric[target] = metricValue - budget;
+            resultMetric[target] = metricValue ?
+                this.round((metricValue - budget) / budget, 4) : null;
             break;
 
           case 'KB':

@@ -109,4 +109,42 @@ describe('setObject test', () => {
       }
     });
   });
+
+  it('sets numeric value to the object.', async () => {
+    let newObj = {};
+    setObject(newObj, 'a.b', 123);
+    expect(newObj).toEqual({
+      a: {
+        b: 123
+      }
+    });
+  });
+
+  it('sets empty value to the object.', async () => {
+    let newObj = {};
+    setObject(newObj, 'a.b', '');
+    expect(newObj).toEqual({
+      a: {
+        b: '',
+      }
+    });
+
+    setObject(newObj, 'a.b', null);
+    expect(newObj).toEqual({
+      a: {
+        b: null,
+      }
+    });
+  });
+
+  it('sets non-string value to the object.', async () => {
+    let newObj = {};
+    let nowtime = Date.now();
+    setObject(newObj, 'a.b', nowtime);
+    expect(newObj).toEqual({
+      a: {
+        b: nowtime,
+      }
+    });
+  });
 });

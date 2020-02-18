@@ -38,31 +38,16 @@
         }
       },
       "budgets": {
-        "metrics": {
-          "FCP": {
-            "seconds": 2
-          },
-          "SpeedIndex": {
-            "seconds": 3
-          },
-          "TTI": {
-            "seconds": 5
-          },
-          "Javascript": {
-            "kb": 500
-          },
-          "CSS": {
-            "kb": 500
-          },
-          "Fonts": {
-            "kb": 100
-          },
-          "Images": {
-            "kb": 500
-          },
-          "Videos": {
-            "kb": 500
-          }
+        "dataSource": "webpagetest",
+        "budget": {
+          "FCP": 2000,
+          "SpeedIndex": 3000,
+          "TTI": 5000,
+          "Javascript": 500,
+          "CSS": 500,
+          "Fonts": 100,
+          "Images": 500,
+          "Videos": 500
         }
       },
       "id": "1580105180079-https://thinkwithgoogle.com"
