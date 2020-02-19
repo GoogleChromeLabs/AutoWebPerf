@@ -141,6 +141,7 @@ class WebPageTestGatherer extends Gatherer {
     return {
       status: status,
       statusText: json.statusText,
+      settings: settings,
       metadata: metadata,
       errors: errors || [],
     };
@@ -209,6 +210,7 @@ class WebPageTestGatherer extends Gatherer {
     return {
       status: status,
       statusText: statusText,
+      settings: gathererData.settings,
       metadata: gathererData.metadata,
       metrics: metrics || {},
       errors: errors || [],

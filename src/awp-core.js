@@ -359,17 +359,27 @@ class AutoWebPerf {
     this.dataSources.forEach(dataSource => {
       if (!test[dataSource]) return;
 
-      let gatherer = this.getGatherer(dataSource);
-      let settings = test[dataSource].settings;
-      let response = gatherer.run(test, {} /* options */);
-      statuses.push(response.status);
+      try {
+        let gatherer = this.getGatherer(dataSource);
+        let settings = test[dataSource].settings;
+        let response = gatherer.run(test, {} /* options */);
+        statuses.push(response.status);
+        newResult[dataSource] = {
+          status: response.status,
+          statusText: response.statusText,
+          metadata: response.metadata,
+          settings: test[dataSource].settings,
+          metrics: response.metrics,
+        };
 
-      newResult[dataSource] = {
-        status: response.status,
-        lastRunNote: response.lastRunNote,
-        metadata: response.metadata,
-        settings: test[dataSource].settings,
-        metrics: response.metrics,
+      } catch (error) {
+        newResult[dataSource] = {
+          status: Status.ERROR,
+          statusText: error,
+          settings: test[dataSource].settings,
+          metadata: {},
+          metrics: {},
+        }
       }
     });
 
