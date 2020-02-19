@@ -22,7 +22,6 @@ class WebPageTestGatherer extends Gatherer {
     // TODO: Metadata keys should be standardized.
     this.metadataMap = {
       'testId': 'data.testId',
-      'jsonUrl': 'data.jsonUrl',
       'ownerKey': 'data.ownerKey',
       'jsonUrl': 'data.jsonUrl',
       'xmlUrl': 'data.xmlUrl',
@@ -90,23 +89,25 @@ class WebPageTestGatherer extends Gatherer {
       urlParams.push(key + '=' + params[key]);
     });
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
-    let metadata = {};
-    let errors = [];
-
     if (this.debug) console.log('WPTGatherer::run\n', url);
 
-    try {
-      let json = {};
-      if (this.apiKey === 'TEST_APIKEY') {
-        json = this.fakeJsonResponse();
+    let json = {};
+    if (this.apiKey === 'TEST_APIKEY') {
+      json = this.fakeRunResponse();
+    } else {
+      let res = this.apiHelper.fetch(url);
+      json = JSON.parse(res);
+      if (this.debug) console.log('WPTGatherer::run API response: \n', json);
+    }
 
-      } else {
-        let res = this.apiHelper.fetch(url);
-        json = JSON.parse(res);
-        if (this.debug) console.log('WPTGatherer::run API response: \n', json);
-      }
+    let status, metadata = {}, errors = [];
 
-      if (json.statusCode === 200) {
+    switch(json.statusCode) {
+      case 100:
+        status = Status.SUBMITTED;
+        break;
+
+      case 200:
         // Parse json resopnse and writes to metadata accordingly.
         Object.keys(this.metadataMap).forEach(key => {
           try {
@@ -122,64 +123,54 @@ class WebPageTestGatherer extends Gatherer {
           }
         });
 
-        // Throw error if there's no testId.
-        if (!metadata.testId) {
-          return {
-            status: Status.ERROR,
-            lastRunNote: json.statusText,
-            metadata: metadata,
-            errors: errors,
-          };
+        if (metadata.testId) {
+          status = Status.SUBMITTED;
+          setObject(test, 'webpagetest.metadata.lastTestId', metadata.testId);
+        } else {
+          // Throw error if there's no testId.
+          status = Status.ERROR;
         }
+        break;
 
-        setObject(test, 'webpagetest.metadata.lastTestId', metadata.testId);
-        return {
-          status: Status.SUBMITTED,
-          settings: test.webpagetest.settings,
-          metadata: metadata,
-          errors: errors,
-        }
-      } else {
-        return {
-          status: Status.ERROR,
-          lastRunNote: json.statusText || 'Unknown Error',
-          metadata: metadata,
-        };
-      }
-    } catch (error) {
-      if (this.debug) {
-        console.log('Error when running...');
-        console.error(error);
-      }
-      return {
-        status: Status.ERROR,
-        lastRunNote: error.toString(),
-        metadata: metadata,
-      };
+      case 400:
+      default:
+        status = Status.ERROR;
+        break;
     }
+
+    return {
+      status: status,
+      statusText: json.statusText,
+      metadata: metadata,
+      errors: errors || [],
+    };
   }
 
   retrieve(result, options) {
     options = options || {};
     let errors = [];
-
     let gathererData = result.webpagetest;
+    let urlParams = [
+      'test=' + gathererData.metadata.testId,
+    ];
+    let url = this.resultApiEndpoint + '?' + urlParams.join('&');
+    if (this.debug) console.log('WPTGatherer::retrieve\n', url);
 
-    try {
-      let urlParams = [
-        'test=' + gathererData.metadata.testId,
-      ];
-      let url = this.resultApiEndpoint + '?' + urlParams.join('&');
-      if (this.debug) console.log('WPTGatherer::retrieve\n', url);
+    let res = this.apiHelper.fetch(url);
+    let json = JSON.parse(res);
+    if (this.debug) console.log(
+        'WPTGatherer::retrieve json.statusCode=\n', json.statusCode);
+    if (this.debug) console.log('WPTGatherer::retrieve\n', json);
 
-      let res = this.apiHelper.fetch(url);
-      let json = JSON.parse(res);
-      if (this.debug) console.log(
-          'WPTGatherer::retrieve json.statusCode=\n', json.statusCode);
-      if (this.debug) console.log('WPTGatherer::retrieve\n', json);
+    let status, metrics = {}, metadata = {};
+    let statusText = json.statusText;
 
-      if (json.statusCode === 200) {
-        let metrics = {}, metadata = {};
+    switch(json.statusCode) {
+      case 100:
+        status = Status.SUBMITTED;
+        break;
+
+      case 200:
         Object.keys(this.metricsMap).forEach(key => {
           try {
             let object = metrics;
@@ -194,59 +185,40 @@ class WebPageTestGatherer extends Gatherer {
           }
         });
         if (errors.length > 0) {
-          return {
-            status: Status.ERROR,
-            lastRunNote: errors.join(', '),
-            metadata: gathererData.metadata,
-            settings: gathererData.settings,
-            metrics: metrics,
-          };
+          status = Status.ERROR;
+        } else {
+          status = Status.RETRIEVED;
+          statusText = 'Success';
         }
-        return {
-          status: Status.RETRIEVED,
-          lastRunNote: 'Success',
-          metadata: gathererData.metadata,
-          settings: gathererData.settings,
-          metrics: metrics,
-        };
+        break;
 
-      } else if (json.statusCode === 100) {
-        return {
-          status: Status.PENDING,
-          lastRunNote: json.statusText,
-          metadata: gathererData.metadata,
-          settings: gathererData.settings,
-        };
+      case 400:
+        status = Status.ERROR;
+        // Deal with the occasional error with "Test not found". These type of
+        // tests can be resolved by simply retrying.
+        if (json.statusText === 'Test not found') {
+          status = Status.SUBMITTED;
+        }
+        break;
 
-      } else if (json.statusCode === 400) {
-        return {
-          status: Status.ERROR,
-          lastRunNote: json.statusText,
-          metadata: gathererData.metadata,
-          settings: gathererData.settings,
-        };
-      } else {
-        throw new Error('Unknown error');
-      }
-    } catch (error) {
-      if (this.debug) {
-        console.log('Error when retrieving...');
-        console.log(error);
-      }
-
-      return {
-        status: Status.ERROR,
-        lastRunNote: error.toString(),
-        metadata: gathererData.metadata,
-        settings: gathererData.settings,
-      };
+      default:
+        status = Status.ERROR;
+        break;
     }
+
+    return {
+      status: status,
+      statusText: statusText,
+      metadata: gathererData.metadata,
+      metrics: metrics || {},
+      errors: errors || [],
+    };
   }
 
-  fakeJsonResponse() {
+  fakeRunResponse() {
     return {
       statusCode: 200,
-      lastRunNote: 'Ok',
+      statusText: 'Ok',
       data: {
         testId: '200118_KA_4022ee20eaf1deebb393585731de6576',
         ownerKey: '9c58809d442152143c04bb7f1a711224aac3cfde',

@@ -14,63 +14,63 @@ let perfBudgetExtension = new PerfBudgetsExtension({
 });
 
 describe('Budgets unit test', () => {
-  // it('adds budget metrics to a result after run.', async () => {
-  //   let test = {
-  //     url: 'google.com',
-  //     webpagetest: {},
-  //     budgets: {
-  //       dataSource: 'webpagetest',
-  //       budget: {
-  //         FCP: 1000,
-  //         SpeedIndex: 3000,
-  //       },
-  //     },
-  //   };
-  //   let result = {
-  //     url: 'google.com',
-  //     webpagetest: {
-  //       metrics: {
-  //         FCP: 1500,
-  //         SpeedIndex: 6000,
-  //       }
-  //     },
-  //   };
-  //
-  //   perfBudgetExtension.afterRun({test: test, result: result});
-  //
-  //   expect(result).toEqual({
-  //     url: 'google.com',
-  //     webpagetest: {
-  //       metrics: {
-  //         FCP: 1500,
-  //         SpeedIndex: 6000,
-  //       }
-  //     },
-  //     budgets: {
-  //       dataSource: 'webpagetest',
-  //       budget: {
-  //         FCP: 1000,
-  //         SpeedIndex: 3000,
-  //       },
-  //       metrics: {
-  //         FCP: {
-  //           budget: {
-  //             milliseconds: 1000,
-  //             seconds: 1,
-  //           },
-  //           overRatio: 0.5,
-  //         },
-  //         SpeedIndex: {
-  //           budget: {
-  //             milliseconds: 3000,
-  //             seconds: 3,
-  //           },
-  //           overRatio: 1,
-  //         },
-  //       }
-  //     },
-  //   });
-  // });
+  it('adds budget metrics to a result after run.', async () => {
+    let test = {
+      url: 'google.com',
+      webpagetest: {},
+      budgets: {
+        dataSource: 'webpagetest',
+        budget: {
+          FCP: 1000,
+          SpeedIndex: 3000,
+        },
+      },
+    };
+    let result = {
+      url: 'google.com',
+      webpagetest: {
+        metrics: {
+          FCP: 1500,
+          SpeedIndex: 6000,
+        }
+      },
+    };
+
+    perfBudgetExtension.afterRun({test: test, result: result});
+
+    expect(result).toEqual({
+      url: 'google.com',
+      webpagetest: {
+        metrics: {
+          FCP: 1500,
+          SpeedIndex: 6000,
+        }
+      },
+      budgets: {
+        dataSource: 'webpagetest',
+        budget: {
+          FCP: 1000,
+          SpeedIndex: 3000,
+        },
+        metrics: {
+          FCP: {
+            budget: {
+              milliseconds: 1000,
+              seconds: 1,
+            },
+            overRatio: 0.5,
+          },
+          SpeedIndex: {
+            budget: {
+              milliseconds: 3000,
+              seconds: 3,
+            },
+            overRatio: 1,
+          },
+        }
+      },
+    });
+  });
 
   it('adds budget metrics to a result after retrieve.', async () => {
     let result = {
