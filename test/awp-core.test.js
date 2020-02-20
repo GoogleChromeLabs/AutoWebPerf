@@ -227,7 +227,10 @@ describe('AutoWebPerf with fake modules', () => {
 
     cleanFakeResults(awp.connector.results);
     let expectedResults = generateFakeResults(10, {status: Status.RETRIEVED});
-    expect(awp.getResults()).toEqual(expectedResults);
+
+    let results = awp.getResults();
+    expect(results).toEqual(expectedResults);
+    expect(results[0].fake.metrics.SpeedIndex).toEqual(500);
   });
 
   it('runs and retrieves all results with partial updates.', async () => {

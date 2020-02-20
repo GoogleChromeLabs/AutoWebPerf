@@ -306,9 +306,12 @@ class AutoWebPerf {
           // Update Test item.
           let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
           recurring.nextTriggerTimestamp = nowtime + offset;
+
+          this.logDebug('AutoWebPerf::retrieve, newResult=\n', newResult);
         }
       }
       testsToUpdate.push(test);
+      this.logDebug('AutoWebPerf::retrieve, test=\n', test);
 
       count++;
       if (this.batchUpdate && count >= this.batchUpdate) {

@@ -318,9 +318,12 @@ class GoogleSheetsConnector extends Connector {
 
     // Overrides pending tests to property 'webpagetest.pendingTests'.
     let propertyKey = 'webpagetest.pendingTests';
-    let tests = this.getTestList();
+    let tests = this.getTestList({
+      filters: ['url', 'webpagetest.settings.location'],
+    });
     tests.forEach(test => {
-      if (!test.webpagetest || !test.webpagetest.settings.location) return;
+      if (!test.url || !test.webpagetest || !test.webpagetest.settings ||
+          !test.webpagetest.settings.location) return;
       test.webpagetest.pendingTests =
           pendingByLocation[test.webpagetest.settings.location];
     });

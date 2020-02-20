@@ -40,6 +40,7 @@ describe('WPTGatherer unit test', () => {
     expect(response.statusText).toEqual('Ok');
     expect(response.metadata).not.toBe(null);
     expect(response.metadata.testId).not.toBe(null);
+    expect(response.settings).not.toBe(null);
     expect(response.errors).toEqual([]);
   });
 
@@ -104,6 +105,8 @@ describe('WPTGatherer unit test', () => {
     expect(response.statusText).toEqual('Success');
     expect(response.metrics.SpeedIndex).toEqual(702);
     expect(response.errors).toEqual([]);
+
+    console.log(response);
   });
 
   it('retrieves result and handles status codes', async () => {

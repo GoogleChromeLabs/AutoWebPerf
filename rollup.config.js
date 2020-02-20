@@ -12,6 +12,7 @@ export default [
       file: 'build/bundle-googlesheets.js',
       format: 'cjs',
       esModule: false,
+      treeshake: false,
     },
     plugins: [
       commonjs({
