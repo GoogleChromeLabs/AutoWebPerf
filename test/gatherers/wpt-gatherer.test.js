@@ -6,6 +6,7 @@
 'use strict';
 
 const Status = require('../../src/common/status');
+const Metric = require('../../src/common/metric');
 const WPTGatherer = require('../../src/gatherers/wpt-gatherer');
 const fs = require('fs');
 
@@ -163,5 +164,40 @@ describe('WPTGatherer unit test', () => {
     expect(response.status).toEqual(Status.SUBMITTED);
     expect(response.statusText).toEqual('Test not found');
     expect(response.metrics).toEqual({});
+  });
+
+  it('follows standardized metric names', async () => {
+    let supportedMetrics = [];
+    Object.keys(Metric).forEach(key => {
+      supportedMetrics = supportedMetrics.concat(Object.keys(Metric[key]));
+    });
+    let result = {
+      selected: true,
+      id: 'id-1234',
+      type: 'single',
+      url: 'google.com',
+      status: 'submitted',
+      webpagetest: {
+        metadata: {
+          testId: 'id-1234',
+        },
+      },
+    };
+    fakeApiHandler.fetch = () => {
+      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
+    };
+    let response = wptGatherer.retrieve(result, {} /* options */);
+    expect(response.metrics).not.toBe([]);
+
+    // Get all metric keys from the response, including lighthouse.*
+    let metrics = Object.keys(response.metrics).filter(
+        metric => metric !== 'lighthouse');
+    metrics = metrics.concat(Object.keys(response.metrics.lighthouse));
+
+    // Make sure all metric keys are supported.
+    let notSupported = metrics.filter(metric => {
+      return !supportedMetrics.includes(metric);
+    })
+    expect(notSupported).toEqual([]);
   });
 });

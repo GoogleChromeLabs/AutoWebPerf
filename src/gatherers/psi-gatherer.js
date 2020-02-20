@@ -27,16 +27,16 @@ class PSIGatherer extends Gatherer {
 
     this.metricsMap = {
       'FirstPaint': 'lighthouseResult.audits.metrics.details.items[0].observedFirstPaint',
-      'FCP': 'lighthouseResult.audits.metrics.details.items[0].observedFirstContentfulPaint',
-      'FMP': 'lighthouseResult.audits.metrics.details.items[0].observedFirstMeaningfulPaint',
+      'FirstContentfulPaint': 'lighthouseResult.audits.metrics.details.items[0].observedFirstContentfulPaint',
+      'FirstMeaningfulPaint': 'lighthouseResult.audits.metrics.details.items[0].observedFirstMeaningfulPaint',
       'SpeedIndex': 'lighthouseResult.audits.metrics.details.items[0].observedSpeedIndex',
-      'TTI': 'lighthouseResult.audits.metrics.details.items[0].interactive',
+      'TimeToInteractive': 'lighthouseResult.audits.metrics.details.items[0].interactive',
       'FirstCPUIdle': 'lighthouseResult.audits.metrics.details.items[0].firstCPUIdle',
-      'FID': 'lighthouseResult.audits.metrics.details.items[0].estimatedInputLatency',
-      'TBT': 'lighthouseResult.audits.metrics.details.items[0].totalBlockingTime',
-      'LCP': 'lighthouseResult.audits.metrics.details.items[0].observedLargestContentfulPaintTs',
-      'DCL': 'lighthouseResult.audits.metrics.details.items[0].observedDomContentLoaded',
-      'onLoad': 'lighthouseResult.audits.metrics.details.items[0].observedLoad',
+      'FirstInputDelay': 'lighthouseResult.audits.metrics.details.items[0].estimatedInputLatency',
+      'TotalBlockingTime': 'lighthouseResult.audits.metrics.details.items[0].totalBlockingTime',
+      'LargestContentfulPaint': 'lighthouseResult.audits.metrics.details.items[0].observedLargestContentfulPaintTs',
+      'DOMContentLoaded': 'lighthouseResult.audits.metrics.details.items[0].observedDomContentLoaded',
+      'LoadEvent': 'lighthouseResult.audits.metrics.details.items[0].observedLoad',
     };
   }
 
@@ -57,47 +57,46 @@ class PSIGatherer extends Gatherer {
       urlParams.push(key + '=' + params[key]);
     });
 
-    console.log(settings);
-
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
 
     if (options.debug) console.log(url);
 
-    try {
-      let json = {};
-      if (this.apiKey === 'TEST_APIKEY') {
-        json = this.fakeJsonResponse();
+    let json = {};
+    if (this.apiKey === 'TEST_APIKEY') {
+      json = this.fakeRunResponse();
 
-      } else {
-        let res = this.apiHelper.fetch(url);
-        json = JSON.parse(res);
-      }
+    } else {
+      let res = this.apiHelper.fetch(url);
+      json = JSON.parse(res);
+    }
 
-      if (json.lighthouseResult) {
-        let metadata = {}, metrics = {};
+    let metadata = {}, metrics = {}, errors = [];
+    if (json && json.lighthouseResult) {
+      try {
         Object.keys(this.metadataMap).forEach(key => {
-          metadata[key] = eval('json.' + this.metadataMap[key]);
+          eval(`metadata.${key} = json.${this.metadataMap[key]}`);
         });
         Object.keys(this.metricsMap).forEach(key => {
-          metrics[key] = eval('json.' + this.metricsMap[key]);
+          eval(`metrics.${key} = json.${this.metricsMap[key]}`);
         });
-
-        return {
-          status: Status.RETRIEVED,
-          settings: test.psi.settings,
-          metadata: metadata,
-          metrics: metrics,
-        }
-      } else {
-        console.error(json);
-        throw new Error('No Lighthouse result found.');
+      } catch (error) {
+        errors.push(error);
       }
-    } catch (error) {
-      console.error(error);
+
+      return {
+        status: Status.RETRIEVED,
+        statusText: 'Success',
+        settings: test.psi.settings,
+        metadata: metadata,
+        metrics: metrics,
+        errors: errors,
+      }
+    } else {
       return {
         status: Status.ERROR,
-        statusText: error.toString(),
-      };
+        statusText: 'No Lighthouse result found in PSI response.',
+        errors: errors,
+      }
     }
   }
 
@@ -105,7 +104,7 @@ class PSIGatherer extends Gatherer {
     return this.run(resultObj, options);
   }
 
-  fakeJsonResponse() {
+  fakeRunResponse() {
     return {
       "captchaResult": "CAPTCHA_NOT_NEEDED",
       "kind": "pagespeedonline#result",

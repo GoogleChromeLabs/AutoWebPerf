@@ -3,6 +3,7 @@
 const assert = require('../utils/assert');
 const setObject = require('../utils/set-object');
 const Status = require('../common/status');
+const Metric = require('../common/metric');
 const Gatherer = require('./gatherer');
 
 class WebPageTestGatherer extends Gatherer {
@@ -31,30 +32,37 @@ class WebPageTestGatherer extends Gatherer {
     };
 
     this.metricsMap = {
+      // Lighthouse Scores
       'lighthouse.Performance': 'data.median.firstView["lighthouse.Performance"]',
-      'lighthouse.PWA': 'data.median.firstView["lighthouse.ProgressiveWebApp"]',
-      'lighthouse.FCP': 'data.median.firstView["lighthouse.Performance.first-contentful-paint"]',
-      'lighthouse.FMP': 'data.median.firstView["lighthouse.Performance.first-meaningful-paint"]',
-      'lighthouse.SpeedIndex': 'data.median.firstView["lighthouse.Performance.speed-index"]',
-      'lighthouse.TTI': 'data.median.firstView["lighthouse.Performance.interactive"]',
-      'lighthouse.FID': 'data.median.firstView["lighthouse.Performance.max-potential-fid"]',
-      'lighthouse.FirstCPUIdle': 'data.median.firstView["lighthouse.Performance.first-cpu-idle"]',
-      'lighthouse.TBT': 'data.lighthouse.audits["total-blocking-time"].numbericValue',
+      'lighthouse.ProgressiveWebApp': 'data.median.firstView["lighthouse.ProgressiveWebApp"]',
 
-      'TTFB': 'data.median.firstView.TTFB',
+      // Lighthouse timing metrics
+      'lighthouse.FirstContentfulPaint': 'data.median.firstView["lighthouse.Performance.first-contentful-paint"]',
+      'lighthouse.FirstMeaningfulPaint': 'data.median.firstView["lighthouse.Performance.first-meaningful-paint"]',
+      'lighthouse.SpeedIndex': 'data.median.firstView["lighthouse.Performance.speed-index"]',
+      'lighthouse.TimeToInteractive': 'data.median.firstView["lighthouse.Performance.interactive"]',
+      'lighthouse.FirstInputDelay': 'data.median.firstView["lighthouse.Performance.max-potential-fid"]',
+      'lighthouse.FirstCPUIdle': 'data.median.firstView["lighthouse.Performance.first-cpu-idle"]',
+      'lighthouse.TotalBlockingTime': 'data.lighthouse.audits["total-blocking-time"].numbericValue',
+
+      // WebPageTest Timing metrics
+      'TimeToFirstByte': 'data.median.firstView.TTFB',
       'FirstPaint': 'data.median.firstView.render',
-      'FCP': 'data.median.firstView.firstContentfulPaint',
-      'FMP': 'data.median.firstView.firstMeaningfulPaint',
+      'FirstContentfulPaint': 'data.median.firstView.firstContentfulPaint',
+      'FirstMeaningfulPaint': 'data.median.firstView.firstMeaningfulPaint',
       'VisualComplete': 'data.median.firstView.visualComplete',
       'SpeedIndex': 'data.median.firstView.SpeedIndex',
-      'TTI': 'data.median.firstView.TTIMeasurementEnd',
-      'onLoad': 'data.median.firstView.loadTime',
+      'LoadEvent': 'data.median.firstView.loadTime',
+      'TimeToInteractive': 'data.median.firstView.TTIMeasurementEnd',
+      'DOMContentLoaded': 'data.median.firstView.domContentLoadedEventStart',
+
+      // WebPageTest Resource Count metrics
+      // 'BytesIn': 'data.median.firstView.bytesIn',
       'Requests': 'data.median.firstView.requestsDoc',
-      'DCL': 'data.median.firstView.domContentLoadedEventStart',
-      'Bytes': 'data.median.firstView.bytesIn',
       'DOMElements': 'data.median.firstView.domElements',
       'Connections': 'data.median.firstView.connections',
 
+      // WebPageTest Resource Size metrics
       'CSS': 'data.median.firstView.breakdown.css.bytes',
       'Fonts': 'data.median.firstView.breakdown.font.bytes',
       'Javascript': 'data.median.firstView.breakdown.js.bytes',
