@@ -107,7 +107,7 @@ let fakeTestsSheetData = [
 let fakeResultsSheetData = [
   ['', '', '', '', '', ''],
   ['', '', '', '', '', ''],
-  ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FCP'],
+  ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.SpeedIndex'],
   [true, 'id-1234', 'single', 'retrieved', 'google.com', 500],
   [false, 'id-5678', 'recurring', 'retrieved', 'web.dev', 800],
 ]
@@ -178,7 +178,7 @@ let fakeResults = [
     status: 'retrieved',
     webpagetest: {
       metrics: {
-        FCP: 500,
+        SpeedIndex: 500,
       },
     },
     googlesheets: {
@@ -193,7 +193,7 @@ let fakeResults = [
     status: 'retrieved',
     webpagetest: {
       metrics: {
-        FCP: 800,
+        SpeedIndex: 800,
       },
     },
     googlesheets: {
@@ -328,7 +328,7 @@ describe('GoogleSheetsConnector Results tab', () => {
       status: 'retrieved',
       webpagetest: {
         metrics: {
-          FCP: 500,
+          SpeedIndex: 500,
         },
       },
       googlesheets: {
@@ -352,7 +352,7 @@ describe('GoogleSheetsConnector Results tab', () => {
       status: 'retrieved',
       webpagetest: {
         metrics: {
-          FCP: 500,
+          SpeedIndex: 500,
         },
       },
       googlesheets: {

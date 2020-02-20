@@ -65,7 +65,7 @@ let generateFakeResults = function(amount, options) {
       result.status = options.status;
       result.fake.status = options.status;
       result.fake.metrics = {
-        FCP: 500,
+        SpeedIndex: 500,
       };
     }
 
@@ -132,7 +132,7 @@ class FakeGatherer extends Gatherer {
       metadata: result.fake.metadata,
       settings: result.fake.settings,
       metrics: {
-        FCP: 500,
+        SpeedIndex: 500,
       },
     };
   }

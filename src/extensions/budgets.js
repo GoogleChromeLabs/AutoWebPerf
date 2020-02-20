@@ -10,10 +10,10 @@ class BudgetsExtension extends Extension {
     super();
     config = config || {};
     this.budgetMetricMap = {
-      'FCP': ['milliseconds', 'seconds', 'overRatio'],
-      'FMP': ['milliseconds', 'seconds', 'overRatio'],
+      'FirstContentfulPaint': ['milliseconds', 'seconds', 'overRatio'],
+      'FirstMeaningfulPaint': ['milliseconds', 'seconds', 'overRatio'],
       'SpeedIndex': ['milliseconds', 'seconds', 'overRatio'],
-      'TTI': ['milliseconds', 'seconds', 'overRatio'],
+      'TimeToInteractive': ['milliseconds', 'seconds', 'overRatio'],
       'Javascript': ['KB', 'overRatio'],
       'CSS': ['KB', 'overRatio'],
       'Fonts': ['KB', 'overRatio'],

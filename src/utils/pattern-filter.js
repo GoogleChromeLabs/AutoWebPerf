@@ -4,7 +4,7 @@ const assert = require('./assert.js');
  * A powerful filter with string patterns.
  *
  * Examples:
- * filters = ['selected', 'webpatestest.metrics.FCP>3', 'rowIndex===5']
+ * filters = ['selected', 'webpatestest.metrics.SpeedIndex>3000', 'rowIndex===5']
 *
  * @param  {Array.<object>} items
  * @param  {Array.<object>} filters

@@ -21,7 +21,7 @@ describe('Budgets unit test', () => {
       budgets: {
         dataSource: 'webpagetest',
         budget: {
-          FCP: 1000,
+          FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
         },
       },
@@ -30,7 +30,7 @@ describe('Budgets unit test', () => {
       url: 'google.com',
       webpagetest: {
         metrics: {
-          FCP: 1500,
+          FirstContentfulPaint: 1500,
           SpeedIndex: 6000,
         }
       },
@@ -42,18 +42,18 @@ describe('Budgets unit test', () => {
       url: 'google.com',
       webpagetest: {
         metrics: {
-          FCP: 1500,
+          FirstContentfulPaint: 1500,
           SpeedIndex: 6000,
         }
       },
       budgets: {
         dataSource: 'webpagetest',
         budget: {
-          FCP: 1000,
+          FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
         },
         metrics: {
-          FCP: {
+          FirstContentfulPaint: {
             budget: {
               milliseconds: 1000,
               seconds: 1,
@@ -77,14 +77,14 @@ describe('Budgets unit test', () => {
       url: 'google.com',
       webpagetest: {
         metrics: {
-          FCP: 1500,
+          FirstContentfulPaint: 1500,
           SpeedIndex: 6000,
         }
       },
       budgets: {
         dataSource: 'webpagetest',
         budget: {
-          FCP: 1000,
+          FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
         },
       }
@@ -96,18 +96,18 @@ describe('Budgets unit test', () => {
       url: 'google.com',
       webpagetest: {
         metrics: {
-          FCP: 1500,
+          FirstContentfulPaint: 1500,
           SpeedIndex: 6000,
         }
       },
       budgets: {
         dataSource: 'webpagetest',
         budget: {
-          FCP: 1000,
+          FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
         },
         metrics: {
-          FCP: {
+          FirstContentfulPaint: {
             budget: {
               milliseconds: 1000,
               seconds: 1,
