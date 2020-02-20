@@ -6,7 +6,7 @@
 'use strict';
 
 const Status = require('../../src/common/status');
-const Metric = require('../../src/common/metric');
+const {MetricKeys} = require('../../src/common/metrics');
 const WPTGatherer = require('../../src/gatherers/wpt-gatherer');
 const fs = require('fs');
 
@@ -167,10 +167,6 @@ describe('WPTGatherer unit test', () => {
   });
 
   it('follows standardized metric names', async () => {
-    let supportedMetrics = [];
-    Object.keys(Metric).forEach(key => {
-      supportedMetrics = supportedMetrics.concat(Object.keys(Metric[key]));
-    });
     let result = {
       selected: true,
       id: 'id-1234',
@@ -189,15 +185,65 @@ describe('WPTGatherer unit test', () => {
     let response = wptGatherer.retrieve(result, {} /* options */);
     expect(response.metrics).not.toBe([]);
 
-    // Get all metric keys from the response, including lighthouse.*
-    let metrics = Object.keys(response.metrics).filter(
-        metric => metric !== 'lighthouse');
-    metrics = metrics.concat(Object.keys(response.metrics.lighthouse));
+    // Get all metric keys from the response.
+    // TODO: Cover webpagetest.lighthouse.metrics.*
+    let metrics = Object.keys(response.metrics);
 
     // Make sure all metric keys are supported.
     let notSupported = metrics.filter(metric => {
-      return !supportedMetrics.includes(metric);
+      let parts = metric.split('.');
+      if (parts.length > 1) metric = parts[parts.length -1];
+      return metric !== 'lighthouse' && !MetricKeys.includes(metric);
     })
     expect(notSupported).toEqual([]);
+  });
+
+  it('throws error when dealing with unsupported metric names', async () => {
+    let result = {
+      selected: true,
+      id: 'id-1234',
+      type: 'single',
+      url: 'google.com',
+      status: 'submitted',
+      webpagetest: {
+        metadata: {
+          testId: 'id-1234',
+        },
+      },
+    };
+    fakeApiHandler.fetch = () => {
+      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
+    };
+    wptGatherer.metricsMap = {
+      'NotSupportedMetric': 'data.median.firstView.TTFB',
+    }
+
+    let response = wptGatherer.retrieve(result, {} /* options */);
+    expect(response.errors).toEqual(
+        ['Metric key "NotSupportedMetric" is not supported.']);
+  });
+
+  it('supports nested metric key such as lighthouse.SpeedIndex', async () => {
+    let result = {
+      selected: true,
+      id: 'id-1234',
+      type: 'single',
+      url: 'google.com',
+      status: 'submitted',
+      webpagetest: {
+        metadata: {
+          testId: 'id-1234',
+        },
+      },
+    };
+    fakeApiHandler.fetch = () => {
+      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
+    };
+    wptGatherer.metricsMap = {
+      'lighthouse.SpeedIndex': 'data.median.firstView.SpeedIndex',
+    }
+
+    let response = wptGatherer.retrieve(result, {} /* options */);
+    expect(response.metrics.lighthouse.SpeedIndex).not.toBe(undefined);
   });
 });

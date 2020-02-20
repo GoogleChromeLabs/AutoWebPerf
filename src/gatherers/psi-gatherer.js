@@ -2,6 +2,7 @@
 
 const assert = require('../utils/assert');
 const Status = require('../common/status');
+const {Metrics} = require('../common/metrics');
 const Gatherer = require('./gatherer');
 
 class PSIGatherer extends Gatherer {
@@ -70,25 +71,31 @@ class PSIGatherer extends Gatherer {
       json = JSON.parse(res);
     }
 
-    let metadata = {}, metrics = {}, errors = [];
+    let metadata = {}, metrics = new Metrics(), errors = [];
     if (json && json.lighthouseResult) {
-      try {
-        Object.keys(this.metadataMap).forEach(key => {
+      Object.keys(this.metadataMap).forEach(key => {
+        try {
           eval(`metadata.${key} = json.${this.metadataMap[key]}`);
-        });
-        Object.keys(this.metricsMap).forEach(key => {
-          eval(`metrics.${key} = json.${this.metricsMap[key]}`);
-        });
-      } catch (error) {
-        errors.push(error);
-      }
+        } catch (error) {
+          errors.push(error);
+        }
+      });
+      Object.keys(this.metricsMap).forEach(key => {
+        // Using eval for the assigning to support non-string and non-numeric
+        // value, like Date object.
+        try {
+          eval(`metrics.set(key, json.${this.metricsMap[key]});`);
+        } catch (e) {
+          errors.push(e.message);
+        }
+      });
 
       return {
         status: Status.RETRIEVED,
         statusText: 'Success',
         settings: test.psi.settings,
         metadata: metadata,
-        metrics: metrics,
+        metrics: metrics.toObject() || {},
         errors: errors,
       }
     } else {

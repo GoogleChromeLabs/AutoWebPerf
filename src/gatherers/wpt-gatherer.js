@@ -3,7 +3,7 @@
 const assert = require('../utils/assert');
 const setObject = require('../utils/set-object');
 const Status = require('../common/status');
-const Metric = require('../common/metric');
+const {Metrics} = require('../common/metrics');
 const Gatherer = require('./gatherer');
 
 class WebPageTestGatherer extends Gatherer {
@@ -171,7 +171,8 @@ class WebPageTestGatherer extends Gatherer {
         'WPTGatherer::retrieve json.statusCode=\n', json.statusCode);
     if (this.debug) console.log('WPTGatherer::retrieve\n', json);
 
-    let status, metrics = {}, metadata = {};
+    let status, metadata = {},
+        metrics = new Metrics(), lighthouseMetrics = new Metrics();
     let statusText = json.statusText;
 
     switch(json.statusCode) {
@@ -180,19 +181,17 @@ class WebPageTestGatherer extends Gatherer {
         break;
 
       case 200:
+        // Setting WebPageTest metrics.
         Object.keys(this.metricsMap).forEach(key => {
+          // Using eval for the assigning to support non-string and non-numeric
+          // value, like Date object.
           try {
-            let object = metrics;
-            key.split('.').forEach(property => {
-              object[property] = object[property] || {}
-              object = object[property]
-            });
-            eval(`metrics.${key} = json.${this.metricsMap[key]}`);
-          } catch (error) {
-            errors.push(`Unable to assign ${key} to metrics.`);
-            metrics[key] = null;
+            eval(`metrics.set(key, json.${this.metricsMap[key]});`);
+          } catch (e) {
+            errors.push(e.message);
           }
         });
+
         if (errors.length > 0) {
           status = Status.ERROR;
         } else {
@@ -220,7 +219,7 @@ class WebPageTestGatherer extends Gatherer {
       statusText: statusText,
       settings: gathererData.settings,
       metadata: gathererData.metadata,
-      metrics: metrics || {},
+      metrics: metrics.toObject() || {},
       errors: errors || [],
     };
   }

@@ -6,7 +6,7 @@
 'use strict';
 
 const Status = require('../../src/common/status');
-const Metric = require('../../src/common/metric');
+const {MetricKeys} = require('../../src/common/metrics');
 const PSIGatherer = require('../../src/gatherers/psi-gatherer');
 const setObject = require('../../src/utils/set-object');
 const fs = require('fs');
@@ -80,11 +80,6 @@ describe('PSIGatherer unit test', () => {
   });
 
   it('follows standardized metric names', async () => {
-    let supportedMetrics = [];
-    supportedMetrics = supportedMetrics.concat(Object.keys(Metric.timing));
-    supportedMetrics = supportedMetrics.concat(Object.keys(Metric.resourceCount));
-    supportedMetrics = supportedMetrics.concat(Object.keys(Metric.resourceSize));
-
     let test = {
       selected: true,
       url: 'google.com',
@@ -102,8 +97,30 @@ describe('PSIGatherer unit test', () => {
 
     // Make sure all metric keys are supported.
     let notSupported = Object.keys(response.metrics).filter(metric => {
-      return !supportedMetrics.includes(metric);
+      return !MetricKeys.includes(metric);
     })
     expect(notSupported).toEqual([]);
+  });
+
+  it('throws error when dealing with unsupported metric names', async () => {
+    let test = {
+      selected: true,
+      url: 'google.com',
+      label: 'Google',
+      psi: {
+        settings: {
+          locale: 'en-US',
+          strategy: 'mobile'
+        }
+      },
+    };
+
+    psiGatherer.metricsMap = {
+      'NotSupportedMetric': 'lighthouseResult.audits.metrics.details.items[0].observedFirstPaint',
+    }
+
+    let response = psiGatherer.run(test, {} /* options */);
+    expect(response.errors).toEqual(
+        ['Metric key "NotSupportedMetric" is not supported.']);
   });
 });
