@@ -1,26 +1,18 @@
 {
   "results": [
     {
-      "id": "1580017583638-https://thinkwithgoogle.com",
+      "id": "1583292994986-https://thinkwithgoogle.com",
       "type": "Single",
       "status": "retrieved",
       "label": "Think With Google",
       "url": "https://thinkwithgoogle.com",
-      "createdTimestamp": 1580017583638,
-      "modifiedTimestamp": 1580080801707,
+      "createdTimestamp": 1583292994986,
+      "modifiedTimestamp": 1583293000330,
       "webpagetest": {
         "status": "retrieved",
-        "metadata": {
-          "testId": "200118_KA_4022ee20eaf1deebb393585731de6576",
-          "jsonUrl": "https://webpagetest.org/jsonResult.php?test=200118_KA_4022ee20eaf1deebb393585731de6576",
-          "ownerKey": "9c58809d442152143c04bb7f1a711224aac3cfde",
-          "xmlUrl": "https://webpagetest.org/xmlResult/200118_KA_4022ee20eaf1deebb393585731de6576/",
-          "userUrl": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/",
-          "summaryCSV": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/page_data.csv",
-          "detailCSV": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/requests.csv"
-        },
+        "statusText": "Success",
         "settings": {
-          "locationId": "Dulles_MotoG4",
+          "location": "Dulles_MotoG4",
           "device": "Pixel",
           "connection": "4G",
           "runs": 1,
@@ -29,141 +21,108 @@
           "block": null,
           "script": null
         },
-        "metrics": {
-          "lighthouse.Performance": 0.97,
-          "lighthouse.PWA": 0.38,
-          "lighthouse.FCP": 1805.008,
-          "lighthouse.FMP": 1912.109,
-          "lighthouse.SpeedIndex": 1971,
-          "lighthouse.TTI": 3032.887,
-          "lighthouse.FID": 74.297,
-          "lighthouse.FirstCPUIdle": 3032.887,
-          "TTFB": 482,
-          "FirstPaint": 700,
-          "FCP": 692,
-          "FMP": 692,
-          "VisualComplete": 900,
-          "SpeedIndex": 702,
-          "TTI": 3527,
-          "onLoad": 1681,
-          "Requests": 17,
-          "DCL": 741,
-          "Bytes": 439869,
-          "DOMElements": 206,
-          "CSS": 0,
-          "Fonts": 30780,
-          "Javascript": 311343,
-          "Images": 18910,
-          "Videos": 0
-        }
-      },
-      "psi": {
-        "status": "retrieved",
-        "metadata": {
-          "testId": "https://www.thinkwithgoogle.com/",
-          "requestedUrl": "https://thinkwithgoogle.com/",
-          "finalUrl": "https://www.thinkwithgoogle.com/",
-          "lighthouseVersion": "5.6.0",
-          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.74 Safari/537.36",
-          "fetchTime": "2020-01-26T05:46:24.419Z"
-        },
-        "settings": {
-          "locale": "en-US",
-          "strategy": "mobile"
-        },
-        "metrics": {
-          "FCP": 696,
-          "FMP": 696,
-          "SpeedIndex": 754,
-          "TTI": 6103,
-          "FirstCPUIdle": 5303,
-          "FID": 120
-        }
-      }
-    },
-    {
-      "id": "1580017854919-https://thinkwithgoogle.com",
-      "type": "Single",
-      "status": "retrieved",
-      "label": "Think With Google",
-      "url": "https://thinkwithgoogle.com",
-      "createdTimestamp": 1580017854919,
-      "modifiedTimestamp": 1580080801933,
-      "webpagetest": {
-        "status": "retrieved",
         "metadata": {
           "testId": "200118_KA_4022ee20eaf1deebb393585731de6576",
-          "jsonUrl": "https://webpagetest.org/jsonResult.php?test=200118_KA_4022ee20eaf1deebb393585731de6576",
           "ownerKey": "9c58809d442152143c04bb7f1a711224aac3cfde",
+          "jsonUrl": "https://webpagetest.org/jsonResult.php?test=200118_KA_4022ee20eaf1deebb393585731de6576",
           "xmlUrl": "https://webpagetest.org/xmlResult/200118_KA_4022ee20eaf1deebb393585731de6576/",
           "userUrl": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/",
           "summaryCSV": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/page_data.csv",
           "detailCSV": "https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/requests.csv"
         },
-        "settings": {
-          "locationId": "Dulles_MotoG4",
-          "device": "Pixel",
-          "connection": "4G",
-          "runs": 1,
-          "repeatView": true,
-          "timeline": true,
-          "block": null,
-          "script": null
-        },
         "metrics": {
-          "lighthouse.Performance": 0.97,
-          "lighthouse.PWA": 0.38,
-          "lighthouse.FCP": 1805.008,
-          "lighthouse.FMP": 1912.109,
-          "lighthouse.SpeedIndex": 1971,
-          "lighthouse.TTI": 3032.887,
-          "lighthouse.FID": 74.297,
-          "lighthouse.FirstCPUIdle": 3032.887,
-          "TTFB": 482,
+          "lighthouse": {
+            "Performance": 0.97,
+            "ProgressiveWebApp": 0.38,
+            "FirstContentfulPaint": 1805.008,
+            "FirstMeaningfulPaint": 1912.109,
+            "SpeedIndex": 1971,
+            "TimeToInteractive": 3032.887,
+            "FirstInputDelay": 74.297,
+            "FirstCPUIdle": 3032.887
+          },
+          "TimeToFirstByte": 482,
           "FirstPaint": 700,
-          "FCP": 692,
-          "FMP": 692,
+          "FirstContentfulPaint": 692,
+          "FirstMeaningfulPaint": 692,
           "VisualComplete": 900,
           "SpeedIndex": 702,
-          "TTI": 3527,
-          "onLoad": 1681,
+          "LoadEvent": 1681,
+          "TimeToInteractive": 3527,
+          "DOMContentLoaded": 741,
           "Requests": 17,
-          "DCL": 741,
-          "Bytes": 439869,
           "DOMElements": 206,
-          "CSS": 0,
+          "Connections": 10,
           "Fonts": 30780,
           "Javascript": 311343,
-          "Images": 18910,
-          "Videos": 0
-        }
-      },
-      "psi": {
-        "status": "retrieved",
-        "metadata": {
-          "testId": "https://www.thinkwithgoogle.com/",
-          "requestedUrl": "https://thinkwithgoogle.com/",
-          "finalUrl": "https://www.thinkwithgoogle.com/",
-          "lighthouseVersion": "5.6.0",
-          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.74 Safari/537.36",
-          "fetchTime": "2020-01-26T05:50:55.838Z"
+          "Images": 18910
         },
-        "settings": {
-          "locale": "en-US",
-          "strategy": "mobile"
+        "errors": []
+      },
+      "budgets": {
+        "dataSource": "webpagetest",
+        "budget": {
+          "FirstContentfulPaint": 2000,
+          "SpeedIndex": 3000,
+          "TimeToInteractive": 5000,
+          "Javascript": 500,
+          "CSS": 500,
+          "Fonts": 100,
+          "Images": 500,
+          "Videos": 500
         },
         "metrics": {
-          "FirstPaint": 786,
-          "FCP": 786,
-          "FMP": 786,
-          "SpeedIndex": 908,
-          "TTI": 6283,
-          "FirstCPUIdle": 5662,
-          "FID": 226,
-          "TBT": 974,
-          "LCP": 886114860078,
-          "DCL": 278,
-          "onLoad": 977
+          "FirstContentfulPaint": {
+            "budget": {
+              "milliseconds": 2000,
+              "seconds": 2
+            },
+            "overRatio": -0.654
+          },
+          "SpeedIndex": {
+            "budget": {
+              "milliseconds": 3000,
+              "seconds": 3
+            },
+            "overRatio": -0.766
+          },
+          "TimeToInteractive": {
+            "budget": {
+              "milliseconds": 5000,
+              "seconds": 5
+            },
+            "overRatio": -0.2946
+          },
+          "Javascript": {
+            "budget": {
+              "KB": 500
+            },
+            "overRatio": 621.686
+          },
+          "CSS": {
+            "budget": {
+              "KB": 500
+            },
+            "overRatio": null
+          },
+          "Fonts": {
+            "budget": {
+              "KB": 100
+            },
+            "overRatio": 306.8
+          },
+          "Images": {
+            "budget": {
+              "KB": 500
+            },
+            "overRatio": 36.82
+          },
+          "Videos": {
+            "budget": {
+              "KB": 500
+            },
+            "overRatio": null
+          }
         }
       }
     }

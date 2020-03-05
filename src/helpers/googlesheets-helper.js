@@ -30,7 +30,7 @@ const GoogleSheetsHelper = {
     var signature = Utilities.computeDigest(
         Utilities.DigestAlgorithm.MD5, message, Utilities.Charset.US_ASCII);
     var signatureStr = '';
-    for (i = 0; i < signature.length; i++) {
+    for (let i = 0; i < signature.length; i++) {
       var byte = signature[i];
       if (byte < 0) byte += 256;
       var byteStr = byte.toString(16);
@@ -130,6 +130,13 @@ const GoogleSheetsHelper = {
       userTimeZone = 'GMT';
     }
     return userTimeZone || 'GMT';
+  },
+
+  /**
+   * Get active sheet's ID.
+   */
+  getSpreadsheetId: () => {
+    return SpreadsheetApp.getActive().getId();
   },
 
   /**

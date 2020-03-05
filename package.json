@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest ./test/",
+    "integration": "npm run build && jest ./integration/",
     "build": "rollup -c",
     "parcel": "parcel src/core.js"
   },

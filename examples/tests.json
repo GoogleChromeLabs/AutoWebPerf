@@ -12,7 +12,7 @@
       "url": "https://thinkwithgoogle.com",
       "recurring": {
         "frequency": "daily",
-        "nextTriggerTimestamp": 1580199259805,
+        "nextTriggerTimestamp": 1583448462844,
         "nextTrigger": "Tue Jan 28 2020 03:14:19 GMT-0500 (Eastern Standard Time)",
         "activatedFrequency": "daily"
       },
@@ -40,9 +40,9 @@
       "budgets": {
         "dataSource": "webpagetest",
         "budget": {
-          "FCP": 2000,
+          "FirstContentfulPaint": 2000,
           "SpeedIndex": 3000,
-          "TTI": 5000,
+          "TimeToInteractive": 5000,
           "Javascript": 500,
           "CSS": 500,
           "Fonts": 100,

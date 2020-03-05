@@ -9,16 +9,18 @@ class BudgetsExtension extends Extension {
   constructor(config) {
     super();
     config = config || {};
+    this.defaultDataSource = config.dataSource || 'webpagetest';
+
     this.budgetMetricMap = {
-      'FirstContentfulPaint': ['milliseconds', 'seconds', 'overRatio'],
-      'FirstMeaningfulPaint': ['milliseconds', 'seconds', 'overRatio'],
-      'SpeedIndex': ['milliseconds', 'seconds', 'overRatio'],
-      'TimeToInteractive': ['milliseconds', 'seconds', 'overRatio'],
-      'Javascript': ['KB', 'overRatio'],
-      'CSS': ['KB', 'overRatio'],
-      'Fonts': ['KB', 'overRatio'],
-      'Images': ['KB', 'overRatio'],
-      'Videos': ['KB', 'overRatio'],
+      'FirstContentfulPaint': ['milliseconds', 'seconds', 'metricValue', 'overRatio'],
+      'FirstMeaningfulPaint': ['milliseconds', 'seconds', 'metricValue', 'overRatio'],
+      'SpeedIndex': ['milliseconds', 'seconds', 'metricValue', 'overRatio'],
+      'TimeToInteractive': ['milliseconds', 'seconds', 'metricValue', 'overRatio'],
+      'Javascript': ['KB', 'metricValue', 'overRatio'],
+      'CSS': ['KB', 'metricValue', 'overRatio'],
+      'Fonts': ['KB', 'metricValue', 'overRatio'],
+      'Images': ['KB', 'metricValue', 'overRatio'],
+      'Videos': ['KB', 'metricValue', 'overRatio'],
     };
   }
 
@@ -38,7 +40,7 @@ class BudgetsExtension extends Extension {
     if (!budgets || budgets === {}) return;
 
     // Use webpagetest as default data source.
-    let dataSource = budgets.dataSource || 'webpagetest';
+    let dataSource = budgets.dataSource || this.defaultDataSource;
     let metricValues = (result[dataSource] || {}).metrics;
     if (!metricValues) metricValues = {};
 
@@ -56,6 +58,10 @@ class BudgetsExtension extends Extension {
 
       targets.forEach(target => {
         switch (target) {
+          case 'metricValue':
+            resultMetric[target] = metricValues[metric];
+            break;
+
           case 'milliseconds':
             setObject(resultMetric, `budget.milliseconds`, budget);
             break;
@@ -68,11 +74,15 @@ class BudgetsExtension extends Extension {
           case 'overRatio':
             metricValue = metricValues[metric];
             resultMetric[target] = metricValue ?
-                this.round((metricValue - budget) / budget, 4) : null;
+                this.round((metricValue - budget) / budget, 2) : null;
             break;
 
           case 'KB':
             setObject(resultMetric, `budget.KB`, budget);
+            break;
+
+          case 'bytes':
+            setObject(resultMetric, `budget.bytes`, budget * 1000);
             break;
 
           default:

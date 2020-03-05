@@ -1,5 +1,5 @@
 function setObject(obj, path, value) {
-  if (!path || !value) return;
+  if (!path) return;
 
   let properties = path.split('.');
   let len = properties.length;

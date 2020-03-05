@@ -69,6 +69,14 @@ class WebPageTestGatherer extends Gatherer {
       'Images': 'data.median.firstView.breakdown.image.bytes',
       'Videos': 'data.median.firstView.breakdown.video.bytes'
     };
+
+    this.metricsConversion = {
+      'CSS': (x) => Math.round(x / 1000),
+      'Fonts': (x) => Math.round(x / 1000),
+      'Javascript': (x) => Math.round(x / 1000),
+      'Images': (x) => Math.round(x / 1000),
+      'Videos': (x) => Math.round(x / 1000),
+    };
   }
 
   run(test, options) {
@@ -174,6 +182,7 @@ class WebPageTestGatherer extends Gatherer {
     let status, metadata = {},
         metrics = new Metrics(), lighthouseMetrics = new Metrics();
     let statusText = json.statusText;
+    let value;
 
     switch(json.statusCode) {
       case 100:
@@ -186,7 +195,11 @@ class WebPageTestGatherer extends Gatherer {
           // Using eval for the assigning to support non-string and non-numeric
           // value, like Date object.
           try {
-            eval(`metrics.set(key, json.${this.metricsMap[key]});`);
+            eval(`value = json.${this.metricsMap[key]};`);
+            if (this.metricsConversion[key]) {
+              value = this.metricsConversion[key](value);
+            }
+            metrics.set(key, value);
           } catch (e) {
             errors.push(e.message);
           }

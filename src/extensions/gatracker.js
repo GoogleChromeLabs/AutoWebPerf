@@ -2,14 +2,26 @@
 
 const assert = require('../utils/assert');
 const Status = require('../common/status');
+const {TestType} = require('../common/types');
 const setObject = require('../utils/set-object');
 const Extension = require('./extension');
+const GoogleSheetsHelper = require('../helpers/googlesheets-helper');
+
+const TrackingType = {
+  RESULT: 'Result',
+  SUBMIT_SINGLE_TEST: 'SubmitManualTest', // Legacy name of single tests.
+  SUBMIT_RECURRING_TEST: 'SubmitScheduledTest', // Legacy name of recurring tests.
+  INIT: 'Initialise',
+};
 
 class GATrackerExtension extends Extension {
   constructor(config) {
     super();
     config = config || {};
     assert(config.apiHandler, 'apiHandler is missing in config.');
+    assert(config.clientEmail, 'clientEmail is missing in config.');
+    assert(config.gaAccount, 'gaAccount is missing in config.');
+    assert(config.awpVersion, 'awpVersion is missing in config.');
 
     this.apiHandler = config.apiHandler;
     this.clientEmail = config.clientEmail;
@@ -17,13 +29,35 @@ class GATrackerExtension extends Extension {
     this.awpVersion = config.awpVersion;
   }
 
-  postRun(test, result) {
-    assert(test, 'test is missing.');
-    assert(result, 'result is missing.');
+  afterRun(params) {
+    assert(params.result, 'result is missing in params.');
+    let result = params.result;
+
+    if (result.status === Status.SUBMITTED) {
+      this.trackAction(TrackingType.RESULT, result.url, {
+
+      });
+
+    } else {
+      let trackingType = result.type === TestType.SINGLE ?
+          TrackingType.SUBMIT_SINGLE_TEST : TrackingType.SUBMIT_RECURRING_TEST;
+      this.trackAction(trackingType, result.url,
+          this.getTrackingCustomValues(result));
+    }
   }
 
-  postRetrieve(result) {
-    assert(result, 'result is missing.');
+  afterRetrieve(params) {
+    assert(params.result, 'result is missing in params.');
+    let result = params.result;
+
+    if (result.status === Status.RETRIEVED) {
+      this.trackAction(TrackingType.RESULT, params.result.url,
+          this.getTrackingCustomValues(result));
+    }
+  }
+
+  getTrackingCustomValues(result) {
+    
   }
 
   /**
@@ -146,3 +180,5 @@ class GATrackerExtension extends Extension {
     return trackingUrl;
   }
 }
+
+module.exports = GATrackerExtension;

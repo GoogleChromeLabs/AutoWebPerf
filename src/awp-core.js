@@ -8,11 +8,7 @@
 
 const Status = require('./common/status');
 const assert = require('./utils/assert');
-
-const TestType = {
-  SINGLE: 'Single',
-  RECURRING: 'Recurring',
-};
+const {TestType} = require('./common/types');
 
 const Frequency = {
   NONE: 'none',
@@ -102,10 +98,11 @@ class AutoWebPerf {
     if (awpConfig.extensions) {
       awpConfig.extensions.forEach(extension => {
         let ExtensionClass;
-        let extConfig = {
-          connector: this.connector,
-        }
-        extConfig[extension] = awpConfig[extension];
+        let extConfig = awpConfig[extension] || {};
+
+        // Adding mandatory properties.
+        extConfig.connector = this.connector;
+        extConfig.apiHandler = this.apiHandler;
 
         switch (extension) {
           case 'budgets':
@@ -114,10 +111,6 @@ class AutoWebPerf {
 
           case 'googlesheets':
             ExtensionClass = require('./extensions/googlesheets-extension');
-            break;
-
-          case 'gatracker':
-            ExtensionClass = require('./extensions/gatracker');
             break;
 
           default:

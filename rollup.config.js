@@ -12,8 +12,8 @@ export default [
       file: 'build/bundle-googlesheets.js',
       format: 'cjs',
       esModule: false,
-      treeshake: false,
     },
+    treeshake: false,
     plugins: [
       commonjs({
         ignore: [
@@ -26,7 +26,7 @@ export default [
         exclude: 'node_modules/**'
       }),
       resolve({
-        preferBuiltins: true,
+        preferBuiltins: false,
         jail: './src',
         dedupe: [],
       }),

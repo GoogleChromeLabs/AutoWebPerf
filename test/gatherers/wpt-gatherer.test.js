@@ -105,8 +105,6 @@ describe('WPTGatherer unit test', () => {
     expect(response.statusText).toEqual('Success');
     expect(response.metrics.SpeedIndex).toEqual(702);
     expect(response.errors).toEqual([]);
-
-    console.log(response);
   });
 
   it('retrieves result and handles status codes', async () => {

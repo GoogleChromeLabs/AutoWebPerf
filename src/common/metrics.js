@@ -3,6 +3,7 @@
  * metrics used in Lighthouse: https://web.dev/performance-scoring/
  */
 
+const assert = require('../utils/assert');
 const setObject = require('../utils/set-object');
 
 const MetricKeys = [

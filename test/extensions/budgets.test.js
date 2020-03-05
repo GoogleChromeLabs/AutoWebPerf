@@ -58,6 +58,7 @@ describe('Budgets unit test', () => {
               milliseconds: 1000,
               seconds: 1,
             },
+            metricValue: 1500,
             overRatio: 0.5,
           },
           SpeedIndex: {
@@ -65,6 +66,7 @@ describe('Budgets unit test', () => {
               milliseconds: 3000,
               seconds: 3,
             },
+            metricValue: 6000,
             overRatio: 1,
           },
         }
@@ -112,6 +114,7 @@ describe('Budgets unit test', () => {
               milliseconds: 1000,
               seconds: 1,
             },
+            metricValue: 1500,
             overRatio: 0.5,
           },
           SpeedIndex: {
@@ -119,6 +122,7 @@ describe('Budgets unit test', () => {
               milliseconds: 3000,
               seconds: 3,
             },
+            metricValue: 6000,
             overRatio: 1,
           },
         }
