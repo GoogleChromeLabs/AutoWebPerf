@@ -23,6 +23,7 @@ describe('Budgets unit test', () => {
         budget: {
           FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
+          CSS: 100,
         },
       },
     };
@@ -32,6 +33,7 @@ describe('Budgets unit test', () => {
         metrics: {
           FirstContentfulPaint: 1500,
           SpeedIndex: 6000,
+          CSS: 200,
         }
       },
     };
@@ -44,6 +46,7 @@ describe('Budgets unit test', () => {
         metrics: {
           FirstContentfulPaint: 1500,
           SpeedIndex: 6000,
+          CSS: 200,
         }
       },
       budgets: {
@@ -51,6 +54,7 @@ describe('Budgets unit test', () => {
         budget: {
           FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
+          CSS: 100,
         },
         metrics: {
           FirstContentfulPaint: {
@@ -58,7 +62,10 @@ describe('Budgets unit test', () => {
               milliseconds: 1000,
               seconds: 1,
             },
-            metricValue: 1500,
+            metric: {
+              milliseconds: 1500,
+              seconds: 1.5,
+            },
             overRatio: 0.5,
           },
           SpeedIndex: {
@@ -66,7 +73,19 @@ describe('Budgets unit test', () => {
               milliseconds: 3000,
               seconds: 3,
             },
-            metricValue: 6000,
+            metric: {
+              milliseconds: 6000,
+              seconds: 6,
+            },
+            overRatio: 1,
+          },
+          CSS: {
+            budget: {
+              KB: 100,
+            },
+            metric: {
+              KB: 200,
+            },
             overRatio: 1,
           },
         }
@@ -114,7 +133,10 @@ describe('Budgets unit test', () => {
               milliseconds: 1000,
               seconds: 1,
             },
-            metricValue: 1500,
+            metric: {
+              milliseconds: 1500,
+              seconds: 1.5,
+            },
             overRatio: 0.5,
           },
           SpeedIndex: {
@@ -122,7 +144,10 @@ describe('Budgets unit test', () => {
               milliseconds: 3000,
               seconds: 3,
             },
-            metricValue: 6000,
+            metric: {
+              milliseconds: 6000,
+              seconds: 6,
+            },
             overRatio: 1,
           },
         }

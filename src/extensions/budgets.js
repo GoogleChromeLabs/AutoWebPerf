@@ -12,15 +12,15 @@ class BudgetsExtension extends Extension {
     this.defaultDataSource = config.dataSource || 'webpagetest';
 
     this.budgetMetricMap = {
-      'FirstContentfulPaint': ['milliseconds', 'seconds', 'metricValue', 'overRatio'],
-      'FirstMeaningfulPaint': ['milliseconds', 'seconds', 'metricValue', 'overRatio'],
-      'SpeedIndex': ['milliseconds', 'seconds', 'metricValue', 'overRatio'],
-      'TimeToInteractive': ['milliseconds', 'seconds', 'metricValue', 'overRatio'],
-      'Javascript': ['KB', 'metricValue', 'overRatio'],
-      'CSS': ['KB', 'metricValue', 'overRatio'],
-      'Fonts': ['KB', 'metricValue', 'overRatio'],
-      'Images': ['KB', 'metricValue', 'overRatio'],
-      'Videos': ['KB', 'metricValue', 'overRatio'],
+      'FirstContentfulPaint': ['milliseconds', 'seconds', 'overRatio'],
+      'FirstMeaningfulPaint': ['milliseconds', 'seconds', 'overRatio'],
+      'SpeedIndex': ['milliseconds', 'seconds', 'overRatio'],
+      'TimeToInteractive': ['milliseconds', 'seconds', 'overRatio'],
+      'Javascript': ['KB', 'overRatio'],
+      'CSS': ['KB', 'overRatio'],
+      'Fonts': ['KB', 'overRatio'],
+      'Images': ['KB', 'overRatio'],
+      'Videos': ['KB', 'overRatio'],
     };
   }
 
@@ -58,17 +58,16 @@ class BudgetsExtension extends Extension {
 
       targets.forEach(target => {
         switch (target) {
-          case 'metricValue':
-            resultMetric[target] = metricValues[metric];
-            break;
-
           case 'milliseconds':
             setObject(resultMetric, `budget.milliseconds`, budget);
+            setObject(resultMetric, `metric.milliseconds`, metricValues[metric]);
             break;
 
           case 'seconds':
             setObject(resultMetric, `budget.seconds`,
                 this.round(budget / 1000, 2));
+            setObject(resultMetric, `metric.seconds`,
+                this.round(metricValues[metric] / 1000, 2));
             break;
 
           case 'overRatio':
@@ -79,6 +78,7 @@ class BudgetsExtension extends Extension {
 
           case 'KB':
             setObject(resultMetric, `budget.KB`, budget);
+            setObject(resultMetric, `metric.KB`, metricValues[metric]);
             break;
 
           case 'bytes':

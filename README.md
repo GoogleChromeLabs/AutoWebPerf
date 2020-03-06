@@ -10,23 +10,18 @@ recurring audits.
 
 ## Getting Started
 
-Clone this repo:
+```
+# List CLI options
+./awp --help
 
-TBD
+# Run tests
+./awp run --tests=examples/tests.json --results=output/results.json
 
-To run tests:
-```
-./awp run --tests=examples/tests.json --results=results.json
-```
+# Run recurring tests
+./awp recurring --tests=examples/tests.json --results=output/results.json
 
-To run recurring tests:
-```
-./awp recurring --tests=examples/tests.json --results=results.json
-```
-
-To retrieve pending results:
-```
-./awp retrieve --tests=examples/tests.json --results=results.json
+# Retrieve pending results
+./awp retrieve --tests=examples/tests.json --results=output/results.json
 ```
 
 ### Using AWP with Node CLI
@@ -48,7 +43,7 @@ To run tests, you can run the following CLI command with given Tests JSON, like
 `examples/tests.json` for the data structure of Tests.
 
 ```
-./awp run --tests=examples/tests.json --results=results.json
+./awp run --tests=examples/tests.json --results=output/results.json
 ```
 
 This will generate the result object(s) in the given path to `results.json`.
@@ -62,7 +57,7 @@ Run the following to retrieve the final metrics of results in the
 `results.json`.
 
 ```
-./awp retrieve --tests=examples/tests.json --results=results.json
+./awp retrieve --tests=examples/tests.json --results=output/results.json
 ```
 
 This will fetch metrics for all audit platforms and update to the Result object
@@ -75,7 +70,7 @@ If you'd like to set up recurring tests, you can define the `recurring` object
 that contains `frequency` for that Test.
 
 ```
-./awp recurring --tests=examples/tests.json --results=results.json
+./awp recurring --tests=examples/tests.json --results=output/results.json
 ```
 
 This will generate the Result object in the `results.json` and updates the next
@@ -84,7 +79,7 @@ trigger time to its original Test object in the `tests.json`.
 #### Run tests with extensions
 
 ```
-./awp run --tests=examples/tests.json --results=results.json --extensions=budgets
+./awp run --tests=examples/tests.json --results=output/results.json --extensions=budgets
 ```
 
 ### Using AWP With Google Sheets

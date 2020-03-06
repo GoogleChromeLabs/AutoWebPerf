@@ -12,10 +12,10 @@ class JSONConnector extends Connector {
     assert(config.results, 'results is missing in config.');
 
     this.tests = config.tests;
-    this.results = config.results;
+    this.resultPath = config.results;
 
     this.testsData = JSON.parse(
-        fse.readFileSync(path.resolve(`./${this.tests}`)));
+        fse.readFileSync(path.resolve(`${this.tests}`)));
   }
 
   healthCheck() {
@@ -31,7 +31,7 @@ class JSONConnector extends Connector {
   }
 
   updateTestList(newTests) {
-    let filepath = path.resolve(`./${this.tests}`);
+    let filepath = path.resolve(`${this.tests}`);
     fse.outputFileSync(
       filepath,
       JSON.stringify({
@@ -42,7 +42,7 @@ class JSONConnector extends Connector {
 
   getResultList() {
     try {
-      let filepath = path.resolve(`./output/${this.results}`);
+      let filepath = path.resolve(`${this.resultPath}`);
       if (fse.existsSync(filepath)) {
         let rawdata = fse.readFileSync(filepath);
         return JSON.parse(rawdata).results;
@@ -56,7 +56,7 @@ class JSONConnector extends Connector {
 
   appendResultList(newResults) {
     let results = this.getResultList();
-    let filepath = path.resolve(`./output/${this.results}`);
+    let filepath = path.resolve(`${this.resultPath}`);
     fse.outputFileSync(
       filepath,
       JSON.stringify({
@@ -76,7 +76,7 @@ class JSONConnector extends Connector {
       return idToResults[result.id] || result;
     });
 
-    let filepath = path.resolve(`./output/${this.results}`);
+    let filepath = path.resolve(`${this.resultPath}`);
     fse.outputFileSync(
       filepath,
       JSON.stringify({
