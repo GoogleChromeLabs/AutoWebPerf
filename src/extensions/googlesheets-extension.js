@@ -27,9 +27,11 @@ class GoogleSheetsExtension extends Extension {
     this.clientEmail = GoogleSheetsHelper.getClientEmail();
     this.spreadsheetId = GoogleSheetsHelper.getSpreadsheetId();
     this.awpVersion = config.awpVersion || 'awp-dev';
+    this.gaAccount = config.gaAccount;
     this.locations = null;
 
-    this.sendTrackEvent = config.sendTrackEvent;
+    this.isSendTrackEvent = config.isSendTrackEvent || false;
+    this.debug = config.debug || false;
   }
 
   /**
@@ -83,12 +85,11 @@ class GoogleSheetsExtension extends Extension {
       // Send action to Google Analytics
       let type = result.type === TestType.SINGLE ?
           TrackingType.SUBMIT_SINGLE_TEST : TrackingType.SUBMIT_RECURRING_TEST;
-      this.trackAction(type, this.spreadsheetId, test.url, result);
+      this.trackAction(type, this.spreadsheetId, result);
 
       // Send retrieved action to Google Analytics.
       if (result.status === Status.RETRIEVED) {
-        this.trackAction(TrackingType.RESULT, this.spreadsheetId, test.url,
-            result);
+        this.trackAction(TrackingType.RESULT, this.spreadsheetId, result);
       }
     }
   }
@@ -115,13 +116,13 @@ class GoogleSheetsExtension extends Extension {
 
     // Send retrieved action to Google Analytics.
     if (result.status === Status.RETRIEVED) {
-      this.trackAction(
-          TrackingType.RESULT, this.spreadsheetId, test.url, result);
+      this.trackAction(TrackingType.RESULT, this.spreadsheetId, result);
     }
   }
 
   afterAllRetrieves(params) {
-    let results = params.results || [];
+    // Get all results in the tab.
+    let results = this.connector.getResultList();
     let pendingResults = results.filter(result => {
       return result.status !== Status.RETRIEVED;
     });
@@ -163,19 +164,32 @@ class GoogleSheetsExtension extends Extension {
    * @param {string} testedUrl
    * @param {!objecmetrics['SpeedIndex'].metricsValuevalues
    */
-  trackAction(action, sheetId, testedUrl, result) {
+  trackAction(action, sheetId, result) {
+    let testedUrl = result.url;
+    let url;
+
     // Record legacy GA event.
-    if (this.sendTrackEvent) {
-      this.apiHandler.fetch(this.gaEventURL(sheetId, action, testedUrl));
+    if (this.isSendTrackEvent) {
+      url = this.gaEventURL(sheetId, action, testedUrl);
+      this.apiHandler.fetch(url);
+
+      if (this.debug) console.log(url);
     }
 
     // Record tests with perf budget with Pageview notation.
     let customValues = this.getCustomValues(action, result) || {};
-    let response = this.apiHandler.fetch(
-        this.gaPageViewURL(this.awpVersion, sheetId, testedUrl, customValues));
-    if (response) {
-      console.log('trackAction response: ', response.getContentText());
+
+    url = this.gaPageViewURL(this.awpVersion, sheetId, testedUrl, customValues);
+    let response = this.apiHandler.fetch(url);
+    if (this.debug) console.log('trackAction: ', url);
+
+    if (response && this.debug) {
+      console.log('trackAction response: ', response);
     }
+  }
+
+  trackError(sheetId, errorStr) {
+    this.apiHandler.fetch(this.gaEventURL(sheetId, 'Error', errorStr));
   }
 
   getCustomValues(action, result) {
@@ -231,15 +245,16 @@ class GoogleSheetsExtension extends Extension {
   /**
    * Get tracking URL with pageview to Google Analytics
    * @param {string} referral
-   * @param {string} page
-   * @param {string} pageTitle
+   * @param {string} sheetId
+   * @param {string} testedUrl
    * @param {string} customValues Custom dimensions and metrics in 'cd1' or 'cm1' format.
    * @return {string}
    */
-  gaPageViewURL(params) {
-    assert(params, 'params is missing in gaPageViewURL');
+  gaPageViewURL(referral, sheetId, testedUrl, customValues) {
+    assert(referral, 'referral is missing in gaPageViewURL');
+    assert(sheetId, 'sheetId is missing in gaPageViewURL');
+    assert(testedUrl, 'testedUrl is missing in gaPageViewURL');
 
-    let customValues = params.customValues;
     let customs = customValues ? Object.keys(customValues).map(x => x + '=' + customValues[x]) : [];
     // Random ID to prevent browser caching.
     let cacheBuster = Math.round(Date.now() / 1000).toString();
@@ -247,11 +262,11 @@ class GoogleSheetsExtension extends Extension {
     let urlParams = [
       'v=1',
       't=pageview',
-      'dl=' + params.page, // Tested URL as active Page
-      'dr=https://' + encodeURI(params.referral), // Referral Source
+      'dl=' + sheetId, // Tested URL as active Page
+      'dr=https://' + encodeURI(referral), // Referral Source
       'ul=en-us',
       'de=UTF-8',
-      'dt=' + params.pageTitle, // Page Title
+      'dt=' + testedUrl, // Page Title
       'cid=' + this.clientEmail || 'anonymous',
       'uid=' + this.clientEmail || 'anonymous',
       'tid=' + this.gaAccount,
@@ -265,25 +280,24 @@ class GoogleSheetsExtension extends Extension {
   /**
    * Get tracking URL with event to Google Analytics
    * @param  {type} spreadsheetId description
-   * @param  {type} context     description
-   * @param  {type} action      description
+   * @param  {type} action     description
+   * @param  {type} label      description
    * @return {type}             description
    */
-  gaEventURL(spreadsheetId, context, action) {
+  gaEventURL(spreadsheetId, action, label) {
     // Random ID to prevent browser caching.
     var cacheBuster = Math.round(Date.now() / 1000).toString();
+    let clientEmail = this.clientEmail;
 
     // Event Category set to Google Spreadsheets.
     var eventCategory =
         encodeURIComponent(spreadsheetId || 'Unknown Google Spreadsheets');
 
-    // Event Action set to spreadsheet title.
-    var eventAction = encodeURIComponent(context || 'Unknown Context');
+    // Set event action as functions, like runTest, amountBatchAutoTests, etc.
+    var eventAction = encodeURIComponent(action || 'Unknown Action');
 
-    // Event Label set to sheet title.
-    var eventLabel = encodeURIComponent(action || 'Unknown Action');
-
-    let clientEmail = this.clientEmail;
+    // Set label as tested URLs
+    var eventLabel = encodeURIComponent(label || 'Unknown Label');
 
     var trackingUrl = [
       'https://ssl.google-analytics.com/collect?',

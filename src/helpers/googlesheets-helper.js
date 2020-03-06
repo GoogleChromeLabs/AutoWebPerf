@@ -1,7 +1,7 @@
 class GoogleSheetsApiHandler {
   fetch(url) {
     try{
-      return UrlFetchApp.fetch(url);
+      return UrlFetchApp.fetch(url).getContentText();
 
     } catch(e){
       Logger.log('There was an error while fetching ' + url, e);

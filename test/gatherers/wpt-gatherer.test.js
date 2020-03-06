@@ -70,10 +70,34 @@ describe('WPTGatherer unit test', () => {
     expect(response.statusText).toEqual('Pending');
     expect(response.errors).toEqual([]);
 
+    // When statusCode is 101
+    wptGatherer.fakeRunResponse = () => {
+      return {
+        statusCode: 101,
+        statusText: 'Pending',
+      };
+    };
+    response = wptGatherer.run(test, {} /* options */);
+    expect(response.status).toEqual(Status.SUBMITTED);
+    expect(response.statusText).toEqual('Pending');
+    expect(response.errors).toEqual([]);
+
     // When statusCode is 400
     wptGatherer.fakeRunResponse = () => {
       return {
         statusCode: 400,
+        statusText: 'Some error',
+      };
+    };
+    response = wptGatherer.run(test, {} /* options */);
+    expect(response.status).toEqual(Status.ERROR);
+    expect(response.statusText).toEqual('Some error');
+    expect(response.errors).toEqual([]);
+
+    // When statusCode is something else.
+    wptGatherer.fakeRunResponse = () => {
+      return {
+        statusCode: 1234,
         statusText: 'Some error',
       };
     };

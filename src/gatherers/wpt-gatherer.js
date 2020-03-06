@@ -120,6 +120,7 @@ class WebPageTestGatherer extends Gatherer {
 
     switch(json.statusCode) {
       case 100:
+      case 101:
         status = Status.SUBMITTED;
         break;
 
@@ -148,7 +149,6 @@ class WebPageTestGatherer extends Gatherer {
         }
         break;
 
-      case 400:
       default:
         status = Status.ERROR;
         break;
@@ -186,6 +186,7 @@ class WebPageTestGatherer extends Gatherer {
 
     switch(json.statusCode) {
       case 100:
+      case 101:
         status = Status.SUBMITTED;
         break;
 

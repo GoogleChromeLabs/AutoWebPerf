@@ -103,6 +103,7 @@ class AutoWebPerf {
         // Adding mandatory properties.
         extConfig.connector = this.connector;
         extConfig.apiHandler = this.apiHandler;
+        extConfig.debug = this.debug;
 
         switch (extension) {
           case 'budgets':
