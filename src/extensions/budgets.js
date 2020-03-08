@@ -26,8 +26,10 @@ class BudgetsExtension extends Extension {
 
   afterRun(params) {
     assert(params.test, 'test is missing.');
-    assert(params.result, 'result is missing.');
-    this.processResult(params.result, params.test.budgets);
+
+    if (params.result) {
+      this.processResult(params.result, params.test.budgets);
+    }
   }
 
   afterRetrieve(params) {

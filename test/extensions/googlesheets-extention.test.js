@@ -56,7 +56,6 @@ describe('GoogleSheetsExtension unit tests', () => {
     };
     result = {
       url: 'google.com',
-      modifiedTimestamp:
       webpagetest: {
         metrics: {
           FirstContentfulPaint: 1500,
@@ -75,13 +74,6 @@ describe('GoogleSheetsExtension unit tests', () => {
         },
       }
     };
-  });
-
-  it('adds createdDate and modifiedDate based on user\'s timezone', async () => {
-    extension.afterRun({
-      test: test,
-      result: result,
-    });
   });
 
   it('computes custom values required for Google Analytics', async () => {

@@ -7,26 +7,9 @@
 'use strict';
 
 const Status = require('./common/status');
+const {Frequency, FrequencyInMinutes} = require('./common/frequency');
 const assert = require('./utils/assert');
 const {TestType} = require('./common/types');
-
-const Frequency = {
-  NONE: 'none',
-  HOURLY: 'hourly', // TODO: Hourly is for development testing.
-  DAILY: 'daily',
-  WEEKLY: 'weekly',
-  BIWEEKLY: 'biweekly',
-  MONTHLY: 'monthly',
-};
-
-// TODO: May need to use MomemtJS for more accurate date offset.
-const FrequencyInMinutes = {
-  HOURLY: 60 * 60 * 1000, // TODO: Hourly is for development testing.
-  DAILY: 24 * 60 * 60 * 1000,
-  WEEKLY: 7 * 24 * 60 * 60 * 1000,
-  BIWEEKLY: 14 * 24 * 60 * 60 * 1000,
-  MONTHLY: 30 * 24 * 60 * 60 * 1000,
-};
 
 class AutoWebPerf {
   constructor(awpConfig) {
@@ -275,7 +258,7 @@ class AutoWebPerf {
         // Run extension with empty result.
         this.runExtensions(extensions, 'afterRun', {
           test: test,
-          result: {},
+          result: null,
         });
 
       } else {

@@ -1,5 +1,5 @@
 module.exports = {
-  SUBMITTED: 'submitted',
-  RETRIEVED: 'retrieved',
-  ERROR: 'error',
+  SUBMITTED: 'Submitted',
+  RETRIEVED: 'Retrieved',
+  ERROR: 'Error',
 }

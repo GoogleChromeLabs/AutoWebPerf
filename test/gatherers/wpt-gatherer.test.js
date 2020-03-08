@@ -113,7 +113,7 @@ describe('WPTGatherer unit test', () => {
       id: 'id-1234',
       type: 'single',
       url: 'google.com',
-      status: 'submitted',
+      status: Status.SUBMITTED,
       webpagetest: {
         metadata: {
           testId: 'id-1234',
@@ -138,7 +138,7 @@ describe('WPTGatherer unit test', () => {
       id: 'id-1234',
       type: 'single',
       url: 'google.com',
-      status: 'submitted',
+      status: Status.SUBMITTED,
       webpagetest: {
         metadata: {
           testId: 'id-1234',
@@ -197,7 +197,7 @@ describe('WPTGatherer unit test', () => {
       id: 'id-1234',
       type: 'single',
       url: 'google.com',
-      status: 'submitted',
+      status: Status.SUBMITTED,
       webpagetest: {
         metadata: {
           testId: 'id-1234',
@@ -229,7 +229,7 @@ describe('WPTGatherer unit test', () => {
       id: 'id-1234',
       type: 'single',
       url: 'google.com',
-      status: 'submitted',
+      status: Status.SUBMITTED,
       webpagetest: {
         metadata: {
           testId: 'id-1234',
@@ -245,7 +245,9 @@ describe('WPTGatherer unit test', () => {
 
     let response = wptGatherer.retrieve(result, {} /* options */);
     expect(response.errors).toEqual(
-        ['Metric key "NotSupportedMetric" is not supported.']);
+        ['Unable to assign NotSupportedMetric to metrics: ' +
+            'json.data.median.firstView.TTFB: Metric key ' +
+            '\"NotSupportedMetric\" is not supported.']);
   });
 
   it('supports nested metric key such as lighthouse.SpeedIndex', async () => {
@@ -254,7 +256,7 @@ describe('WPTGatherer unit test', () => {
       id: 'id-1234',
       type: 'single',
       url: 'google.com',
-      status: 'submitted',
+      status: Status.SUBMITTED,
       webpagetest: {
         metadata: {
           testId: 'id-1234',
