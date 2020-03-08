@@ -40,7 +40,8 @@
       "budgets": {
         "dataSource": "webpagetest",
         "budget": {
-          "FirstContentfulPaint": 2000,
+          "FirstContentfulPaint": 1500,
+          "FirstMeaningfulPaint": 2000,
           "SpeedIndex": 3000,
           "TimeToInteractive": 5000,
           "Javascript": 500,

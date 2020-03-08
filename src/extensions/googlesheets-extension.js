@@ -81,6 +81,11 @@ class GoogleSheetsExtension extends Extension {
         result.createdDate = GoogleSheetsHelper.getFormattedDate(
             new Date(result.createdTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:MM');
       }
+      // Format modifiedDate
+      if (result.modifiedTimestamp) {
+        result.modifiedDate = GoogleSheetsHelper.getFormattedDate(
+            new Date(result.modifiedTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:MM');
+      }
 
       // Send action to Google Analytics
       let type = result.type === TestType.SINGLE ?
@@ -113,6 +118,12 @@ class GoogleSheetsExtension extends Extension {
 
   afterRetrieve(params) {
     let result = params.result;
+
+    // Format modifiedDate
+    if (result.modifiedTimestamp) {
+      result.modifiedDate = GoogleSheetsHelper.getFormattedDate(
+          new Date(result.modifiedTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:MM');
+    }
 
     // Send retrieved action to Google Analytics.
     if (result.status === Status.RETRIEVED) {

@@ -116,7 +116,7 @@ class WebPageTestGatherer extends Gatherer {
       if (this.debug) console.log('WPTGatherer::run API response: \n', json);
     }
 
-    let status, metadata = {}, errors = [];
+    let status, metadata = {}, errors = [], statusText = json.statusText;
 
     switch(json.statusCode) {
       case 100:
@@ -146,6 +146,22 @@ class WebPageTestGatherer extends Gatherer {
         } else {
           // Throw error if there's no testId.
           status = Status.ERROR;
+          statusText = 'No testId found';
+        }
+
+        if (errors.length > 0) {
+          status = Status.ERROR;
+          statusText = errors.join('\n');
+        }
+
+        break;
+
+      case 400:
+        status = Status.ERROR;
+        // Deal with the occasional error with "Test not found". These type of
+        // tests can be resolved by simply retrying.
+        if (json.statusText === 'Test not found') {
+          status = Status.SUBMITTED;
         }
         break;
 
@@ -156,7 +172,7 @@ class WebPageTestGatherer extends Gatherer {
 
     return {
       status: status,
-      statusText: json.statusText,
+      statusText: statusText,
       settings: settings,
       metadata: metadata,
       errors: errors || [],
@@ -202,15 +218,15 @@ class WebPageTestGatherer extends Gatherer {
             }
             metrics.set(key, value);
           } catch (e) {
-            errors.push(e.message);
+            errors.push(`Unable to assign ${key} to metrics: ` +
+                `json.${this.metricsMap[key]}: ${e.message}`);
           }
         });
 
+        status = Status.RETRIEVED;
+        statusText = 'Success';
         if (errors.length > 0) {
-          status = Status.ERROR;
-        } else {
-          status = Status.RETRIEVED;
-          statusText = 'Success';
+          statusText = 'Success with errors: \n' + errors.join('\n');
         }
         break;
 
