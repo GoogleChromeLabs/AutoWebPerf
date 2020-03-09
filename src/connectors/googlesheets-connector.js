@@ -226,7 +226,7 @@ class GoogleSheetsConnector extends Connector {
     let rowIndex = tabConfig.skipRows + 1;
 
     this.updateList('resultsTab', newResults, (result, rowIndex) => {
-      return rowIndex;
+      return result.googlesheets.rowIndex;
     } /* rowIndexFunc */);
   }
 

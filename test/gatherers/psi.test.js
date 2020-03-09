@@ -101,26 +101,4 @@ describe('PSIGatherer unit test', () => {
     })
     expect(notSupported).toEqual([]);
   });
-
-  it('throws error when dealing with unsupported metric names', async () => {
-    let test = {
-      selected: true,
-      url: 'google.com',
-      label: 'Google',
-      psi: {
-        settings: {
-          locale: 'en-US',
-          strategy: 'mobile'
-        }
-      },
-    };
-
-    psiGatherer.metricsMap = {
-      'NotSupportedMetric': 'lighthouseResult.audits.metrics.details.items[0].observedFirstPaint',
-    }
-
-    let response = psiGatherer.run(test, {} /* options */);
-    expect(response.errors).toEqual(
-        ['Metric key "NotSupportedMetric" is not supported.']);
-  });
 });

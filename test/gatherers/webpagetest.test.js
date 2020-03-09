@@ -223,33 +223,6 @@ describe('WPTGatherer unit test', () => {
     expect(notSupported).toEqual([]);
   });
 
-  it('throws error when dealing with unsupported metric names', async () => {
-    let result = {
-      selected: true,
-      id: 'id-1234',
-      type: 'single',
-      url: 'google.com',
-      status: Status.SUBMITTED,
-      webpagetest: {
-        metadata: {
-          testId: 'id-1234',
-        },
-      },
-    };
-    fakeApiHandler.fetch = () => {
-      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
-    };
-    wptGatherer.metricsMap = {
-      'NotSupportedMetric': 'data.median.firstView.TTFB',
-    }
-
-    let response = wptGatherer.retrieve(result, {} /* options */);
-    expect(response.errors).toEqual(
-        ['Unable to assign NotSupportedMetric to metrics: ' +
-            'json.data.median.firstView.TTFB: Metric key ' +
-            '\"NotSupportedMetric\" is not supported.']);
-  });
-
   it('supports nested metric key such as lighthouse.SpeedIndex', async () => {
     let result = {
       selected: true,

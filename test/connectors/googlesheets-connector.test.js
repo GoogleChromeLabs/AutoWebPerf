@@ -7,6 +7,7 @@
 
 const GoogleSheetsConnector = require('../../src/connectors/googlesheets-connector');
 const setObject = require('../../src/utils/set-object');
+const Status = require('../../src/common/status');
 
 global.SpreadsheetApp = {
   getActive: () => {
@@ -108,8 +109,8 @@ let fakeResultsSheetData = [
   ['', '', '', '', '', ''],
   ['', '', '', '', '', ''],
   ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.SpeedIndex'],
-  [true, 'id-1234', 'single', 'retrieved', 'google.com', 500],
-  [false, 'id-5678', 'recurring', 'retrieved', 'web.dev', 800],
+  [true, 'id-1234', 'single', 'Retrieved', 'google.com', 500],
+  [false, 'id-5678', 'recurring', 'Retrieved', 'web.dev', 800],
 ]
 
 let fakeLocationsSheetData = [
@@ -175,7 +176,7 @@ let fakeResults = [
     id: 'id-1234',
     type: 'single',
     url: 'google.com',
-    status: 'retrieved',
+    status: Status.RETRIEVED,
     webpagetest: {
       metrics: {
         SpeedIndex: 500,
@@ -190,7 +191,7 @@ let fakeResults = [
     id: 'id-5678',
     type: 'recurring',
     url: 'web.dev',
-    status: 'retrieved',
+    status: Status.RETRIEVED,
     webpagetest: {
       metrics: {
         SpeedIndex: 800,
@@ -325,7 +326,7 @@ describe('GoogleSheetsConnector Results tab', () => {
       id: 'id-9999',
       type: 'single',
       url: 'google.com',
-      status: 'retrieved',
+      status: Status.RETRIEVED,
       webpagetest: {
         metrics: {
           SpeedIndex: 500,
@@ -344,26 +345,27 @@ describe('GoogleSheetsConnector Results tab', () => {
   it('updates results to the Results sheet', async () => {
     let results, expecteResults;
     results = connector.getResultList();
-    let result = {
+    let result =   {
       selected: true,
-      id: 'id-1234',
-      type: 'single',
-      url: 'test.com',
-      status: 'retrieved',
+      id: 'id-5678',
+      type: 'recurring',
+      url: 'web.dev',
+      status: Status.ERROR,
       webpagetest: {
         metrics: {
-          SpeedIndex: 500,
+          SpeedIndex: 800,
         },
       },
       googlesheets: {
-        rowIndex: 4,
+        rowIndex: 5,
       }
     };
     connector.updateResultList([result]);
     expecteResults = connector.getResultList();
 
     expect(expecteResults.length).toEqual(2);
-    expect(expecteResults[0].url).toEqual('test.com');
+    expect(expecteResults[1].status).toEqual(Status.ERROR);
+    expect(expecteResults[1].url).toEqual('web.dev');
   });
 });
 

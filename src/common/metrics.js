@@ -26,18 +26,28 @@ const MetricKeys = [
   'HTML',
   'Javascript',
   'CSS',
+  'UnusedCSS',
   'Fonts',
   'Images',
+  'WebPImages',
+  'OptimizedImages',
+  'ReponsiveImages',
+  'OffscreenImages',
   'Videos',
+  'ThirdParty',
+  'RenderBlockingResources',
 
   // resourceCount
   'DOMElements',
   'Connections',
   'Requests',
 
-  // scores
+  // scores and flags
   'Performance',
   'ProgressiveWebApp',
+  'Manifest',
+  'ServiceWorker',
+  'Offline',
 ];
 
 class Metrics {

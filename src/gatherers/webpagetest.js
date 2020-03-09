@@ -43,7 +43,19 @@ class WebPageTestGatherer extends Gatherer {
       'lighthouse.TimeToInteractive': 'data.median.firstView["lighthouse.Performance.interactive"]',
       'lighthouse.FirstInputDelay': 'data.median.firstView["lighthouse.Performance.max-potential-fid"]',
       'lighthouse.FirstCPUIdle': 'data.median.firstView["lighthouse.Performance.first-cpu-idle"]',
-      'lighthouse.TotalBlockingTime': 'data.lighthouse.audits["total-blocking-time"].numbericValue',
+      'lighthouse.TotalBlockingTime': 'data.lighthouse.audits["total-blocking-time"].numericValue',
+      'lighthouse.LargestContentfulPaint': 'data.lighthouse.audits.metrics.details.items[0].largestContentfulPaint',
+
+      // Lighthouse resource size metrics
+      'lighthouse.ThirdParty': 'data.lighthouse.audits["third-party-summary"].details.summary.wastedBytes',
+      'lighthouse.RenderBlockingResources': 'data.lighthouse.audits["render-blocking-resources"].numericValue',
+      'lighthouse.UnusedCSS': 'data.lighthouse.audits["unused-css-rules"].numericValue',
+      'lighthouse.UseWebPImages': 'data.lighthouse.audits["uses-webp-images"].numericValue',
+      'lighthouse.UseOptimizedImages': 'data.lighthouse.audits["uses-optimized-images"].numericValue',
+      'lighthouse.OffscreenImages': 'data.lighthouse.audits["offscreen-images"].numericValue',
+      'lighthouse.InstallableManifest': 'data.lighthouse.audits["installable-manifest"].numericValue',
+      'lighthouse.ServiceWorker': 'data.lighthouse.audits["service-worker"].numericValue',
+      'lighthouse.WorksOffline': 'data.lighthouse.audits["works-offline"].numericValue',
 
       // WebPageTest Timing metrics
       'TimeToFirstByte': 'data.median.firstView.TTFB',
@@ -57,7 +69,6 @@ class WebPageTestGatherer extends Gatherer {
       'DOMContentLoaded': 'data.median.firstView.domContentLoadedEventStart',
 
       // WebPageTest Resource Count metrics
-      // 'BytesIn': 'data.median.firstView.bytesIn',
       'Requests': 'data.median.firstView.requestsDoc',
       'DOMElements': 'data.median.firstView.domElements',
       'Connections': 'data.median.firstView.connections',
@@ -70,12 +81,15 @@ class WebPageTestGatherer extends Gatherer {
       'Videos': 'data.median.firstView.breakdown.video.bytes'
     };
 
+    let bytesToKb = (x) => Math.round(x / 1000);
     this.metricsConversion = {
-      'CSS': (x) => Math.round(x / 1000),
-      'Fonts': (x) => Math.round(x / 1000),
-      'Javascript': (x) => Math.round(x / 1000),
-      'Images': (x) => Math.round(x / 1000),
-      'Videos': (x) => Math.round(x / 1000),
+      'CSS': bytesToKb,
+      'Fonts': bytesToKb,
+      'Javascript': bytesToKb,
+      'Images': bytesToKb,
+      'Videos': bytesToKb,
+      'ThirdParty': bytesToKb,
+      'UnusedCSS': bytesToKb,
     };
   }
 
@@ -126,6 +140,7 @@ class WebPageTestGatherer extends Gatherer {
 
       case 200:
         // Parse json resopnse and writes to metadata accordingly.
+        let message;
         Object.keys(this.metadataMap).forEach(key => {
           try {
             let object = metadata;
@@ -134,9 +149,13 @@ class WebPageTestGatherer extends Gatherer {
               object = object[property]
             });
             eval(`metadata.${key} = json.${this.metadataMap[key]}`);
+
           } catch (error) {
-            errors.push(`Unable to assign ${key} to metadata: metadata.${key} = json.${this.metadataMap[key]}`);
             metadata[key] = null;
+            message = `Unable to assign ${key} to metadata: metadata.${key}` +
+                ` = json.${this.metadataMap[key]}`;
+            if (this.debug) message += e.message;
+            errors.push(message);
           }
         });
 
@@ -198,7 +217,7 @@ class WebPageTestGatherer extends Gatherer {
     let status, metadata = {},
         metrics = new Metrics(), lighthouseMetrics = new Metrics();
     let statusText = json.statusText;
-    let value;
+    let value, message;
 
     switch(json.statusCode) {
       case 100:
@@ -216,10 +235,15 @@ class WebPageTestGatherer extends Gatherer {
             if (this.metricsConversion[key]) {
               value = this.metricsConversion[key](value);
             }
-            metrics.set(key, value);
+
+            // Note: Use setAny() instead of restrict metric names.
+            metrics.setAny(key, value);
           } catch (e) {
-            errors.push(`Unable to assign ${key} to metrics: ` +
-                `json.${this.metricsMap[key]}: ${e.message}`);
+
+            metrics.setAny(key, null);
+            message = `Unable to assign json.${this.metricsMap[key]} to ${key}`;
+            if (this.debug) message += ': ' + e.message;
+            errors.push(message);
           }
         });
 

@@ -88,7 +88,7 @@ class AutoWebPerf {
 
         switch (extension) {
           case 'budgets':
-            ExtensionClass = require('./extensions/budgets-extension');
+            ExtensionClass = require('./extensions/budgets');
             break;
 
           case 'googlesheets':
@@ -349,6 +349,7 @@ class AutoWebPerf {
           metadata: response.metadata,
           settings: test[dataSource].settings,
           metrics: response.metrics,
+          errors: response.errors,
         };
 
       } catch (error) {
