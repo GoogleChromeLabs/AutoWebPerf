@@ -46,20 +46,19 @@ class AutoWebPerf {
     }
 
     this.log(`Use connector ${awpConfig.connector}`);
-    switch (awpConfig.connector.toLowerCase()) {
+    let ConnectorClass, connectorName = awpConfig.connector.toLowerCase();
+    let connectorConfig = awpConfig[connectorName];
+
+    switch (connectorName) {
       case 'json':
-        let JSONConnector = require('./connectors/json-connector');
-        this.connector = new JSONConnector(awpConfig.json, this.apiHandler);
+        ConnectorClass = require('./connectors/json-connector');
+        this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
         this.apiKeys = this.connector.getConfig().apiKeys;
         break;
 
       case 'googlesheets':
-        assert(awpConfig.googlesheets, 'googlesheets is missing.');
-        let GoogleSheetsConnector = require('./connectors/googlesheets-connector');
-
-        // TODO: Standardize awpConfig.
-        this.connector = new GoogleSheetsConnector(
-            awpConfig.googlesheets, this.apiHandler);
+        ConnectorClass = require('./connectors/googlesheets-connector');
+        this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
         this.apiKeys = this.connector.getConfig().apiKeys;
         break;
 
@@ -72,7 +71,6 @@ class AutoWebPerf {
             `Connector ${awpConfig.connector} is not supported.`);
         break;
     }
-
 
     this.log(`Use extensions: ${awpConfig.extensions}`);
 

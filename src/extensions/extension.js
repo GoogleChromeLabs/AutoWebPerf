@@ -1,15 +1,15 @@
 class Extention {
   constructor(config) {}
   // Run
-  beforeRun(params) {}
-  afterRun(params) {}
-  beforeAllRuns(params) {}
-  afterAllRuns(params) {}
+  beforeRun(context) {}
+  afterRun(context) {}
+  beforeAllRuns(context) {}
+  afterAllRuns(context) {}
   // Retrieve
-  beforeRetrieve(params) {}
-  afterRetrieve(params) {}
-  beforeAllRetrieves(params) {}
-  afterAllRetrieves(params) {}
+  beforeRetrieve(context) {}
+  afterRetrieve(context) {}
+  beforeAllRetrieves(context) {}
+  afterAllRetrieves(context) {}
 }
 
 module.exports = Extention;

@@ -1,13 +1,11 @@
 class Connector {
   constructor(config, apiHandler) {}
-  init() {}
-  healthCheck() {}
   getConfig() {}
-  getTestList() {}
-  updateTestList(tests) {}
-  getResultList(conditions) {}
-  appendResultList() {}
-  updateResultList() {}
+  getTestList(options) {}
+  updateTestList(newTests, options) {}
+  getResultList(options) {}
+  appendResultList(newResults, options) {}
+  updateResultList(newResults, options) {}
 }
 
 module.exports = Connector;

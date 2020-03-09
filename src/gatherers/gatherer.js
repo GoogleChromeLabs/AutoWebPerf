@@ -1,8 +1,7 @@
 class Gatherer {
-  constructor(config) {}
-  run(test) {}
-  retrieve(testId) {}
-  cancel(testId) {}
+  constructor(config, apiHelper, options) {}
+  run(test, options) {}
+  retrieve(result, options) {}
 }
 
 module.exports = Gatherer;

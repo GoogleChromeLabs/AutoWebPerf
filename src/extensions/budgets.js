@@ -24,17 +24,17 @@ class BudgetsExtension extends Extension {
     };
   }
 
-  afterRun(params) {
-    assert(params.test, 'test is missing.');
+  afterRun(context) {
+    assert(context.test, 'test is missing.');
 
-    if (params.result) {
-      this.processResult(params.result, params.test.budgets);
+    if (context.result) {
+      this.processResult(context.result, context.test.budgets);
     }
   }
 
-  afterRetrieve(params) {
-    assert(params.result, 'result is missing.');
-    this.processResult(params.result, params.result.budgets);
+  afterRetrieve(context) {
+    assert(context.result, 'result is missing.');
+    this.processResult(context.result, context.result.budgets);
   }
 
   processResult(result, budgets) {

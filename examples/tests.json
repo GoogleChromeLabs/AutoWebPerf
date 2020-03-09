@@ -11,10 +11,10 @@
       "label": "Think With Google",
       "url": "https://thinkwithgoogle.com",
       "recurring": {
-        "frequency": "daily",
+        "frequency": "Daily",
         "nextTriggerTimestamp": 1583448462844,
         "nextTrigger": "Tue Jan 28 2020 03:14:19 GMT-0500 (Eastern Standard Time)",
-        "activatedFrequency": "daily"
+        "activatedFrequency": "Daily"
       },
       "webpagetest": {
         "settings": {

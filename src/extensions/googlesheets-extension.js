@@ -36,12 +36,12 @@ class GoogleSheetsExtension extends Extension {
 
   /**
    * beforeRun - Convert location name to id based on location tab.
-   * @param {object} params
+   * @param {object} context
    */
-  beforeRun(params) {
+  beforeRun(context) {
     this.locations = this.locations || this.connector.getList('locationsTab');
 
-    let test = params.test;
+    let test = context.test;
     this.locations.forEach(location => {
       if (test.webpagetest.settings.location === location.name) {
         test.webpagetest.settings.locationId = location.id;
@@ -51,12 +51,12 @@ class GoogleSheetsExtension extends Extension {
 
   /**
    * afterRun - Convert location id to name based on location tab.
-   * @param {object} params
+   * @param {object} context
    */
-  afterRun(params) {
+  afterRun(context) {
     this.locations = this.locations || this.connector.getList('locationsTab');
-    let test = params.test;
-    let result = params.result;
+    let test = context.test;
+    let result = context.result;
 
     // Replace locationId with location name.
     this.locations.forEach(location => {
@@ -99,11 +99,11 @@ class GoogleSheetsExtension extends Extension {
     }
   }
 
-  beforeAllRun(params) {}
+  beforeAllRun(context) {}
 
-  afterAllRuns(params) {
+  afterAllRuns(context) {
     // Create trigger for retrieving results.
-    let tests = params.tests || [];
+    let tests = context.tests || [];
     if (tests.length > 0) {
       let triggerId = this.connector.getSystemVar(SystemVars.RETRIEVE_TRIGGER_ID);
       console.log(`${SystemVars.RETRIEVE_TRIGGER_ID} = ${triggerId}`);
@@ -116,8 +116,8 @@ class GoogleSheetsExtension extends Extension {
     }
   }
 
-  afterRetrieve(params) {
-    let result = params.result;
+  afterRetrieve(context) {
+    let result = context.result;
 
     // Format modifiedDate
     if (result.modifiedTimestamp) {
@@ -131,7 +131,7 @@ class GoogleSheetsExtension extends Extension {
     }
   }
 
-  afterAllRetrieves(params) {
+  afterAllRetrieves(context) {
     // Get all results in the tab.
     let results = this.connector.getResultList();
     let pendingResults = results.filter(result => {

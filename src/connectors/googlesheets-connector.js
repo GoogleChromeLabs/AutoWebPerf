@@ -206,10 +206,6 @@ class GoogleSheetsConnector extends Connector {
     options.appendRowIndex = true;
 
     let results = this.getList('resultsTab', options);
-
-    results = results.filter(result => {
-      return result.id;
-    });
     results = patternFilter(results, options.filters);
 
     return results;
@@ -227,15 +223,10 @@ class GoogleSheetsConnector extends Connector {
 
   updateResultList(newResults) {
     let tabConfig = this.tabConfigs['resultsTab'];
-    let idToRows = {}, rowIndex = tabConfig.skipRows + 1;
-    let results = this.getResultList();
-    results.forEach(result => {
-      idToRows[result.id] = rowIndex;
-      rowIndex++;
-    });
+    let rowIndex = tabConfig.skipRows + 1;
 
     this.updateList('resultsTab', newResults, (result, rowIndex) => {
-      return idToRows[result.id];
+      return rowIndex;
     } /* rowIndexFunc */);
   }
 
