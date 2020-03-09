@@ -7,7 +7,7 @@
 
 const Status = require('../../src/common/status');
 const {MetricKeys} = require('../../src/common/metrics');
-const WPTGatherer = require('../../src/gatherers/wpt-gatherer');
+const WPTGatherer = require('../../src/gatherers/webpagetest');
 const fs = require('fs');
 
 let fakeApiHandler = {

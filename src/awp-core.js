@@ -88,7 +88,7 @@ class AutoWebPerf {
 
         switch (extension) {
           case 'budgets':
-            ExtensionClass = require('./extensions/budgets');
+            ExtensionClass = require('./extensions/budgets-extension');
             break;
 
           case 'googlesheets':
@@ -120,15 +120,16 @@ class AutoWebPerf {
       debug: this.debug,
     };
 
+    // FIXME: Remove the hardcoded require path without breaking RollUp bundle.
     if (!this.gatherers[name]) {
       let GathererClass = null;
       switch (name) {
         case 'webpagetest':
-          GathererClass = require('./gatherers/wpt-gatherer');
+          GathererClass = require('./gatherers/webpagetest');
           break;
 
         case 'psi':
-          GathererClass = require('./gatherers/psi-gatherer');
+          GathererClass = require('./gatherers/psi');
           break;
 
         // case 'crux':

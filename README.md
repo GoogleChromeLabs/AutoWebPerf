@@ -313,6 +313,39 @@ sensitive.
   - `Performance`
   - `ProgressiveWebApp`
 
+## Source Folder Structure
+
+All source codes for major functions are located in `src` folder. Files are
+organized into the following subfolders:
+
+- `common`: Common classes and definitions, such as Status, Frequency, Metrics, etc.
+- `connectors`: Connector classes.
+- `extensions`: Extension classes.
+- `gatherers`: Gatherer classes.
+- `fakedata`: JSON files for unit tests.
+- `utils`: Utilities and tools.
+
+## Unit Test
+
+Run the following commands to run unit test:
+
+```
+npm test
+```
+
+To run individual test spec, you can install Jest NPM module to your local
+machine:
+
+```
+npm install -g jest
+jest test/some-module.test.js
+```
+
+### Unit Test Design
+
+The Unit Test is based on [Jest](https://jestjs.io/) unit test framework. All
+unit tests are located in the `./test` folder, and are organized into its own
+corresponding subfolders, as the same structure as in the `src` folder.
 
 ## Resources
 

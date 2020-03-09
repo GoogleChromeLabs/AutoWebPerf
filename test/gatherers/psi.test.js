@@ -7,7 +7,7 @@
 
 const Status = require('../../src/common/status');
 const {MetricKeys} = require('../../src/common/metrics');
-const PSIGatherer = require('../../src/gatherers/psi-gatherer');
+const PSIGatherer = require('../../src/gatherers/psi');
 const setObject = require('../../src/utils/set-object');
 const fs = require('fs');
 
