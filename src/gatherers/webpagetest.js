@@ -111,7 +111,8 @@ class WebPageTestGatherer extends Gatherer {
       'block': settings.block || '',
       'script': settings.script || '',
       'location': `${settings.locationId}.${settings.connection}` || '',
-      'mobile': settings.mobile || '',
+      'mobile': settings.device ? 1 : 0,
+      'mobileDevice': settings.device || '',
     }
 
     let urlParams = [];
