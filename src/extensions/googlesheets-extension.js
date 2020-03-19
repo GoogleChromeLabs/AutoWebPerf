@@ -14,7 +14,22 @@ const TrackingType = {
   INIT: 'Initialise',
 };
 
+/**
+ * The extension for providing additional actions for AWP on GoogleSheets.
+ * In a nutshell, it provides the following additions:
+ * - Before each run, convert location name to id based on location tab.
+ * - After each run, convert location id to name based on location tab.
+ * - After all runs, create trigger for retrieving results.
+ * - After each retrieve, update modifiedDate and send analytic signals to
+ *     Google Analytics.
+ * - After all retrieves, update to latestResultsTab and delete trigger for
+ *     retreiving results.
+ */
 class GoogleSheetsExtension extends Extension {
+  /**
+   * @param {object} config The config for this extension, as the "googlesheets"
+   *     property in awpConfig loaded from src/awp-core.js.
+   */
   constructor(config) {
     super();
     assert(config.connector, 'connector is missing in config.');
@@ -51,7 +66,7 @@ class GoogleSheetsExtension extends Extension {
 
   /**
    * afterRun - Convert location id to name based on location tab.
-   * @param {object} context
+   * @param {object} context Context object that contains Test and Result objects.
    */
   afterRun(context) {
     this.locations = this.locations || this.connector.getList('locationsTab');
@@ -99,10 +114,12 @@ class GoogleSheetsExtension extends Extension {
     }
   }
 
-  beforeAllRun(context) {}
-
+  /**
+   * afterAllRuns - create a trigger for retrieving results if not exists.
+   * @param {object} context Context object that contains all processed Tests
+   *     and Result objects.
+   */
   afterAllRuns(context) {
-    // Create trigger for retrieving results.
     let tests = context.tests || [];
     if (tests.length > 0) {
       let triggerId = this.connector.getSystemVar(SystemVars.RETRIEVE_TRIGGER_ID);
@@ -116,6 +133,11 @@ class GoogleSheetsExtension extends Extension {
     }
   }
 
+  /**
+   * afterRetrieve - Update modifiedDate for the Result, and send analytics
+   *     signals to Google Analytics.
+   * @param {object} context Context object that contains the processed Result.
+   */
   afterRetrieve(context) {
     let result = context.result;
 
@@ -131,6 +153,12 @@ class GoogleSheetsExtension extends Extension {
     }
   }
 
+  /**
+   * afterAllRetrieves - Collect all latest retrieved Results for each label,
+   *     and delete the trigger for retrieving results if all results are done.
+   * @param {object} context Context object that contains all processed Tests
+   *     and Result objects.
+   */
   afterAllRetrieves(context) {
     // Get all results in the tab.
     let results = this.connector.getResultList();
@@ -170,25 +198,26 @@ class GoogleSheetsExtension extends Extension {
   }
 
   /**
-   * Tracking with pageview
-   * @param {string} action
-   * @param {string} testedUrl
-   * @param {!objecmetrics['SpeedIndex'].metricsValuevalues
+   * trackAction - Tracking with pageview
+   *
+   * @param {TrackingType} trackingType A TrackingType, e.g. TrackingType.RESULT.
+   * @param {string} sheetId GoogleSheets ID.
+   * @param {object} result Processed Result object.
    */
-  trackAction(action, sheetId, result) {
+  trackAction(trackingType, sheetId, result) {
     let testedUrl = result.url;
     let url;
 
     // Record legacy GA event.
     if (this.isSendTrackEvent) {
-      url = this.gaEventURL(sheetId, action, testedUrl);
+      url = this.gaEventURL(sheetId, trackingType, testedUrl);
       this.apiHandler.fetch(url);
 
       if (this.debug) console.log(url);
     }
 
     // Record tests with perf budget with Pageview notation.
-    let customValues = this.getCustomValues(action, result) || {};
+    let customValues = this.getCustomValues(trackingType, result) || {};
 
     url = this.gaPageViewURL(this.awpVersion, sheetId, testedUrl, customValues);
     let response = this.apiHandler.fetch(url);
@@ -199,11 +228,22 @@ class GoogleSheetsExtension extends Extension {
     }
   }
 
+  /**
+   * trackError - Record an error event to Google Analytics.
+   * @param {string} sheetId GoogleSheets ID.
+   * @param {string} errorStr Error details.
+   */
   trackError(sheetId, errorStr) {
     this.apiHandler.fetch(this.gaEventURL(sheetId, 'Error', errorStr));
   }
 
-  getCustomValues(action, result) {
+  /**
+   * getCustomValues - Return the object of full list of custom metrics and
+   *     dimensions used for tracking with GoogleAnalytics.
+   * @param {TrackingType} trackingType A TrackingType, e.g. TrackingType.RESULT.
+   * @param {object} result Processed Result object.
+   */
+  getCustomValues(trackingType, result) {
     if (result.budgets) {
       let hasBudgets = false;
       let underBudgets = {};
@@ -218,8 +258,8 @@ class GoogleSheetsExtension extends Extension {
       });
 
       return {
+        'cd1': trackingType,
         // Custom dimensions as booleans
-        'cd1': action,
         'cd2': hasBudgets || null,
         'cd3': underBudgets['SpeedIndex'] || null,
         'cd4': underBudgets['TimeToInteractive'] || null,
@@ -322,8 +362,6 @@ class GoogleSheetsExtension extends Extension {
       'ea=' + eventAction,
       'el=' + eventLabel
     ].join('&');
-
-    // config.log("trackingUrl: " + trackingUrl);
 
     return trackingUrl;
   }

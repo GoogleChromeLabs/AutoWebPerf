@@ -13,7 +13,20 @@ const DataAxis = {
   COLUMN: 'column',
 };
 
+/**
+ * the connector handles read and write actions with GoogleSheets as a data
+ * store. This connector works together with
+ * `src/extensions/googlesheets-extensions.js` and
+ * `src/helpers/googlesheets-helper.js`.
+ */
 class GoogleSheetsConnector extends Connector {
+  /**
+   * constructor - Initilize the instance  with given config object and
+   * singleton ApiHandler instance. The config object is a sub-property from
+   * the awpConfig object at the top level.
+   * @param  {Object} config The config object for initializing this connector.
+   * @param  {Object} apiHelper ApiHandler instance initialized in awp-core.
+   */
   constructor(config, apiHelper) {
     super();
     assert(config.configTabName, 'configTabName is missing in config.');
@@ -23,9 +36,9 @@ class GoogleSheetsConnector extends Connector {
 
     this.apiHelper = apiHelper;
     this.locationApiEndpoint = 'http://www.webpagetest.org/getLocations.php?f=json&k=A';
-
     this.activeSpreadsheet = SpreadsheetApp.getActive();
 
+    // The main settings for each Sheet tab.
     this.tabConfigs = {
       testsTab: {
         tabName: config.testsTabName,
@@ -77,6 +90,7 @@ class GoogleSheetsConnector extends Connector {
       },
     };
 
+    // The list of validation rules for all tabs.
     this.validationsMaps = [{
       fromTab: 'testsTab',
       fromProperty: 'webpagetest.settings.location',
@@ -84,6 +98,7 @@ class GoogleSheetsConnector extends Connector {
       toProperty: 'name',
     }];
 
+    // Mapping of conditional formatting, used by resultsTab and latestResultsTab.
     this.resultColumnConditions = {
       'webpagetest.metrics.lighthouse.Performance': [0.4, 0.74, 0.75],
       'webpagetest.metrics.lighthouse.ProgressiveWebApp': [0.4, 0.74, 0.75],
@@ -106,6 +121,11 @@ class GoogleSheetsConnector extends Connector {
     this.healthCheck();
   }
 
+  /**
+   * init - Initializing the AWP on Spreadsheets, including adding triggers,
+   * get all locations from WebPageTest, init conditional formatting, and get
+   * user timeozone.
+   */
   init() {
     // Delete all previous triggers, and create submitting recurring trigger.
     this.initTriggers();
@@ -129,6 +149,12 @@ class GoogleSheetsConnector extends Connector {
     this.setSystemVar(SystemVars.LAST_INIT_TIMESTAMP, Date.now());
   }
 
+  /**
+   * getList - The helper function for getting arbitrary items, like Tests,
+   * Results, or Config items.
+   * @param  {type} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @param  {type} options Options: appendRowIndex, verbose or debug.
+   */
   getList(tabId, options) {
     options = options || {};
     let tabConfig = this.tabConfigs[tabId];
@@ -172,6 +198,12 @@ class GoogleSheetsConnector extends Connector {
     return items;
   }
 
+  /**
+   * getTestList - Return the array of Tests, supporting Pattern filters.
+   * Checkout `src/utils/pattern-filter.js` for more details.
+   * @param  {object} options Options including filters, verbose and debug.
+   * @return {Array<object>} description
+   */
   getTestList(options) {
     options = options || {};
     options.appendRowIndex = true;
@@ -181,17 +213,38 @@ class GoogleSheetsConnector extends Connector {
     return tests;
   }
 
+  /**
+   * updateTestList - Update the array of new Tests to the original Tests,
+   * based on the RowIndex of each Test in the "Tests" Sheet.
+   * @param  {Array<object>} newTests The array of new Test objects.
+   * @param  {object} options Options: filters, verbose and debug.
+   */
   updateTestList(newTests, options) {
     this.updateList('testsTab', newTests, (test, rowIndex) => {
+      // test.googlesheets.rowIndex in each Test is added in getList().
       return test.googlesheets.rowIndex;
     } /* rowIndexFunc */);
   }
 
+  /**
+   * getRowRange - The helper function get the GoogleSheets Range object for the
+   * entire row with given row index.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @param  {number} rowIndex The row index in a sheet. (starting from 1)
+   * @return {object} GoogleSheets Range object
+   */
   getRowRange(tabId, rowIndex) {
     let lastColumn = this.tabConfigs[tabId].sheet.getLastColumn();
     return this.tabConfigs[tabId].sheet.getRange(rowIndex, 1, 1, lastColumn);
   }
 
+  /**
+   * getColumnRange - Return the GoogleSheets Range object for
+   * the entire column with given propertyKey.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @param  {string} propertyKey The property key for the column. E.g. "webpagetest.metrics.CSS"
+   * @return {object} GoogleSheets Range object
+   */
   getColumnRange(tabId, propertyKey) {
     let tabConfig = awp.connector.tabConfigs[tabId];
     let sheet = tabConfig.sheet;
@@ -201,6 +254,11 @@ class GoogleSheetsConnector extends Connector {
     return range;
   }
 
+  /**
+   * getResultList - Return the array of Results, supporting PatternFilter.
+   * @param  {object} options Options: filters, verbose and debug.
+   * @return {Array<object>} Arary of Results.
+   */
   getResultList(options) {
     options = options || {};
     options.appendRowIndex = true;
@@ -211,6 +269,10 @@ class GoogleSheetsConnector extends Connector {
     return results;
   }
 
+  /**
+   * appendResultList - Append new results to the end of the existing Results.
+   * @param  {Array<object>} newResults Array of new Results
+   */
   appendResultList(newResults) {
     let tabConfig = this.tabConfigs['resultsTab'];
     let lastRowIndex = this.getResultList().length + 1 + tabConfig.skipRows;
@@ -221,6 +283,10 @@ class GoogleSheetsConnector extends Connector {
     } /* rowIndexFunc */);
   }
 
+  /**
+   * updateResultList - Override the Results with specific rowIndex.
+   * @param  {Array<object>} newResults Array of new Results
+   */
   updateResultList(newResults) {
     let tabConfig = this.tabConfigs['resultsTab'];
     let rowIndex = tabConfig.skipRows + 1;
@@ -230,6 +296,12 @@ class GoogleSheetsConnector extends Connector {
     } /* rowIndexFunc */);
   }
 
+  /**
+   * getPropertyLookup - Return an array of property keys from the Row of
+   * PropertyLookup.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @return {Array<string>} Array of property keys.
+   */
   getPropertyLookup(tabId) {
     let tabConfig = this.tabConfigs[tabId];
     let sheet = tabConfig.sheet;
@@ -250,6 +322,14 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
+  /**
+   * getPropertyIndex - Return the index with a given property key. E.g.
+   * getPropertyIndex('webpagetest.metrics.CSS') returns the column inex for
+   * CSS metric column.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @param  {string} lookupKey Property key of the column to look up.
+   * @return {number} Column index.
+   */
   getPropertyIndex(tabId, lookupKey) {
     let propertyLookup = this.getPropertyLookup(tabId);
     for (let i = 0; i < propertyLookup.length; i++) {
@@ -259,6 +339,9 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
+  /**
+   * initTriggers - Create recurring and onEdit triggers if not exist.
+   */
   initTriggers() {
     GoogleSheetsHelper.deleteAllTriggers();
     Object.keys(SystemVars).forEach(key => {
@@ -276,6 +359,10 @@ class GoogleSheetsConnector extends Connector {
     this.setSystemVar(SystemVars.ONEDIT_TRIGGER_ID, triggerId);
   }
 
+  /**
+   * initLocations - Get locations from WebPageTest API and update to Locations
+   * tab.
+   */
   initLocations() {
     // Reset locations tab.
     let locations = this.getList('locationsTab');
@@ -321,6 +408,13 @@ class GoogleSheetsConnector extends Connector {
     this.updateTestList(tests);
   }
 
+  /**
+   * updateList - The helper function for updating arbitrary items, like Tests,
+   * Results, or Config items.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @param  {Array<object>} items Array of new items.
+   * @param  {Function} rowIndexFunc The function that returns rowIndex for each item.
+   */
   updateList(tabId, items, rowIndexFunc) {
     let tabConfig = this.tabConfigs[tabId];
     let data = tabConfig.sheet.getDataRange().getValues();
@@ -349,6 +443,10 @@ class GoogleSheetsConnector extends Connector {
     });
   }
 
+  /**
+   * clearList - Clear the entire list of a specific tab.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   */
   clearList(tabId) {
     let tabConfig = this.tabConfigs[tabId];
     let lastRow = tabConfig.sheet.getLastRow();
@@ -356,6 +454,9 @@ class GoogleSheetsConnector extends Connector {
         tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
   }
 
+  /**
+   * initValidations - Reset all validation rules in the validationsMaps.
+   */
   initValidations() {
     this.validationsMaps.forEach(mapping => {
       let targetRange = this.getColumnRange(
@@ -368,6 +469,10 @@ class GoogleSheetsConnector extends Connector {
     });
   }
 
+  /**
+   * initConditionalFormat - Reset all conditional formatting defined in The
+   * resultColumnConditions.
+   */
   initConditionalFormat() {
     let rules = [];
     let tabConfig = this.tabConfigs['resultsTab'];
@@ -407,18 +512,17 @@ class GoogleSheetsConnector extends Connector {
     sheet.setConditionalFormatRules(rules);
   }
 
+  /**
+   * initUserTimeZone - Set the user timezone to System tab.
+   */
   initUserTimeZone() {
     let userTimeZone = GoogleSheetsHelper.getUserTimeZone();
     this.setSystemVar('USER_TIMEZONE', userTimeZone);
   }
 
-  onEditCell(tabId, propertyKey) {
-
-  }
-
   /**
-   * Request WPT API Key.
-   * @param {string} message
+   * requestApiKey - Request for WebPageTest API key.
+   * @param  {string} message Message for the UI prompt.
    */
   requestApiKey(message) {
     let apiKey = this.getConfigVar('apiKeys.webpagetest');
@@ -444,27 +548,58 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
+  /**
+   * getConfig - Returns the entire Config as an object.
+   * @return {object} Config object.
+   */
   getConfig() {
     let configValues = this.getList('configTab');
     return configValues ? configValues[0] : null;
   }
 
+  /**
+   * getConfigVar - Returns a specific variable from the Config tab.
+   * @param  {string} key
+   * @return {any} value
+   */
   getConfigVar(key) {
     return this.getVarFromTab('configTab', key);
   }
 
+  /**
+   * setConfigVar - Set a value to a specific variable in the Config tab.
+   * @param  {string} key
+   * @param  {string} value
+   */
   setConfigVar(key, value) {
     this.setVarToTab('configTab', key, value);
   }
 
+  /**
+   * getSystemVar - Returns a specific variable from the System tab.
+   * @param  {string} key description
+   * @param  {string} value
+   */
   getSystemVar(key) {
     return this.getVarFromTab('systemTab', key);
   }
 
+  /**
+   * setSystemVar - Set a value to a specific variable in the System tab.
+   * @param  {string} key
+   * @param  {string} value
+   */
   setSystemVar(key, value) {
     this.setVarToTab('systemTab', key, value);
   }
 
+  /**
+   * getVarFromTab - A generic helper function to get the value of a varible in
+   * a specific tab.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "configTab"
+   * @param  {string} key
+   * @return {type} value
+   */
   getVarFromTab(tabId, key) {
     let object = (this.getList(tabId) || [])[0];
     try {
@@ -474,6 +609,13 @@ class GoogleSheetsConnector extends Connector {
     }
   }
 
+  /**
+   * setVarToTab - A generic helper function to set a value of a varible in
+   * a specific tab.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "configTab"
+   * @param  {type} key
+   * @param  {type} value
+   */
   setVarToTab(tabId, key, value) {
     let tabConfig = this.tabConfigs[tabId];
     let data = tabConfig.sheet.getDataRange().getValues();
@@ -490,6 +632,9 @@ class GoogleSheetsConnector extends Connector {
     });
   }
 
+  /**
+   * healthCheck - For integration test. WIP.
+   */
   healthCheck() {
     // TODO: validate data type in sheets, e.g. check string type for propertyLookup.
   }

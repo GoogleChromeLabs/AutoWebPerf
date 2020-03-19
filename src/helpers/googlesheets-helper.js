@@ -1,4 +1,6 @@
-class GoogleSheetsApiHandler {
+const ApiHandler = require('./api-handler');
+
+class GoogleSheetsApiHandler extends ApiHandler {
   fetch(url) {
     try{
       return UrlFetchApp.fetch(url).getContentText();
