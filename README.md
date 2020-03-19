@@ -164,6 +164,68 @@ used by modules:
 - `json` property as the configuration for **JSONConnector**.
 - `budgets` property as the configuration for **BudgetsExtension**
 
+### Usage of AutoWebPerf core
+
+Examples of creating a new instance of AWP:
+```
+let awp = new AutoWebPerf({
+  connector: 'JSON',
+  helper: 'Node',
+  dataSources: ['webpagetest'],
+  extensions: extensions,
+  json: { // Config for JSON connector.
+    tests: argv['tests'],
+    results: argv['results'],
+  },
+  verbose: verbose,
+  debug: debug,
+});
+```
+To submit all tests:
+```
+awp.run();
+```
+
+To submit specific tests using filters:
+This will run the test which has id=1 and selected=true properties.
+```
+awp.run({
+  filters: ['id="1"', 'selected'],
+});
+```
+
+To retrieve all pending results, filtering with status !== "Retrieved".
+```
+awp.retrieve({
+  filters: ['status!=="Retrieved"'],
+});
+```
+For more advanced usage of PatternFilter, please check out
+`src/utils/pattern-filter.js` with more examples.
+
+
+To activate recurring tests without actually submitting. This will update the
+nextTriggerTimestamp in the Test objects only.
+```
+awp.recurring({
+  activateOnly: true  
+});
+```
+
+To run recurring tests:
+```
+// This will run the actual audit and update the nextTriggerTimestamp.
+awp.recurring();
+```
+
+To run tests with specific extensions:
+```
+// This will override the extension list defined in the awpConfig.
+awp.run({
+  extensions: ['budgets']
+})
+```
+
 
 ### Gatherer Modules
 

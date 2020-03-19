@@ -11,7 +11,41 @@ const {Frequency, FrequencyInMinutes} = require('./common/frequency');
 const assert = require('./utils/assert');
 const {TestType} = require('./common/types');
 
+/**
+ * AutoWebPerf (AWP) main class.
+ * Please check README.md for more details of the usage AWP instance.
+ *
+ * Exmaples of creating a new instance of AWP:
+ *   let awp = new AutoWebPerf({
+ *     connector: 'JSON',
+ *     helper: 'Node',
+ *     dataSources: ['webpagetest'],
+ *     extensions: extensions,
+ *     json: { // Config for JSON connector.
+ *       tests: argv['tests'],
+ *       results: argv['results'],
+ *     },
+ *     verbose: verbose,
+ *     debug: debug,
+ *   });
+ */
 class AutoWebPerf {
+  /**
+   * @param {object} awpConfig The overall config object, including sub-configs
+   *     for connetor, helpers, gatherers, and extension modules.
+   *
+   * Mandatory properties:
+   * - awpConfig.dataSources {Array<string>} The array of gatherer names.
+   *     e.g. ['webpagetest', 'psi']
+   * - awpConfig.connector {string} Connector name. E.g. 'json'.
+   * - awpConfig.helper {string} Helper name. E.g. 'node'.
+   *
+   * Sub-configs:
+   * - Connector config. E.g. `awpConfig.googlesheets` is the config object for
+   *     GoogleSheets connector and extension module.
+   * - Extension config. E.g. `awpConfig.budget` is the config object for Budget
+   *     extension module.
+   */
   constructor(awpConfig) {
     this.debug = awpConfig.debug || false;
     this.verbose = awpConfig.verbose || false;
@@ -49,16 +83,23 @@ class AutoWebPerf {
     let ConnectorClass, connectorName = awpConfig.connector.toLowerCase();
     let connectorConfig = awpConfig[connectorName];
 
+    // The API Keys used by Gatherers are expected to be accessed through
+    // Connector, similar to environment variables. E.g. with GoogleSheets,
+    // API Keys are stored in Config tab for users to update easily.
     switch (connectorName) {
       case 'json':
         ConnectorClass = require('./connectors/json-connector');
         this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
+
+        // Get the ApiKeys variables from the Config through Connector.
         this.apiKeys = this.connector.getConfig().apiKeys;
         break;
 
       case 'googlesheets':
         ConnectorClass = require('./connectors/googlesheets-connector');
         this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
+
+        // Get the ApiKeys variables from the Config through Connector.
         this.apiKeys = this.connector.getConfig().apiKeys;
         break;
 
@@ -114,6 +155,11 @@ class AutoWebPerf {
     this.batchUpdate = awpConfig.batchUpdate || 0;
   }
 
+  /**
+   * Return the singleton gatherer instance with given name.
+   * @param {string} name Gatherer name. E.g. 'webpagetest'.
+   * @return {object} Gatherer instance.
+   */
   getGatherer(name) {
     let options = {
       verbose: this.verbose,
@@ -154,8 +200,15 @@ class AutoWebPerf {
   }
 
   /**
-   * Run selected tests for all tests, and writes output to results.
-   * @param  {object} options
+   * Run tests and writes output to results.
+   * @param {object} options
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
    */
   run(options) {
     options = options || {};
@@ -215,8 +268,17 @@ class AutoWebPerf {
   }
 
   /**
-   * Submit recurring tests.
-   * @param  {object} options description
+   * Run recurring tests and writes output to results.
+   * @param {object} options
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - activateOnly {boolean}: When true, only update the nextTriggerTimestamp
+   *     to a Test object without running actual audit.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
    */
   recurring(options) {
     options = options || {};
@@ -315,9 +377,16 @@ class AutoWebPerf {
   }
 
   /**
-   * The main function for running a test.
-   * @param  {object} test
-   * @param  {object} options
+   * Run a single Test and return the Result object.
+   * @param {object} test Test object to run.
+   * @param {object} options
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
    */
   runTest(test, options) {
     options = options || {};
@@ -369,8 +438,15 @@ class AutoWebPerf {
   }
 
   /**
-   * Retrieve test result for all result list.
+   * Retrieve test result for all filtered Results.
    * @param  {object} options
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
    */
   retrieve(options) {
     options = options || {};
@@ -441,8 +517,15 @@ class AutoWebPerf {
   }
 
   /**
-   * Run through all extensions
-   * @param  {object} options
+   * Run through all extensions.
+   * @param {object} options
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
    */
   runExtensions(extensions, functionName, params) {
     extensions.forEach(extName => {
@@ -452,18 +535,47 @@ class AutoWebPerf {
     });
   }
 
+  /**
+   * Return all Test objects.
+   * @param {object} options
+   * @return {Array<object>} Test objects.
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
+   */
   getTests(options) {
     options = options || {};
     let tests = this.connector.getTestList(options);
     return tests;
   }
 
+  /**
+   * Return all Result objects.
+   * @param {object} options
+   * @return {Array<object>} Result objects.
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
+   */
   getResults(options) {
     options = options || {};
     let results = this.connector.getResultList(options);
     return results;
   }
 
+  /**
+   * Returns the overall status with given list of Gatherers' statuses.
+   * @param {Array<string>} statuses
+   * @return {string} Overall status
+   */
   updateOverallStatus(statuses) {
     // The overall status depends on the aggregation of all data sources.
     // If all data sources returne retrieved, the overall status is retrieved.
@@ -478,15 +590,19 @@ class AutoWebPerf {
     }
   }
 
-  cancel(tests) {
-    // TODO
-  }
-
+  /**
+   * Log a message with console.log.
+   * @param {string} message
+   */
   log(message) {
     if (!this.verbose) return;
     console.log(message);
   }
 
+  /**
+   * Log debug message.
+   * @param {string} message
+   */
   logDebug(message) {
     if (!this.debug) return;
     console.log(message);
