@@ -27,17 +27,33 @@ class PSIGatherer extends Gatherer {
     };
 
     this.metricsMap = {
-      'FirstPaint': 'lighthouseResult.audits.metrics.details.items[0].observedFirstPaint',
-      'FirstContentfulPaint': 'lighthouseResult.audits.metrics.details.items[0].observedFirstContentfulPaint',
-      'FirstMeaningfulPaint': 'lighthouseResult.audits.metrics.details.items[0].observedFirstMeaningfulPaint',
-      'SpeedIndex': 'lighthouseResult.audits.metrics.details.items[0].observedSpeedIndex',
+      'TimeToFirstByte': 'lighthouseResult.audits["time-to-first-byte"].numericValue',
+      'FirstContentfulPaint': 'lighthouseResult.audits.metrics.details.items[0].firstContentfulPaint',
+      'FirstMeaningfulPaint': 'lighthouseResult.audits.metrics.details.items[0].firstMeaningfulPaint',
+      'SpeedIndex': 'lighthouseResult.audits.metrics.details.items[0].speedIndex',
       'TimeToInteractive': 'lighthouseResult.audits.metrics.details.items[0].interactive',
       'FirstCPUIdle': 'lighthouseResult.audits.metrics.details.items[0].firstCPUIdle',
       'FirstInputDelay': 'lighthouseResult.audits.metrics.details.items[0].estimatedInputLatency',
       'TotalBlockingTime': 'lighthouseResult.audits.metrics.details.items[0].totalBlockingTime',
-      'LargestContentfulPaint': 'lighthouseResult.audits.metrics.details.items[0].observedLargestContentfulPaintTs',
-      'DOMContentLoaded': 'lighthouseResult.audits.metrics.details.items[0].observedDomContentLoaded',
-      'LoadEvent': 'lighthouseResult.audits.metrics.details.items[0].observedLoad',
+      'HTML': 'lighthouseResult.audits["resource-summary"].details.items[5].size',
+      'Javascript': 'lighthouseResult.audits["resource-summary"].details.items[1].size',
+      'CSS': 'lighthouseResult.audits["resource-summary"].details.items[4].size',
+      'Fonts': 'lighthouseResult.audits["resource-summary"].details.items[2].size',
+      'Images': 'lighthouseResult.audits["resource-summary"].details.items[3].size',
+      'Videos': 'lighthouseResult.audits["resource-summary"].details.items[7].size',
+      'ThirdParty': 'lighthouseResult.audits["resource-summary"].details.items[8].size',
+      'UnusedCSS': 'lighthouseResult.audits["unused-css-rules"].details.overallSavingsBytes',
+      'WebPImages': 'lighthouseResult.audits["uses-webp-images"].details.overallSavingsBytes',
+      'OptimizedImages': 'lighthouseResult.audits["uses-optimized-images"].details.overallSavingsBytes',
+      'ResponsiveImages': 'lighthouseResult.audits["uses-responsive-images"].details.overallSavingsBytes',
+      'OffscreenImages': 'lighthouseResult.audits["offscreen-images"].details.overallSavingsBytes',
+      'DOMElements': 'lighthouseResult.audits["dom-size"].numericValue',
+      'Requests': 'lighthouseResult.audits["network-requests"].details.numericValue',
+      'Performance': 'lighthouseResult.categories.performance.score',
+      'ProgressiveWebApp': 'lighthouseResult.categories.pwa.score',
+      'Manifest': 'lighthouseResult.audits["installable-manifest"].score',
+      'ServiceWorker': 'lighthouseResult.audits["service-worker"].score',
+      'Offline': 'lighthouseResult.audits["works-offline"].score',
     };
   }
 
@@ -49,13 +65,19 @@ class PSIGatherer extends Gatherer {
     let params = {
       'url': encodeURIComponent(test.url),
       'key': this.apiKey,
-      'category': 'performance',
+      'category': ['performance', 'pwa'],
       'locale': settings.locale,
       'strategy': settings.strategy,
     }
     let urlParams = [];
     Object.keys(params).forEach(key => {
-      urlParams.push(key + '=' + params[key]);
+      if (Array.isArray(params[key])) {
+        params[key].forEach((p) => {
+          urlParams.push(key + '=' + p);
+        })
+      } else {
+          urlParams.push(key + '=' + params[key]);
+      }
     });
 
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
@@ -89,6 +111,15 @@ class PSIGatherer extends Gatherer {
           errors.push(e.message);
         }
       });
+      // summing up the render blocking resources
+      let blockingResourceSize = 0;
+      const blockingResources = json.lighthouseResult.audits['render-blocking-resources'];
+      if (blockingResources) {
+        blockingResources.details.items.forEach((br) => {
+          blockingResourceSize += br.totalBytes;
+        });
+        metrics.set('RenderBlockingResources', blockingResourceSize);
+      }
 
       return {
         status: Status.RETRIEVED,
@@ -128,6 +159,65 @@ class PSIGatherer extends Gatherer {
           "benchmarkIndex": 642
         },
         "audits": {
+          "time-to-first-byte": {
+            "numericValue": 967
+          },
+          "resource-summary": {
+            "details": {
+              "items": [
+                {"size": 5000},
+                {"size": 5000},
+                {"size": 5000},
+                {"size": 5000},
+                {"size": 5000},
+                {"size": 5000},
+                {"size": 5000},
+                {"size": 5000}
+                ]
+            }
+          },
+          "unused-css-rules": {
+            "details": {
+              "overallSavingsBytes": 500
+            }
+          },
+          "uses-webp-images": {
+            "details": {
+              "overallSavingsBytes": 500
+            }
+          },
+          "uses-optimized-images": {
+            "details": {
+              "overallSavingsBytes": 500
+            }
+          },
+          "uses-responsive-images": {
+            "details": {
+              "overallSavingsBytes": 500
+            }
+          },
+          "offscreen-images": {
+            "details": {
+              "overallSavingsBytes": 500
+            }
+          },
+          "dom-size": {
+            "numericValue": 200
+          },
+          "network-requests": {
+            "details": {
+              "numericValue": 40
+            }
+          },
+          "installable-manifest": {
+            "score": 1
+          },
+          "service-worker": {
+            "score": 0
+          },
+          "works-offline": {
+            "score": 0
+          },
           "metrics": {
             "id": "metrics",
             "title": "Metrics",
@@ -172,6 +262,22 @@ class PSIGatherer extends Gatherer {
             },
             "numericValue": 1642.5
           },
+          "render-blocking-resources": {
+            "details": {
+              "items": [
+                {"totalBytes": 200},
+                {"totalBytes": 300}
+                ]
+            }
+          }
+        },
+        "categories": {
+          "performance": {
+            "score": 0.58
+          },
+          "pwa": {
+            "score": 0.48
+          }
         },
       },
       "analysisUTCTimestamp": "2020-01-20T22:38:16.761Z"

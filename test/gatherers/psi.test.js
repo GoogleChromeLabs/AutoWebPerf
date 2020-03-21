@@ -68,7 +68,7 @@ describe('PSIGatherer unit test', () => {
     // When returning empty response.
     fakeResponse = {};
     setObject(fakeResponse,
-        'lighthouseResult.audits.metrics.details.items[0].observedFirstPaint',
+        'lighthouseResult.audits.metrics.details.items[0].speedIndex',
         2000);
     psiGatherer.fakeRunResponse = () => {
       return fakeResponse;
@@ -76,7 +76,7 @@ describe('PSIGatherer unit test', () => {
     response = psiGatherer.run(test, {} /* options */);
     expect(response.status).toEqual(Status.RETRIEVED);
     expect(response.statusText).toEqual('Success');
-    expect(response.metrics.FirstPaint).toEqual(2000);
+    expect(response.metrics.SpeedIndex).toEqual(2000);
   });
 
   it('follows standardized metric names', async () => {
