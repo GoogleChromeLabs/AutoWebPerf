@@ -6,8 +6,7 @@
   "scripts": {
     "test": "jest ./test/",
     "integration": "npm run build && jest ./integration/",
-    "build": "rollup -c",
-    "parcel": "parcel src/core.js"
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",

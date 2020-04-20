@@ -106,7 +106,7 @@ class WebPageTestGatherer extends Gatherer {
       'video': '1',
       'lighthouse': '1',
       'runs': settings.runs || '1',
-      'fvonly': !settings.repeatView || true,
+      'fvonly': !settings.repeatView,
       'timeline': settings.hasTimeline || false,
       'block': settings.block || '',
       'script': settings.script || '',

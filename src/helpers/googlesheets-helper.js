@@ -14,6 +14,15 @@ class GoogleSheetsApiHandler extends ApiHandler {
   }
 }
 
+const TabRole = {
+  TESTS: 'tests',
+  RESULTS: 'results',
+  LATEST_RESULTS: 'latestResults',
+  CONFIG: 'config',
+  SYSTEM: 'system',
+  LOCATIONS: 'locations',
+};
+
 const SystemVars = {
   RETRIEVE_TRIGGER_ID: 'RETRIEVE_TRIGGER_ID',
   RECURRING_TRIGGER_ID: 'RECURRING_TRIGGER_ID',
@@ -156,4 +165,5 @@ module.exports = {
   GoogleSheetsApiHandler,
   GoogleSheetsHelper,
   SystemVars,
+  TabRole,
 };

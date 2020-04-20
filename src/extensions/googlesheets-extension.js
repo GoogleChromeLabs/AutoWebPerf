@@ -47,38 +47,49 @@ class GoogleSheetsExtension extends Extension {
 
     this.isSendTrackEvent = config.isSendTrackEvent || false;
     this.debug = config.debug || false;
+
+    // Default values mappings.
+    this.defaultResultValues = {
+      'selected': false,
+    };
   }
 
   /**
    * beforeRun - Convert location name to id based on location tab.
    * @param {object} context
    */
-  beforeRun(context) {
-    this.locations = this.locations || this.connector.getList('locationsTab');
-
+  beforeRun(context, options) {
     let test = context.test;
-    this.locations.forEach(location => {
-      if (test.webpagetest.settings.location === location.name) {
-        test.webpagetest.settings.locationId = location.id;
-      }
-    });
+
+    // Update locations if there's WPT settings.
+    if (test.webpagetest && test.webpagetest.settings) {
+      this.locations = this.locations || this.connector.getList('locationsTab');
+      this.locations.forEach(location => {
+        if (test.webpagetest.settings.location === location.name) {
+          test.webpagetest.settings.locationId = location.id;
+        }
+      });
+    }
   }
 
   /**
    * afterRun - Convert location id to name based on location tab.
    * @param {object} context Context object that contains Test and Result objects.
    */
-  afterRun(context) {
-    this.locations = this.locations || this.connector.getList('locationsTab');
+  afterRun(context, options) {
     let test = context.test;
     let result = context.result;
 
-    // Replace locationId with location name.
-    this.locations.forEach(location => {
-      if (test.webpagetest.settings.locationId === location.id) {
-        test.webpagetest.settings.location = location.name;
-      }
-    });
+    // Update locations if there's WPT settings.
+    if (test.webpagetest && test.webpagetest.settings) {
+      // Replace locationId with location name.
+      this.locations = this.locations || this.connector.getList('locationsTab');
+      this.locations.forEach(location => {
+        if (test.webpagetest.settings.locationId === location.id) {
+          test.webpagetest.settings.location = location.name;
+        }
+      });
+    }
 
     // Format recurring.nextTrigger with user's timezone.
     if (test.recurring) {
@@ -111,6 +122,11 @@ class GoogleSheetsExtension extends Extension {
       if (result.status === Status.RETRIEVED) {
         this.trackAction(TrackingType.RESULT, this.spreadsheetId, result);
       }
+
+      // Set default values if there's no value assigned for specific properties.
+      Object.keys(this.defaultResultValues).forEach(key => {
+        if (!result[key]) result[key] = this.defaultResultValues[key];
+      });
     }
   }
 
@@ -119,16 +135,23 @@ class GoogleSheetsExtension extends Extension {
    * @param {object} context Context object that contains all processed Tests
    *     and Result objects.
    */
-  afterAllRuns(context) {
+  afterAllRuns(context, options) {
     let tests = context.tests || [];
-    if (tests.length > 0) {
+    let results = context.results || [];
+    options = options || {};
+
+    let pendingResults = results.filter(result => {
+      return result.status !== Status.RETRIEVED;
+    });
+
+    if (pendingResults.length > 0) {
       let triggerId = this.connector.getSystemVar(SystemVars.RETRIEVE_TRIGGER_ID);
-      console.log(`${SystemVars.RETRIEVE_TRIGGER_ID} = ${triggerId}`);
+      if (options.verbose) console.log(`${SystemVars.RETRIEVE_TRIGGER_ID} = ${triggerId}`);
 
       if (!triggerId) {
-        console.log('Creating Trigger for retrieveResults...');
         triggerId = GoogleSheetsHelper.createTimeBasedTrigger('retrieveResults', 10 /* minutes */);
         this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, triggerId);
+        if (options.verbose) console.log(`Time-based Trigger created for retrieveResults: ${triggerId}`);
       }
     }
   }
@@ -138,7 +161,7 @@ class GoogleSheetsExtension extends Extension {
    *     signals to Google Analytics.
    * @param {object} context Context object that contains the processed Result.
    */
-  afterRetrieve(context) {
+  afterRetrieve(context, options) {
     let result = context.result;
 
     // Format modifiedDate
@@ -159,39 +182,59 @@ class GoogleSheetsExtension extends Extension {
    * @param {object} context Context object that contains all processed Tests
    *     and Result objects.
    */
-  afterAllRetrieves(context) {
-    // Get all results in the tab.
-    let results = this.connector.getResultList();
-    let pendingResults = results.filter(result => {
-      return result.status !== Status.RETRIEVED;
-    });
-    let retrievedResults = results.filter(result => {
-      return result.status === Status.RETRIEVED;
-    });
+  afterAllRetrieves(context, options) {
+    let googlesheets = (options || {}).googlesheets || {};
 
-    // Collect all latest retrieved results by labels.
-    let labels = retrievedResults.map(result => result.label);
-    let resultsByLabel = {};
+    // Skip when there's no newly updated results from the context.
+    if (!context.results || context.results.length === 0) return;
 
-    let latestResults = this.connector.getList('latestResultsTab');
-    latestResults.forEach(result => {
-      resultsByLabel[result.label] = result;
+    // Get all tabIds of results tabs.
+    let resultsTabIds = Object.keys(this.connector.tabConfigs).filter(tabId => {
+      return this.connector.tabConfigs[tabId].tabRole === 'results';
     });
-    retrievedResults.forEach(result => {
-      resultsByLabel[result.label] = result;
-    });
+    let allResults = [];
 
-    let newLatestResults = [];
-    Object.keys(resultsByLabel).forEach(label => {
-      newLatestResults.push(resultsByLabel[label]);
-    });
+    // Running through all results tabs to update latest results tab if needed.
+    resultsTabIds.forEach(tabId => {
+      let tabConfig = this.connector.tabConfigs[tabId];
+      let latestResultsTab = tabConfig.latestResultsTab;
 
-    this.connector.updateList('latestResultsTab', newLatestResults,
-        null /* use default rowIndex */);
+      let results = this.connector.getResultList({resultsTab: tabId});
+      allResults = allResults.concat(results);
+
+      let retrievedResults = results.filter(result => {
+        return result.status === Status.RETRIEVED;
+      });
+
+      // Update corresponding latest results tab.
+      if (tabId === googlesheets.resultsTab && latestResultsTab &&
+          retrievedResults.length > 0) {
+        // Collect all latest retrieved results by labels.
+        // let labels = retrievedResults.map(result => result.label);
+        let resultsByLabel = {};
+        retrievedResults.forEach(result => {
+          resultsByLabel[result.label] = result;
+        });
+
+        let newLatestResults = [];
+        Object.keys(resultsByLabel).forEach(label => {
+          newLatestResults.push(resultsByLabel[label]);
+        });
+
+        this.connector.updateList(latestResultsTab, newLatestResults,
+            null /* use default rowIndex */);
+      }
+    });
 
     // Delete trigger if all results are retrieved.
+    let pendingResults = allResults.filter(result => {
+      return result.status !== Status.RETRIEVED;
+    });
+
     if (pendingResults.length === 0) {
-      console.log('Deleting Trigger for retrieveResults...');
+      if (options.verbose) {
+        console.log('Deleting Trigger for retrieveResults...');
+      }
       GoogleSheetsHelper.deleteTriggerByFunction('retrieveResults');
       this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, '');
     }
@@ -364,6 +407,14 @@ class GoogleSheetsExtension extends Extension {
     ].join('&');
 
     return trackingUrl;
+  }
+
+  /**
+   * Returns the GoogleSheetsHelper for unit test purpose.
+   * @return {object}
+   */
+  getGoogleSheetsHelper() {
+    return GoogleSheetsHelper;
   }
 }
 

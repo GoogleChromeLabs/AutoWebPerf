@@ -244,8 +244,8 @@ class AutoWebPerf {
       // inefficient.
       count++;
       if (this.batchUpdate && count >= this.batchUpdate) {
-        this.connector.updateTestList(testsToUpdate);
-        this.connector.appendResultList(resultsToUpdate);
+        this.connector.updateTestList(testsToUpdate, options);
+        this.connector.appendResultList(resultsToUpdate, options);
         this.log(
             `AutoWebPerf::run, batch update ${testsToUpdate.length} tests` +
             ` and appends ${resultsToUpdate.length} results.`);
@@ -257,8 +257,8 @@ class AutoWebPerf {
     });
 
     // Update the remaining.
-    this.connector.updateTestList(testsToUpdate);
-    this.connector.appendResultList(resultsToUpdate);
+    this.connector.updateTestList(testsToUpdate, options);
+    this.connector.appendResultList(resultsToUpdate, options);
 
     // After all runs.
     this.runExtensions(extensions, 'afterAllRuns', {
@@ -309,11 +309,7 @@ class AutoWebPerf {
         this.logDebug('AutoWebPerf::recurring with activateOnly.');
 
         let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
-        if (!offset) {
-          recurring.nextTriggerTimestamp = '';
-        } else {
-          recurring.nextTriggerTimestamp = nowtime + offset;
-        }
+        recurring.nextTriggerTimestamp = offset ? nowtime + offset : '';
         recurring.activatedFrequency = recurring.frequency;
 
         // Run extension with empty result.
@@ -502,7 +498,7 @@ class AutoWebPerf {
 
       count++;
       if (this.batchUpdate && count >= this.batchUpdate) {
-        this.connector.updateResultList(resultsToUpdate);
+        this.connector.updateResultList(resultsToUpdate, options);
         this.log(
             `AutoWebPerf::retrieve, batch appends ` +
             `${resultsToUpdate.length} results.`);
@@ -512,8 +508,9 @@ class AutoWebPerf {
       }
     });
 
-    this.connector.updateResultList(resultsToUpdate);
-    this.runExtensions(extensions, 'afterAllRetrieves', {results: results});
+    this.connector.updateResultList(resultsToUpdate, options);
+    this.runExtensions(extensions, 'afterAllRetrieves', {results: results},
+        options);
   }
 
   /**
@@ -527,11 +524,11 @@ class AutoWebPerf {
    * - verbose {boolean}: Whether to show verbose messages in terminal.
    * - debug {boolean}: Whether to show debug messages in terminal.
    */
-  runExtensions(extensions, functionName, params) {
+  runExtensions(extensions, functionName, context, options) {
     extensions.forEach(extName => {
       if (!this.extensions[extName]) return;
       let extension = this.extensions[extName];
-      if (extension[functionName]) extension[functionName](params);
+      if (extension[functionName]) extension[functionName](context, options);
     });
   }
 

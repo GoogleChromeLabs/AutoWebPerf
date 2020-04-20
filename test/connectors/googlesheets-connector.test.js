@@ -6,118 +6,117 @@
 'use strict';
 
 const GoogleSheetsConnector = require('../../src/connectors/googlesheets-connector');
+const assert = require('../../src/utils/assert');
 const setObject = require('../../src/utils/set-object');
 const Status = require('../../src/common/status');
+const {initFakeSheet, fakeSheetData} = require('./googlesheets-test-utils');
+
+let fakeSheets = {
+  'Configs': initFakeSheet(fakeSheetData.fakeConfigSheetData),
+  'System': initFakeSheet(fakeSheetData.fakeSystemSheetData),
+  'Locations': initFakeSheet(fakeSheetData.fakeLocationsSheetData),
+  'Tests': initFakeSheet(fakeSheetData.fakeTestsSheetData),
+  'Results': initFakeSheet(fakeSheetData.fakeResultsSheetData),
+};
 
 global.SpreadsheetApp = {
-  getActive: () => {
-    return {
-      getSheetByName: () => {
-        return {}
-      },
-    };
+  getActive: () => ({
+    getSheetByName: (tabName) => {
+      if (tabName === 'NonExistingTab') return null;
+      return fakeSheets[tabName];
+    },
+  }),
+  newDataValidation: () => ({
+    requireValueInRange: () => ({
+      build: () => {},
+    })
+  }),
+  newConditionalFormatRule: () => ({
+    setGradientMaxpointWithValue: () => ({
+      setGradientMidpointWithValue: () => ({
+        setGradientMinpointWithValue: () => ({
+          setRanges: () => ({
+            build: jest.fn(),
+          }),
+        })
+      })
+    }),
+  }),
+  InterpolationType: {
+    NUMBER: '',
   },
-  newDataValidation: () => {
-    return {
-      requireValueInRange: () => {
-        return {
-          build: () => {},
-        }
-      }
-    }
-  }
 };
 
-const initFakeSheet = (tabName, fakeData) => {
-  let sheet = connector.tabConfigs[tabName].sheet;
-  sheet.fakeData = [...fakeData];
-  sheet.getDataRange = () => {
-    return {
-      getValues: () => {
-        return sheet.fakeData;
-      }
-    }
-  };
-  sheet.getRange = (row, column, numRows, numColumns) => {
-    return {
-      getValues: () => {
-        let data = sheet.fakeData.slice(row - 1, row + numRows - 1);
-        data = data.map(row => {
-          return row.slice(column - 1, column + numColumns);
-        });
-        return data;
-      },
-      setValue: (value) => {
-        sheet.fakeData[row - 1][column - 1] = value;
-      },
-      setValues: (values) => {
-        while(sheet.fakeData.length < row) {
-          sheet.fakeData.push([]);
-        }
-        sheet.fakeData[row - 1] = values[0];
-      },
-      setDataValidation: () => {},
-    }
-  };
-  sheet.getLastRow = () => {
-    return sheet.fakeData.length;
-  };
-  sheet.getLastColumn = () => {
-    return sheet.fakeData[0].length;
-  };
-  sheet.deleteRows = (row, numRows) => {
-    let newFakeData = [];
-    for (let i=0; i<sheet.fakeData.length; i++) {
-      if (i < row - 1 || i > row + numRows - 1) {
-        newFakeData.push(sheet.fakeData[i]);
-      }
-    }
-    sheet.fakeData = newFakeData;
-  };
+let connectorConfig = {
+  defaultTestsTab: 'Tests-1',
+  defaultResultsTab: 'Results-1',
+  tabs: [{
+    tabName: 'Tests-1',
+    tabRole: 'tests',
+    dataAxis: 'row',
+    propertyLookup: 2, // Starts at 1
+    skipColumns: 0,
+    skipRows: 3,
+  }, {
+    tabName: 'Tests-2',
+    tabRole: 'tests',
+    dataAxis: 'row',
+    propertyLookup: 2, // Starts at 1
+    skipColumns: 0,
+    skipRows: 3,
+  }, {
+    tabName: 'Results-1',
+    tabRole: 'results',
+    dataAxis: 'row',
+    propertyLookup: 2, // Starts at 1
+    skipColumns: 0,
+    skipRows: 3,
+    latestResultsTab: 'Latest Results',
+  }, {
+    tabName: 'Latest Results',
+    tabRole: 'latestResults',
+    dataAxis: 'row',
+    propertyLookup: 2, // Starts at 1
+    skipColumns: 0,
+    skipRows: 3,
+  }, {
+    tabName: 'Configs',
+    tabRole: 'config',
+    dataAxis: 'column',
+    propertyLookup: 2, // Starts at 1
+    skipRows: 1,
+    skipColumns: 2,
+  }, {
+    tabName: 'System',
+    tabRole: 'system',
+    dataAxis: 'column',
+    propertyLookup: 2, // Starts at 1
+    skipRows: 1,
+    skipColumns: 2,
+  }, {
+    tabName: 'Locations',
+    tabRole: 'locations',
+    dataAxis: 'row',
+    propertyLookup: 2, // Starts at 1
+    skipRows: 2,
+    skipColumns: 0,
+  }, {
+    tabName: 'NonExistingTab',
+    tabRole: 'something',
+    dataAxis: 'row',
+    propertyLookup: 2, // Starts at 1
+    skipRows: 2,
+    skipColumns: 0,
+  }],
+  validationsMaps: [{
+    targetTab: 'Tests-1',
+    targetProperty: 'webpagetest.settings.location',
+    validationTab: 'locationsTab',
+    validationProperty: 'name',
+  }],
 };
 
-let connector = new GoogleSheetsConnector({
-  configTabName: 'config',
-  testsTabName: 'tests',
-  resultsTabName: 'results',
-  systemTabName: 'system',
-  locationsTabName: 'locations',
-}, {} /* apiHelper */);
-
-let fakeConfigSheetData = [
-  ['Name', 'key', 'value'],
-  ['WPT API Key', 'apiKeys.webpagetest', 'WPT_KEY'],
-  ['PSI API Key', 'apiKeys.psi', 'PSI_KEY'],
-];
-
-let fakeSystemSheetData = [
-  ['Name', 'key', 'value'],
-  ['isRecurring', 'isRecurring', true],
-  ['triggerId', 'triggerId', '12345'],
-];
-
-let fakeTestsSheetData = [
-  ['', '', '', '', ''],
-  ['', '', '', '', ''],
-  ['selected', 'url', 'label', 'recurring.frequency', 'webpagetest.settings.connection'],
-  [true, 'google.com', 'Google', 'daily', '4G'],
-  [false, 'examples.com', 'Example', null, '3G'],
-  [true, 'web.dev', 'Web.Dev', 'daily', '3G'],
-];
-
-let fakeResultsSheetData = [
-  ['', '', '', '', '', ''],
-  ['', '', '', '', '', ''],
-  ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.SpeedIndex'],
-  [true, 'id-1234', 'single', 'Retrieved', 'google.com', 500],
-  [false, 'id-5678', 'recurring', 'Retrieved', 'web.dev', 800],
-]
-
-let fakeLocationsSheetData = [
-  ['Name', 'ID', 'Pending Tests', 'Browsers'],
-  ['name', 'id', 'pendingTests', 'browsers'],
-  ['Old location', 'location-old', '0', 'should-be-deleted'],
-]
+let connector = new GoogleSheetsConnector(connectorConfig, {} /* apiHelper */);
 
 let fakeTests = [
   {
@@ -125,7 +124,8 @@ let fakeTests = [
     url: 'google.com',
     label: 'Google',
     recurring: {
-      frequency: 'daily',
+      frequency: 'Daily',
+      nextTriggerTimestamp: null,
     },
     webpagetest: {
       settings: {
@@ -142,6 +142,7 @@ let fakeTests = [
     label: 'Example',
     recurring: {
       frequency: null,
+      nextTriggerTimestamp: null,
     },
     webpagetest: {
       settings: {
@@ -157,7 +158,8 @@ let fakeTests = [
     url: 'web.dev',
     label: 'Web.Dev',
     recurring: {
-      frequency: 'daily',
+      frequency: 'Daily',
+      nextTriggerTimestamp: null,
     },
     webpagetest: {
       settings: {
@@ -208,21 +210,21 @@ let fakeResults = [
 describe('GoogleSheetsConnector Config tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    initFakeSheet('configTab', fakeConfigSheetData);
+    fakeSheets['Configs'] = initFakeSheet(fakeSheetData.fakeConfigSheetData);
   });
 
   it('returns list of config values from the Config sheet', async () => {
     let config = connector.getConfig();
     expect(config).toEqual({
       apiKeys: {
-        webpagetest: 'WPT_KEY',
+        webpagetest: 'TEST_APIKEY',
         psi: 'PSI_KEY',
       }
     });
   });
 
   it('get a value from Config sheet via getConfigVar', async () => {
-    expect(connector.getConfigVar('apiKeys.webpagetest')).toEqual('WPT_KEY');
+    expect(connector.getConfigVar('apiKeys.webpagetest')).toEqual('TEST_APIKEY');
     expect(connector.getConfigVar('apiKeys.psi')).toEqual('PSI_KEY');
   });
 
@@ -236,11 +238,17 @@ describe('GoogleSheetsConnector Config tab', () => {
 describe('GoogleSheetsConnector Tests tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    initFakeSheet('testsTab', fakeTestsSheetData);
+    fakeSheets['Tests-1'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
+    fakeSheets['Tests-2'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
   });
 
-  it('returns all tests from the Tests sheet with filters', async () => {
+  it('returns all tests from the Tests sheet', async () => {
     let tests = connector.getTestList();
+    expect(tests).toEqual(fakeTests);
+  });
+
+  it('returns all tests from a specific sheet', async () => {
+    let tests = connector.getTestList({tabId: 'Tests-2'});
     expect(tests).toEqual(fakeTests);
   });
 
@@ -297,7 +305,7 @@ describe('GoogleSheetsConnector Tests tab', () => {
 
 describe('GoogleSheetsConnector Results tab', () => {
   beforeEach(() => {
-    initFakeSheet('resultsTab', fakeResultsSheetData);
+    fakeSheets['Results-1'] = initFakeSheet(fakeSheetData.fakeResultsSheetData);
   });
 
   it('returns list of results from the Results sheet', async () => {
@@ -372,25 +380,25 @@ describe('GoogleSheetsConnector Results tab', () => {
 describe('GoogleSheetsConnector System tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    initFakeSheet('systemTab', fakeSystemSheetData);
+    fakeSheets['System'] = initFakeSheet(fakeSheetData.fakeSystemSheetData);
   });
 
   it('returns a specific system variable from the System sheet', async () => {
-    expect(connector.getSystemVar('isRecurring')).toEqual(true);
-    expect(connector.getSystemVar('triggerId')).toEqual('12345');
+    expect(connector.getSystemVar('RETRIEVE_TRIGGER_ID')).toEqual('');
+    expect(connector.getSystemVar('RECURRING_TRIGGER_ID')).toEqual('');
   });
 
   it('sets value to a specific system var to the System sheet', async () => {
-    connector.setSystemVar('isRecurring', false);
-    expect(connector.getSystemVar('isRecurring')).toEqual(false);
-    expect(connector.getSystemVar('triggerId')).toEqual('12345');
+    connector.setSystemVar('RETRIEVE_TRIGGER_ID', 'trigger-1');
+    expect(connector.getSystemVar('RETRIEVE_TRIGGER_ID')).toEqual('trigger-1');
+    expect(connector.getSystemVar('RECURRING_TRIGGER_ID')).toEqual('');
   });
 });
 
 describe('GoogleSheetsConnector Locations tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    initFakeSheet('locationsTab', fakeLocationsSheetData);
+    fakeSheets['Locations'] = initFakeSheet(fakeSheetData.fakeLocationsSheetData);
   });
 
   it('updates locations to LocationsTab', async () => {
@@ -431,21 +439,22 @@ describe('GoogleSheetsConnector Locations tab', () => {
   });
 });
 
-describe('GoogleSheetsConnector getPropertyLookup and getPropertyIndex', () => {
+describe('GoogleSheetsConnector additional functions', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    initFakeSheet('configTab', fakeConfigSheetData);
-    initFakeSheet('systemTab', fakeSystemSheetData);
-    initFakeSheet('resultsTab', fakeResultsSheetData);
+    fakeSheets['Configs'] = initFakeSheet(fakeSheetData.fakeConfigSheetData);
+    fakeSheets['System'] = initFakeSheet(fakeSheetData.fakeSystemSheetData);
+    fakeSheets['Tests-1'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
+    fakeSheets['Results-1'] = initFakeSheet(fakeSheetData.fakeResultsSheetData);
   });
 
   it('returns property lookup values for sheet with DataAxis.ROW', async () => {
     let propertyLookup;
-    propertyLookup = connector.getPropertyLookup('testsTab');
-    expect(propertyLookup).toEqual(fakeTestsSheetData[2]);
+    propertyLookup = connector.getPropertyLookup('Tests-1');
+    expect(propertyLookup).toEqual(fakeSheetData.fakeTestsSheetData[1]);
 
-    propertyLookup = connector.getPropertyLookup('resultsTab');
-    expect(propertyLookup).toEqual(fakeResultsSheetData[2]);
+    propertyLookup = connector.getPropertyLookup('Results-1');
+    expect(propertyLookup).toEqual(fakeSheetData.fakeResultsSheetData[1]);
   });
 
   it('returns property lookup values for sheet with DataAxis.COLUMN', async () => {
@@ -454,7 +463,9 @@ describe('GoogleSheetsConnector getPropertyLookup and getPropertyIndex', () => {
     expect(propertyLookup).toEqual(['apiKeys.webpagetest', 'apiKeys.psi']);
 
     propertyLookup = connector.getPropertyLookup('systemTab');
-    expect(propertyLookup).toEqual(['isRecurring', 'triggerId']);
+    expect(propertyLookup).toEqual([
+        'RETRIEVE_TRIGGER_ID', 'RECURRING_TRIGGER_ID', 'ONEDIT_TRIGGER_ID',
+        'LAST_INIT_TIMESTAMP']);
   });
 
   it('returns property index with given property key', async () => {
@@ -462,7 +473,25 @@ describe('GoogleSheetsConnector getPropertyLookup and getPropertyIndex', () => {
     index = connector.getPropertyIndex('configTab', 'apiKeys.webpagetest');
     expect(index).toEqual(1);
 
-    index = connector.getPropertyIndex('resultsTab', 'status');
+    index = connector.getPropertyIndex('Results-1', 'status');
     expect(index).toEqual(4);
+  });
+
+  it('returns specific tabIds with given a tab role', async () => {
+    let index, tabIds;
+    tabIds = connector.getTabIds('tests');
+    expect(tabIds).toEqual(['Tests-1', 'Tests-2']);
+
+    tabIds = connector.getTabIds('results');
+    expect(tabIds).toEqual(['Results-1']);
+  });
+
+  it('returns specific tabIds with given a tab role', async () => {
+    let tabId = connector.getTabId('Locations');
+    expect(tabId).toEqual('locationsTab');
+  });
+
+  it('throws error if not able to find a specific sheet', () => {
+    expect(() => {connector.getSheet('NonExistingTab')}).toThrow(Error);
   });
 });

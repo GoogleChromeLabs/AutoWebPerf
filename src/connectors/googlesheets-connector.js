@@ -6,7 +6,7 @@ const Status = require('../common/status');
 const setObject = require('../utils/set-object');
 const transpose = require('../utils/transpose');
 const Connector = require('./connector');
-const {GoogleSheetsHelper, SystemVars} = require('../helpers/googlesheets-helper');
+const {GoogleSheetsHelper, SystemVars, TabRole} = require('../helpers/googlesheets-helper');
 
 const DataAxis = {
   ROW: 'row',
@@ -29,77 +29,53 @@ class GoogleSheetsConnector extends Connector {
    */
   constructor(config, apiHelper) {
     super();
-    assert(config.configTabName, 'configTabName is missing in config.');
-    assert(config.testsTabName, 'testsTabName is missing in config.');
-    assert(config.resultsTabName, 'resultsTabName is missing in config.');
-    assert(config.locationsTabName, 'locationsTabName is missing in config.');
+    assert(config.tabs, 'tabs is missing in config.');
+    assert(config.defaultTestsTab, 'defaultTestsTab is missing in config.');
+    assert(config.defaultResultsTab, 'defaultResultsTab is missing in config.');
 
     this.apiHelper = apiHelper;
     this.locationApiEndpoint = 'http://www.webpagetest.org/getLocations.php?f=json&k=A';
     this.activeSpreadsheet = SpreadsheetApp.getActive();
+    this.defaultTestsTab = config.defaultTestsTab;
+    this.defaultResultsTab = config.defaultResultsTab;
 
-    // The main settings for each Sheet tab.
-    this.tabConfigs = {
-      testsTab: {
-        tabName: config.testsTabName,
-        sheet: this.activeSpreadsheet.getSheetByName(config.testsTabName),
-        dataAxis: DataAxis.ROW,
-        propertyLookup: 3, // Starts at 1
-        skipColumns: 0,
-        skipRows: 3,
-      },
-      resultsTab: {
-        tabName: config.resultsTabName,
-        sheet: this.activeSpreadsheet.getSheetByName(config.resultsTabName),
-        dataAxis: DataAxis.ROW,
-        propertyLookup: 3, // Starts at 1
-        skipColumns: 0,
-        skipRows: 3,
-      },
-      latestResultsTab: {
-        tabName: config.latestResultsTabName,
-        sheet: this.activeSpreadsheet.getSheetByName(config.latestResultsTabName),
-        dataAxis: DataAxis.ROW,
-        propertyLookup: 3, // Starts at 1
-        skipColumns: 0,
-        skipRows: 3,
-      },
-      configTab: {
-        tabName: config.configTabName,
-        sheet: this.activeSpreadsheet.getSheetByName(config.configTabName),
-        dataAxis: DataAxis.COLUMN,
-        propertyLookup: 2, // Starts at 1
-        skipRows: 1,
-        skipColumns: 2,
-      },
-      systemTab: {
-        tabName: config.systemTabName,
-        sheet: this.activeSpreadsheet.getSheetByName(config.systemTabName),
-        dataAxis: DataAxis.COLUMN,
-        propertyLookup: 2, // Starts at 1
-        skipRows: 1,
-        skipColumns: 2,
-      },
-      locationsTab: {
-        tabName: config.locationsTabName,
-        sheet: this.activeSpreadsheet.getSheetByName(config.locationsTabName),
-        dataAxis: DataAxis.ROW,
-        propertyLookup: 2, // Starts at 1
-        skipRows: 2,
-        skipColumns: 0,
-      },
-    };
+    // Construct individual tab config from this.tabs.
+    this.tabConfigs = {};
+    config.tabs.forEach(tabConfig => {
+      assert(tabConfig.tabName,
+          `tabName is missing in tabConfig: ${tabConfig}`);
+      assert(tabConfig.tabRole,
+          `tabRole is missing in tabConfig: ${tabConfig}`);
+
+      switch(tabConfig.tabRole) {
+        case TabRole.SYSTEM:
+          this.tabConfigs.systemTab = tabConfig;
+          break;
+
+        case TabRole.CONFIG:
+          this.tabConfigs.configTab = tabConfig;
+          break;
+
+        // Note: the Locations tab is dedciated for WebPageTest-based tests.
+        case TabRole.LOCATIONS:
+          this.tabConfigs.locationsTab = tabConfig;
+          break;
+
+        default:
+          this.tabConfigs[tabConfig.tabName] = tabConfig;
+          break;
+      }
+    });
+
+    assert(this.tabConfigs.configTab, 'configTab is missing in config.tabs.');
+    assert(this.tabConfigs.systemTab, 'systemTab is missing in config.tabs.');
+    assert(this.tabConfigs.locationsTab, 'locationsTab is missing in config.tabs.');
 
     // The list of validation rules for all tabs.
-    this.validationsMaps = [{
-      fromTab: 'testsTab',
-      fromProperty: 'webpagetest.settings.location',
-      toTab: 'locationsTab',
-      toProperty: 'name',
-    }];
+    this.validationsMaps = config.validationsMaps;
 
     // Mapping of conditional formatting, used by resultsTab and latestResultsTab.
-    this.resultColumnConditions = {
+    this.columnConditions = {
       'webpagetest.metrics.lighthouse.Performance': [0.4, 0.74, 0.75],
       'webpagetest.metrics.lighthouse.ProgressiveWebApp': [0.4, 0.74, 0.75],
       'webpagetest.metrics.lighthouse.FirstContentfulPaint': [5000, 4000, 2000],
@@ -136,8 +112,10 @@ class GoogleSheetsConnector extends Connector {
     // Init all validations.
     this.initValidations();
 
-    // Init condition formatting.
-    this.initConditionalFormat();
+    // Init condition formatting for all Result tabs.
+    this.getTabIds(TabRole.RESULTS).forEach(tabId => {
+      this.initConditionalFormat(tabId);
+    });
 
     // Init user timezone.
     this.initUserTimeZone();
@@ -152,13 +130,13 @@ class GoogleSheetsConnector extends Connector {
   /**
    * getList - The helper function for getting arbitrary items, like Tests,
    * Results, or Config items.
-   * @param  {type} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @param  {type} tabId The keys of tabConfigs. E.g. "configTab"
    * @param  {type} options Options: appendRowIndex, verbose or debug.
    */
   getList(tabId, options) {
     options = options || {};
     let tabConfig = this.tabConfigs[tabId];
-    let data = tabConfig.sheet.getDataRange().getValues();
+    let data = this.getSheet(tabId).getDataRange().getValues();
 
     let skipRows = tabConfig.skipRows || 0;
     let skipColumns = tabConfig.skipColumns || 0;
@@ -207,8 +185,10 @@ class GoogleSheetsConnector extends Connector {
   getTestList(options) {
     options = options || {};
     options.appendRowIndex = true;
+    let googlesheets = options.googlesheets || {};
 
-    let tests = this.getList('testsTab', options);
+    // If tabId is not specified, use the default Tests tabId.
+    let tests = this.getList(googlesheets.testsTab || this.defaultTestsTab, options);
     tests = patternFilter(tests, options.filters);
     return tests;
   }
@@ -220,7 +200,12 @@ class GoogleSheetsConnector extends Connector {
    * @param  {object} options Options: filters, verbose and debug.
    */
   updateTestList(newTests, options) {
-    this.updateList('testsTab', newTests, (test, rowIndex) => {
+    options = options || {};
+    let googlesheets = options.googlesheets || {};
+
+    // If tabId is not specified, use the default Tests tabId.
+    this.updateList(googlesheets.testsTab || this.defaultTestsTab, newTests,
+        (test, rowIndex) => {
       // test.googlesheets.rowIndex in each Test is added in getList().
       return test.googlesheets.rowIndex;
     } /* rowIndexFunc */);
@@ -234,8 +219,9 @@ class GoogleSheetsConnector extends Connector {
    * @return {object} GoogleSheets Range object
    */
   getRowRange(tabId, rowIndex) {
-    let lastColumn = this.tabConfigs[tabId].sheet.getLastColumn();
-    return this.tabConfigs[tabId].sheet.getRange(rowIndex, 1, 1, lastColumn);
+    let sheet = this.getSheet(tabId);
+    let lastColumn = sheet.getLastColumn();
+    return sheet.getRange(rowIndex, 1, 1, lastColumn);
   }
 
   /**
@@ -246,8 +232,8 @@ class GoogleSheetsConnector extends Connector {
    * @return {object} GoogleSheets Range object
    */
   getColumnRange(tabId, propertyKey) {
-    let tabConfig = awp.connector.tabConfigs[tabId];
-    let sheet = tabConfig.sheet;
+    let tabConfig = this.tabConfigs[tabId];
+    let sheet = this.getSheet(tabId);
     let columnIndex = this.getPropertyIndex(tabId, propertyKey);
     let range = sheet.getRange(tabConfig.skipRows + 1,
         columnIndex, sheet.getLastRow() - tabConfig.skipRows, 1);
@@ -262,8 +248,11 @@ class GoogleSheetsConnector extends Connector {
   getResultList(options) {
     options = options || {};
     options.appendRowIndex = true;
+    let googlesheets = options.googlesheets || {};
 
-    let results = this.getList('resultsTab', options);
+    // If tabId is not specified, use the default Results tabId.
+    let tabId = googlesheets.resultsTab || this.defaultResultsTab;
+    let results = this.getList(tabId, options);
     results = patternFilter(results, options.filters);
 
     return results;
@@ -273,10 +262,17 @@ class GoogleSheetsConnector extends Connector {
    * appendResultList - Append new results to the end of the existing Results.
    * @param  {Array<object>} newResults Array of new Results
    */
-  appendResultList(newResults) {
-    let tabConfig = this.tabConfigs['resultsTab'];
-    let lastRowIndex = this.getResultList().length + 1 + tabConfig.skipRows;
-    this.updateList('resultsTab', newResults, (result, rowIndex) => {
+  appendResultList(newResults, options) {
+    options = options || {};
+    let googlesheets = options.googlesheets || {};
+
+    // If tabId is not specified, use the default Results tabId.
+    let tabId = googlesheets.resultsTab || this.defaultResultsTab;
+    let tabConfig = this.tabConfigs[tabId];
+
+    // Use the last row index as base for appending results.
+    let lastRowIndex = this.getColumnRange(tabId, 'id').getLastRow() + 1;
+    this.updateList(tabId, newResults, (result, rowIndex) => {
       rowIndex = lastRowIndex;
       lastRowIndex++;
       return rowIndex;
@@ -287,11 +283,16 @@ class GoogleSheetsConnector extends Connector {
    * updateResultList - Override the Results with specific rowIndex.
    * @param  {Array<object>} newResults Array of new Results
    */
-  updateResultList(newResults) {
-    let tabConfig = this.tabConfigs['resultsTab'];
+  updateResultList(newResults, options) {
+    options = options || {};
+    let googlesheets = options.googlesheets || {};
+
+    // If tabId is not specified, use the default Results tabId.
+    let tabId = googlesheets.resultsTab || this.defaultResultsTab;
+    let tabConfig = this.tabConfigs[tabId];
     let rowIndex = tabConfig.skipRows + 1;
 
-    this.updateList('resultsTab', newResults, (result, rowIndex) => {
+    this.updateList(tabId, newResults, (result, rowIndex) => {
       return result.googlesheets.rowIndex;
     } /* rowIndexFunc */);
   }
@@ -304,7 +305,7 @@ class GoogleSheetsConnector extends Connector {
    */
   getPropertyLookup(tabId) {
     let tabConfig = this.tabConfigs[tabId];
-    let sheet = tabConfig.sheet;
+    let sheet = this.getSheet(tabId);
     let skipRows = tabConfig.skipRows || 0;
     let skipColumns = tabConfig.skipColumns || 0;
 
@@ -367,7 +368,7 @@ class GoogleSheetsConnector extends Connector {
     // Reset locations tab.
     let locations = this.getList('locationsTab');
     let tabConfig = this.tabConfigs['locationsTab'];
-    let sheet = tabConfig.sheet;
+    let sheet = this.getSheet('locationsTab');
 
     // Get new locations from remote API.
     let res = this.apiHelper.fetch(this.locationApiEndpoint);
@@ -417,7 +418,7 @@ class GoogleSheetsConnector extends Connector {
    */
   updateList(tabId, items, rowIndexFunc) {
     let tabConfig = this.tabConfigs[tabId];
-    let data = tabConfig.sheet.getDataRange().getValues();
+    let data = this.getSheet(tabId).getDataRange().getValues();
     let propertyLookup = data[tabConfig.propertyLookup - 1];
 
     let rowIndex = tabConfig.skipRows + 1;
@@ -445,13 +446,13 @@ class GoogleSheetsConnector extends Connector {
 
   /**
    * clearList - Clear the entire list of a specific tab.
-   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @param {string} tabId The keys of tabConfigs. E.g. "testsTab"
    */
   clearList(tabId) {
     let tabConfig = this.tabConfigs[tabId];
-    let lastRow = tabConfig.sheet.getLastRow();
-    tabConfig.sheet.deleteRows(
-        tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
+    let sheet = this.getSheet(tabId);
+    let lastRow = sheet.getLastRow();
+    sheet.deleteRows(tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
   }
 
   /**
@@ -460,9 +461,9 @@ class GoogleSheetsConnector extends Connector {
   initValidations() {
     this.validationsMaps.forEach(mapping => {
       let targetRange = this.getColumnRange(
-          mapping.fromTab, mapping.fromProperty);
+          this.getTabId(mapping.targetTab), mapping.targetProperty);
       let validationRange = this.getColumnRange(
-          mapping.toTab, mapping.toProperty);
+          this.getTabId(mapping.validationTab), mapping.validationProperty);
       let rule = SpreadsheetApp.newDataValidation().requireValueInRange(
           validationRange).build();
       targetRange.setDataValidation(rule);
@@ -471,17 +472,18 @@ class GoogleSheetsConnector extends Connector {
 
   /**
    * initConditionalFormat - Reset all conditional formatting defined in The
-   * resultColumnConditions.
+   * columnConditions.
+   * @param {string} tabId The keys of tabConfigs. E.g. "testsTab"
    */
-  initConditionalFormat() {
+  initConditionalFormat(tabId) {
     let rules = [];
-    let tabConfig = this.tabConfigs['resultsTab'];
-    let sheet = tabConfig.sheet;
-    let propertyLookup = this.getPropertyLookup('resultsTab');
+    let tabConfig = this.tabConfigs[tabId];
+    let sheet = this.getSheet(tabId);
+    let propertyLookup = this.getPropertyLookup(tabId);
 
     let columnIndex = 1;
     propertyLookup.forEach(propertyKey => {
-      let conditions = this.resultColumnConditions[propertyKey];
+      let conditions = this.columnConditions[propertyKey];
       if (conditions && conditions.length > 0) {
         let range = sheet.getRange(tabConfig.skipRows + 1, columnIndex,
             sheet.getMaxRows() - tabConfig.skipRows, 1);
@@ -618,18 +620,56 @@ class GoogleSheetsConnector extends Connector {
    */
   setVarToTab(tabId, key, value) {
     let tabConfig = this.tabConfigs[tabId];
-    let data = tabConfig.sheet.getDataRange().getValues();
+    let sheet = this.getSheet(tabId);
+    let data = sheet.getDataRange().getValues();
     let propertyLookup = this.getPropertyLookup(tabId);
 
     let i = 1;
     propertyLookup.forEach(property => {
       if (property === key) {
-        let range = tabConfig.sheet.getRange(
+        let range = sheet.getRange(
             tabConfig.skipRows + i, tabConfig.skipColumns + 1);
         range.setValue(value);
       }
       i++;
     });
+  }
+
+  /**
+   * Return the sheet object of the given tabId.
+   * @param  {string} tabId Tab ID in the tabConfigs object.
+   * @return {object} AppScript sheet object.
+   */
+  getSheet(tabId) {
+    let config = this.tabConfigs[tabId];
+    assert((config || {}).tabName, `tabName not found in ${tabId} tab config.`);
+
+    let sheet = this.activeSpreadsheet.getSheetByName(config.tabName);
+    assert(sheet, `Sheet ${config.tabName} not found.`);
+    return sheet;
+  }
+
+  /**
+   * Return a list of TabIds of the given tab role.
+   * @param  {string} tabRole Specific tab role, e.g. TabRole.TESTS.
+   * @return {Array<string>} List of tabIds
+   */
+  getTabIds(tabRole) {
+    return Object.keys(this.tabConfigs).filter(tabId => {
+      return this.tabConfigs[tabId].tabRole === tabRole;
+    });
+  }
+
+  /**
+   * Return the tabId by a given tabName.
+   * @param  {string} tabNmae Specific tab name, e.g. Locations.
+   * @return {string} tabId
+   */
+  getTabId(tabName) {
+    let tabIds = Object.keys(this.tabConfigs).filter(tabId => {
+      return this.tabConfigs[tabId].tabName === tabName;
+    });
+    return (tabIds || [])[0];
   }
 
   /**

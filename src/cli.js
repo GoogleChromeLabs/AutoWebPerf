@@ -21,7 +21,17 @@ Options (*denotes default value if not passed in):
   debug\t\tPrint out debug console logs.
 
 Examples:
-  # ...
+  # List CLI options
+  ./awp --help
+
+  # Run tests
+  ./awp run --tests=examples/tests.json --results=output/results.json
+
+  # Run recurring tests
+  ./awp recurring --tests=examples/tests.json --results=output/results.json
+
+  # Retrieve pending results
+  ./awp retrieve --tests=examples/tests.json --results=output/results.json
   `;
   console.log(usage);
 }
