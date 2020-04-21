@@ -217,7 +217,7 @@ describe('AWP bundle for GoogleSheets', () => {
 
   it('submits recurring tests and updates next frequency timestamp in ' +
       'activateOnly mode', () => {
-    // Running tests and writing to Results-2 tab.
+    // Running recurring tests with activateOnly mode.
     awp.recurring({
       activateOnly: true,
       googlesheets: {
@@ -237,6 +237,47 @@ describe('AWP bundle for GoogleSheets', () => {
     // Ensure there's no new rows in Results tab.
     let resultsData = fakeSheets['Results-1'].fakeData;
     expect(resultsData.length).toEqual(3);
+  });
+
+  it('submits recurring tests and updates in the correct tabs', () => {
+    let testsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'url', 'label', 'recurring.frequency', 'recurring.nextTriggerTimestamp', 'webpagetest.settings.connection'],
+      ['', 'URL', 'Label', 'Frequency', 'Next Trigger Timestamp', 'WPT Connection'],
+      [true, 'example.com', 'Example', 'Daily', null, '3G'],
+    ];
+    let testsData2 = [
+      ['', '', '', '', '', ''],
+      ['selected', 'url', 'label', 'recurring.frequency', 'recurring.nextTriggerTimestamp', 'webpagetest.settings.connection'],
+      ['', 'URL', 'Label', 'Frequency', 'Next Trigger Timestamp', 'WPT Connection'],
+      [true, 'correct.com', 'Correct', 'Daily', null, '3G'],
+    ];
+    fakeSheets['Tests-1'] = initFakeSheet(testsData);
+    fakeSheets['Tests-2'] = initFakeSheet(testsData2);
+
+    // Running recurring tests with activateOnly mode.
+    awp.recurring({
+      filters: ['googlesheets.rowIndex===4'],
+      activateOnly: true,
+      googlesheets: {
+        testsTab: 'Tests-2',
+        resultsTab: 'Results-2',
+      },
+    });
+
+    testsData = fakeSheets['Tests-1'].fakeData;
+    testsData2 = fakeSheets['Tests-2'].fakeData;
+
+    // Ensure that there's no change in Tests-1 tab
+    let nowtime = Date.now();
+    expect(testsData[3][1]).toEqual('example.com');
+    expect(testsData[3][2]).toEqual('Example');
+    expect(testsData[3][4]).toBe(null);
+
+    // Ensure that the target
+    expect(testsData2[3][1]).toEqual('correct.com');
+    expect(testsData2[3][2]).toEqual('Correct');
+    expect(testsData2[3][4]).toBeGreaterThan(nowtime);
   });
 
   it('submits recurring tests and creates results rows', () => {

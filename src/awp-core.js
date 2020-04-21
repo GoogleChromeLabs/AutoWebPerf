@@ -294,12 +294,12 @@ class AutoWebPerf {
     });
 
     this.logDebug('AutoWebPerf::retrieve, tests.length=\n', tests.length);
-    this.runExtensions(extensions, 'beforeAllRuns', {tests: tests});
+    this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
 
     let count = 0;
     tests.forEach(test => {
       this.logDebug('AutoWebPerf::recurring, test=\n', test);
-      this.runExtensions(extensions, 'beforeRun', {test: test});
+      this.runExtensions(extensions, 'beforeRun', {test: test}, options);
 
       let nowtime = Date.now();
       let recurring = test.recurring;
@@ -316,7 +316,7 @@ class AutoWebPerf {
         this.runExtensions(extensions, 'afterRun', {
           test: test,
           result: null,
-        });
+        }, options);
 
       } else {
         // Run normal recurring tests.
@@ -332,7 +332,7 @@ class AutoWebPerf {
           this.runExtensions(extensions, 'afterRun', {
             test: test,
             result: newResult,
-          });
+          }, options);
 
           newResults.push(newResult);
           resultsToUpdate.push(newResult);
@@ -349,8 +349,8 @@ class AutoWebPerf {
 
       count++;
       if (this.batchUpdate && count >= this.batchUpdate) {
-        this.connector.updateTestList(testsToUpdate);
-        this.connector.appendResultList(resultsToUpdate);
+        this.connector.updateTestList(testsToUpdate, options);
+        this.connector.appendResultList(resultsToUpdate, options);
         this.log(
             `AutoWebPerf::recurring, batch update ${testsToUpdate.length} tests` +
             ` and appends ${resultsToUpdate.length} results.`);
@@ -362,14 +362,14 @@ class AutoWebPerf {
     });
 
     // Update the remaining.
-    this.connector.updateTestList(testsToUpdate);
-    this.connector.appendResultList(resultsToUpdate);
+    this.connector.updateTestList(testsToUpdate, options);
+    this.connector.appendResultList(resultsToUpdate, options);
 
     // After all runs.
     this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
-    });
+    }, options);
   }
 
   /**
@@ -450,7 +450,8 @@ class AutoWebPerf {
     let resultsToUpdate = [];
 
     let results = this.connector.getResultList(options);
-    this.runExtensions(extensions, 'beforeAllRetrieves', [] /* tests */, results);
+    this.runExtensions(extensions, 'beforeAllRetrieves', [] /* tests */,
+        results, options);
 
     // Default filter for penging results only.
     if (!options.filters) {
@@ -464,7 +465,8 @@ class AutoWebPerf {
       this.log(`Retrieve: id=${result.id}`);
       this.logDebug('AutoWebPerf::retrieve, result=\n', result);
 
-      this.runExtensions(extensions, 'beforeRetrieve', {result: result});
+      this.runExtensions(extensions, 'beforeRetrieve', {result: result},
+          options);
 
       let statuses = [];
       let newResult = result;
@@ -485,7 +487,8 @@ class AutoWebPerf {
       });
 
       // After retrieving the result.
-      this.runExtensions(extensions, 'afterRetrieve', {result: newResult});
+      this.runExtensions(extensions, 'afterRetrieve', {result: newResult},
+          options);
 
       // Update overall status.
       newResult.status =  this.updateOverallStatus(statuses);
@@ -515,6 +518,9 @@ class AutoWebPerf {
 
   /**
    * Run through all extensions.
+   * @param {Array<string>} extensions Array of extension names
+   * @param {string} functionName The function to execute in the extention.
+   * @param {object} context Context object that includes tests and results.
    * @param {object} options
    *
    * Available options:
