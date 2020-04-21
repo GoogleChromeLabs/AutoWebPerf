@@ -45,6 +45,7 @@ class WebPageTestGatherer extends Gatherer {
       'lighthouse.FirstCPUIdle': 'data.median.firstView["lighthouse.Performance.first-cpu-idle"]',
       'lighthouse.TotalBlockingTime': 'data.lighthouse.audits["total-blocking-time"].numericValue',
       'lighthouse.LargestContentfulPaint': 'data.lighthouse.audits.metrics.details.items[0].largestContentfulPaint',
+      'lighthouse.CumulativeLayoutShift' : 'data.median.firstView["chromeUserTiming.CumulativeLayoutShift"]',
 
       // Lighthouse resource size metrics
       'lighthouse.ThirdParty': 'data.lighthouse.audits["third-party-summary"].details.summary.wastedBytes',
