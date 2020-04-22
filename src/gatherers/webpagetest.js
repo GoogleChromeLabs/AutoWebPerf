@@ -75,6 +75,7 @@ class WebPageTestGatherer extends Gatherer {
       'Connections': 'data.median.firstView.connections',
 
       // WebPageTest Resource Size metrics
+      'TotalSize': 'data.median.firstView.bytesIn',
       'CSS': 'data.median.firstView.breakdown.css.bytes',
       'Fonts': 'data.median.firstView.breakdown.font.bytes',
       'Javascript': 'data.median.firstView.breakdown.js.bytes',
@@ -84,6 +85,7 @@ class WebPageTestGatherer extends Gatherer {
 
     let bytesToKb = (x) => Math.round(x / 1000);
     this.metricsConversion = {
+      'Size': bytesToKb,
       'CSS': bytesToKb,
       'Fonts': bytesToKb,
       'Javascript': bytesToKb,

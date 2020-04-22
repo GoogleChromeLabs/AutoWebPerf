@@ -21,8 +21,10 @@ const MetricKeys = [
   'FirstCPUIdle',
   'FirstInputDelay',
   'LargestContentfulPaint',
+  'CumulativeLayoutShift',
 
   // resourceSize
+  'TotalSize',
   'HTML',
   'Javascript',
   'CSS',
