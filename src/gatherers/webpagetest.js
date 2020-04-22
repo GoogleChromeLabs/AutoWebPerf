@@ -85,7 +85,7 @@ class WebPageTestGatherer extends Gatherer {
 
     let bytesToKb = (x) => Math.round(x / 1000);
     this.metricsConversion = {
-      'Size': bytesToKb,
+      'TotalSize': bytesToKb,
       'CSS': bytesToKb,
       'Fonts': bytesToKb,
       'Javascript': bytesToKb,
