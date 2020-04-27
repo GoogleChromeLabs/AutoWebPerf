@@ -76,26 +76,26 @@ class GoogleSheetsConnector extends Connector {
 
     // Mapping of conditional formatting, used by resultsTab and latestResultsTab.
     this.columnConditions = {
-      'webpagetest.metrics.lighthouse.Performance': [0.4, 0.74, 0.75],
-      'webpagetest.metrics.lighthouse.ProgressiveWebApp': [0.4, 0.74, 0.75],
-      'webpagetest.metrics.lighthouse.SpeedIndex': [8000, 4500, 3000],
-      'webpagetest.metrics.lighthouse.FirstContentfulPaint': [5000, 4000, 2000],
-      'webpagetest.metrics.lighthouse.FirstMeaningfulPaint': [5500, 4500, 2500],
-      'webpagetest.metrics.lighthouse.LargestContentfulPaint': [4000,3250,2500],
-      'webpagetest.metrics.lighthouse.CumulativeLayoutShift': [0.4,0.25,0.1],
-      'webpagetest.metrics.lighthouse.FirstInputDelay': [300, 200, 100],
-      'webpagetest.metrics.lighthouse.TimeToInteractive': [8000, 7000, 5000],
-      'webpagetest.metrics.lighthouse.TotalBlockingTime': [1000,600,300],
-      'webpagetest.metrics.FirstContentfulPaint': [5000, 4000, 2000],
-      'webpagetest.metrics.FirstMeaningfulPaint': [5500, 4500, 2500],
-      'webpagetest.metrics.DOMContentLoaded': [7000, 3500, 2000],
-      'webpagetest.metrics.TimeToInteractive': [8000, 7000, 5000],
-      'webpagetest.metrics.SpeedIndex': [8000, 4500, 3000],
-      'webpagetest.metrics.TimeToFirstByte': [4000, 2000, 1000],
-      'webpagetest.metrics.FirstPaint': [4500, 3000, 1500],
-      'webpagetest.metrics.VisualComplete': [8000, 4500, 3000],
-      'webpagetest.metrics.LoadEvent': [10000, 6500, 5000],
-      'webpagetest.metrics.Connections': [30, 20, 10],
+      'webpagetest.metrics.lighthouse.Performance': [0.4, 0.75],
+      'webpagetest.metrics.lighthouse.ProgressiveWebApp': [0.4, 0.75],
+      'webpagetest.metrics.lighthouse.SpeedIndex': [5800, 4300],
+      'webpagetest.metrics.lighthouse.FirstContentfulPaint': [4000, 2000],
+      'webpagetest.metrics.lighthouse.FirstMeaningfulPaint': [4000, 2000],
+      'webpagetest.metrics.lighthouse.LargestContentfulPaint': [4000,2500],
+      'webpagetest.metrics.lighthouse.CumulativeLayoutShift': [0.25,0.1],
+      'webpagetest.metrics.lighthouse.FirstInputDelay': [300, 100],
+      'webpagetest.metrics.lighthouse.TimeToInteractive': [7300, 5200],
+      'webpagetest.metrics.lighthouse.TotalBlockingTime': [600,300],
+      'webpagetest.metrics.FirstContentfulPaint': [4000, 2000],
+      'webpagetest.metrics.FirstMeaningfulPaint': [4000, 2000],
+      'webpagetest.metrics.DOMContentLoaded': [7000, 2500],
+      'webpagetest.metrics.TimeToInteractive': [7300, 5200],
+      'webpagetest.metrics.SpeedIndex': [5800, 4300],
+      'webpagetest.metrics.TimeToFirstByte': [3000, 1000],
+      'webpagetest.metrics.FirstPaint': [4000, 1500],
+      'webpagetest.metrics.VisualComplete': [8000, 4300],
+      'webpagetest.metrics.LoadEvent': [10000, 5000],
+      'webpagetest.metrics.Connections': [30, 10],
     };
 
     this.healthCheck();
@@ -491,13 +491,14 @@ class GoogleSheetsConnector extends Connector {
       if (conditions && conditions.length > 0) {
         let range = sheet.getRange(tabConfig.skipRows + 1, columnIndex,
             sheet.getMaxRows() - tabConfig.skipRows, 1);
-        let maxpoint = conditions[2], midpoint = conditions[1],
-            minpoint = conditions[0];
+        let maxpoint = conditions[1],
+          minpoint = conditions[0];
+        midpoint = minpoint+(maxpoint-minpoint)/2;
         let maxcolor = '#68bb50', mincolor = '#e06666';
         if (maxpoint < minpoint) {
           maxpoint = conditions[0];
           maxcolor = '#e06666';
-          minpoint = conditions[2];
+          minpoint = conditions[1];
           mincolor = '#68bb50';
         }
 

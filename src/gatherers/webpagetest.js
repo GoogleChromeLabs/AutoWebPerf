@@ -118,6 +118,22 @@ class WebPageTestGatherer extends Gatherer {
       'mobileDevice': settings.device || '',
     }
 
+    let customParemetersString = test.webpagetest.settings.customParameters;
+    let customParemetersArray = [];
+    if(customParemetersString) {      
+      customParemetersString.forEach(element => { 
+        var obj = {};
+        var newElement = element.split("=");
+        obj[newElement[0]] = newElement[1];
+        if(obj)
+          customParemetersArray.push(obj);
+      });
+      customParemetersArray.forEach(element => {
+        params.push(element);
+      });
+    }
+
+
     let urlParams = [];
     Object.keys(params).forEach(key => {
       urlParams.push(key + '=' + params[key]);

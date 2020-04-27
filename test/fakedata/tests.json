@@ -24,7 +24,8 @@
           "repeatView": true,
           "timeline": true,
           "block": null,
-          "script": null
+          "script": null,
+          "parameters": "keepua=1,fvonly=1"
         }
       },
       "psi": {
