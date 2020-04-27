@@ -493,7 +493,7 @@ class GoogleSheetsConnector extends Connector {
             sheet.getMaxRows() - tabConfig.skipRows, 1);
         let maxpoint = conditions[1],
           minpoint = conditions[0];
-        midpoint = minpoint+(maxpoint-minpoint)/2;
+        let midpoint = minpoint+(maxpoint-minpoint)/2;
         let maxcolor = '#68bb50', mincolor = '#e06666';
         if (maxpoint < minpoint) {
           maxpoint = conditions[0];
