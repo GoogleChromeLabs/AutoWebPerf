@@ -120,16 +120,15 @@ class WebPageTestGatherer extends Gatherer {
 
     let customParemetersString = test.webpagetest.settings.customParameters;
     let customParemetersArray = [];
-    if(customParemetersString) {      
-      customParemetersString.forEach(element => { 
+    if (customParemetersString) {
+      customParemetersString.split(',').forEach(element => {
         var obj = {};
         var newElement = element.split("=");
         obj[newElement[0]] = newElement[1];
-        if(obj)
-          customParemetersArray.push(obj);
+        if (obj) customParemetersArray.push(obj);
       });
       customParemetersArray.forEach(element => {
-        params.push(element);
+        params[element] = customParemetersArray[element];
       });
     }
 
