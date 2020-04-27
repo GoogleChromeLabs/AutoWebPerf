@@ -118,20 +118,13 @@ class WebPageTestGatherer extends Gatherer {
       'mobileDevice': settings.device || '',
     }
 
-    let customParemetersString = test.webpagetest.settings.customParameters;
-    let customParemetersArray = [];
-    if (customParemetersString) {
-      customParemetersString.split(',').forEach(element => {
-        var obj = {};
-        var newElement = element.split("=");
-        obj[newElement[0]] = newElement[1];
-        if (obj) customParemetersArray.push(obj);
-      });
-      customParemetersArray.forEach(element => {
-        params[element] = customParemetersArray[element];
+    let customParemeters = test.webpagetest.settings.customParameters;
+    if (customParemeters) {
+      customParemeters.split(',').forEach(element => {
+        let obj = element.split("=");
+        params[obj[0]] = obj[1];
       });
     }
-
 
     let urlParams = [];
     Object.keys(params).forEach(key => {
