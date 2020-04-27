@@ -13,11 +13,9 @@ class ChromeUXReportGatherer extends Gatherer {
         assert(config, 'Parameter config is missing.');
      	assert(apiHelper, 'Parameter apiHelper is missing.');
 
-
      	this.projectId = config.projectId;
      	this.origins = config.origins;
-     	this.debug = options.debug;
-
+     	this.keyFilename = options.keyFilename;
 
      	// Query:
   		// https://console.cloud.google.com/bigquery?sq=221270044539:1f5e2d56a02c41cab74794a57c5bab70
