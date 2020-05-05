@@ -19,7 +19,6 @@ const MetricKeys = [
   'TimeToInteractive',
   'TotalBlockingTime',
   'FirstCPUIdle',
-  'FirstInputDelay',
   'LargestContentfulPaint',
   'CumulativeLayoutShift',
 

@@ -41,7 +41,6 @@ class WebPageTestGatherer extends Gatherer {
       'lighthouse.FirstMeaningfulPaint': 'data.median.firstView["lighthouse.Performance.first-meaningful-paint"]',
       'lighthouse.SpeedIndex': 'data.median.firstView["lighthouse.Performance.speed-index"]',
       'lighthouse.TimeToInteractive': 'data.median.firstView["lighthouse.Performance.interactive"]',
-      'lighthouse.FirstInputDelay': 'data.median.firstView["lighthouse.Performance.max-potential-fid"]',
       'lighthouse.FirstCPUIdle': 'data.median.firstView["lighthouse.Performance.first-cpu-idle"]',
       'lighthouse.TotalBlockingTime': 'data.lighthouse.audits["total-blocking-time"].numericValue',
       'lighthouse.LargestContentfulPaint': 'data.lighthouse.audits.metrics.details.items[0].largestContentfulPaint',

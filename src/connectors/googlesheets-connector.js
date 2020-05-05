@@ -83,7 +83,6 @@ class GoogleSheetsConnector extends Connector {
       'webpagetest.metrics.lighthouse.FirstMeaningfulPaint': [4000, 2000],
       'webpagetest.metrics.lighthouse.LargestContentfulPaint': [4000,2500],
       'webpagetest.metrics.lighthouse.CumulativeLayoutShift': [0.25,0.1],
-      'webpagetest.metrics.lighthouse.FirstInputDelay': [300, 100],
       'webpagetest.metrics.lighthouse.TimeToInteractive': [7300, 5200],
       'webpagetest.metrics.lighthouse.TotalBlockingTime': [600,300],
       'webpagetest.metrics.FirstContentfulPaint': [4000, 2000],
