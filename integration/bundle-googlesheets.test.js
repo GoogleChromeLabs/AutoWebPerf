@@ -215,6 +215,51 @@ describe('AWP bundle for GoogleSheets', () => {
     expect(systemData[1][2]).toEqual('timeBased-retrieveResults');
   });
 
+  it('submits selected tests with batch mode and writes results', () => {
+    let resultsData = fakeSheets['Results-1'].fakeData;
+    expect(resultsData.length).toEqual(3);
+
+    let systemData = [
+      ['Name', 'key', 'value'],
+      ['Retrieve Trigger ID', 'RETRIEVE_TRIGGER_ID', ''],
+    ];
+    fakeSheets['System'] = initFakeSheet(systemData);
+
+    // Running tests and writing to Results-2 tab.
+    awp.run({
+      filters: ['selected'],
+      googlesheets: {
+        testsTab: 'Tests-1',
+        resultsTab: 'Results-2',
+      },
+      runByBatch: true, // Run with batch mode for all gatherers.
+    });
+
+    // Ensure there's no additional rows written to Results-1 tab.
+    expect(resultsData.length).toEqual(3);
+
+    // Running tests and writing to Results-1 tab.
+    awp.run({
+      filters: ['selected'],
+      googlesheets: {
+        testsTab: 'Tests-1',
+        resultsTab: 'Results-1',
+      },
+    });
+    // Ensure there are two additional rows in the Results tab.
+    expect(resultsData.length).toEqual(5);
+
+    // Verify each result row's status and URL.
+    expect(resultsData[3][3]).toEqual('Submitted');
+    expect(resultsData[3][4]).toEqual('google.com');
+    expect(resultsData[4][3]).toEqual('Submitted');
+    expect(resultsData[4][4]).toEqual('web.dev');
+
+    // Ensure it creates Retrieve trigger and records it in System tab.
+    systemData = fakeSheets['System'].fakeData;
+    expect(systemData[1][2]).toEqual('timeBased-retrieveResults');
+  });
+
   it('submits recurring tests and updates next frequency timestamp in ' +
       'activateOnly mode', () => {
     // Running recurring tests with activateOnly mode.

@@ -149,10 +149,10 @@ class AutoWebPerf {
     this.gatherers = {};
 
     // The frequency of when to write data back via a connector.
-    // E.g. batchUpdate = 10 means for every 10 run or retrieve, it will
+    // E.g. batchUpdateBuffer = 10 means for every 10 run or retrieve, it will
     // update the data by calling connector.updateTestList or updateResultList.
-    // When batchUpdate is 0, it will write back after all iteration.
-    this.batchUpdate = awpConfig.batchUpdate || 0;
+    // When batchUpdateBuffer is 0, it will write back after all iteration.
+    this.batchUpdateBuffer = awpConfig.batchUpdateBuffer || 0;
   }
 
   /**
@@ -202,6 +202,7 @@ class AutoWebPerf {
   /**
    * Run tests and writes output to results.
    * @param {object} options
+   * @return {object} Procssed Tests and Results.
    *
    * Available options:
    * - filters {Array<string>}: Use `options.filters` to filter
@@ -212,64 +213,32 @@ class AutoWebPerf {
    */
   run(options) {
     options = options || {};
-    let testsToUpdate = [], resultsToUpdate = [], newResults = [];
     let extensions = options.extensions || Object.keys(this.extensions);
 
-    let count = 0;
     let tests = this.connector.getTestList(options);
-    this.runExtensions(extensions, 'beforeAllRuns', tests, [] /* results */);
+    this.logDebug('AutoWebPerf::run, tests.length=\n', tests.length);
 
-    tests.forEach(test => {
-      this.logDebug('AutoWebPerf::run, test=\n', test);
-      this.runExtensions(extensions, 'beforeRun', {test: test});
+    // Before all runs.
+    this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
 
-      // Only run test when URL is defined.
-      // TODO: Throw error back.
-      if (!test.url) return;
-
-      // Run test.
-      let newResult = this.runTest(test, options);
-      this.runExtensions(extensions, 'afterRun', {
-          test: test,
-          result: newResult
-      });
-
-      newResults.push(newResult);
-      resultsToUpdate.push(newResult);
-      testsToUpdate.push(test);
-
-      this.logDebug('AutoWebPerf::run, newResult=\n', newResult);
-
-      // FIXME: When using JSONConnector, this batch update mechanism will be
-      // inefficient.
-      count++;
-      if (this.batchUpdate && count >= this.batchUpdate) {
-        this.connector.updateTestList(testsToUpdate, options);
-        this.connector.appendResultList(resultsToUpdate, options);
-        this.log(
-            `AutoWebPerf::run, batch update ${testsToUpdate.length} tests` +
-            ` and appends ${resultsToUpdate.length} results.`);
-
-        testsToUpdate = [];
-        resultsToUpdate = [];
-        count = 0;
-      }
-    });
-
-    // Update the remaining.
-    this.connector.updateTestList(testsToUpdate, options);
-    this.connector.appendResultList(resultsToUpdate, options);
+    let newResults = this.runTests(tests, options);
 
     // After all runs.
     this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
-    });
+    }, options);
+
+    return {
+      tests: tests,
+      results: newResults,
+    };
   }
 
   /**
    * Run recurring tests and writes output to results.
    * @param {object} options
+   * @return {object} Procssed Tests and Results.
    *
    * Available options:
    * - filters {Array<string>}: Use `options.filters` to filter
@@ -282,10 +251,14 @@ class AutoWebPerf {
    */
   recurring(options) {
     options = options || {};
+    options.recurring = true;
+
     let extensions = options.extensions || Object.keys(this.extensions);
     let testsToUpdate = [], resultsToUpdate = [];
     let newResults = [];
+    let nowtime = Date.now();
 
+    // Get recurring Tests that passed nextTriggerTimestamp only.
     let tests = this.connector.getTestList(options);
     tests = tests.filter(test => {
       let recurring = test.recurring;
@@ -293,149 +266,71 @@ class AutoWebPerf {
           Frequency[recurring.frequency.toUpperCase()];
     });
 
-    this.logDebug('AutoWebPerf::retrieve, tests.length=\n', tests.length);
+    this.logDebug('AutoWebPerf::recurring, tests.length=\n', tests.length);
+
+    // Before all runs.
     this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
 
-    let count = 0;
-    tests.forEach(test => {
-      this.logDebug('AutoWebPerf::recurring, test=\n', test);
-      this.runExtensions(extensions, 'beforeRun', {test: test}, options);
-
-      let nowtime = Date.now();
-      let recurring = test.recurring;
-
-      if (options.activateOnly &&
-          recurring.frequency !== recurring.activatedFrequency) {
-        this.logDebug('AutoWebPerf::recurring with activateOnly.');
-
-        let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
-        recurring.nextTriggerTimestamp = offset ? nowtime + offset : '';
-        recurring.activatedFrequency = recurring.frequency;
-
-        // Run extension with empty result.
-        this.runExtensions(extensions, 'afterRun', {
+    if (options.activateOnly) {
+      // Update next trigger timestamp only.
+      tests.forEach(test => {
+        // Before each run.
+        this.runExtensions(extensions, 'beforeRun', {
           test: test,
           result: null,
         }, options);
 
-      } else {
-        // Run normal recurring tests.
-        if (!recurring.nextTriggerTimestamp ||
-            recurring.nextTriggerTimestamp <= nowtime) {
-
-          this.log('AutoWebPerf::Triggered recurring.');
-
-          // Run all recurring tests.
-          let newResult = this.runTest(test, {
-            recurring: true,
-          });
-          this.runExtensions(extensions, 'afterRun', {
-            test: test,
-            result: newResult,
-          }, options);
-
-          newResults.push(newResult);
-          resultsToUpdate.push(newResult);
-
-          // Update Test item.
-          let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
-          recurring.nextTriggerTimestamp = nowtime + offset;
-
-          this.logDebug('AutoWebPerf::retrieve, newResult=\n', newResult);
+        let recurring = test.recurring;
+        if (recurring.frequency !== recurring.activatedFrequency) {
+          this.logDebug('AutoWebPerf::recurring with activateOnly.');
+          this.updateNextTriggerTimestamp(test);
         }
-      }
-      testsToUpdate.push(test);
-      this.logDebug('AutoWebPerf::retrieve, test=\n', test);
 
-      count++;
-      if (this.batchUpdate && count >= this.batchUpdate) {
-        this.connector.updateTestList(testsToUpdate, options);
-        this.connector.appendResultList(resultsToUpdate, options);
-        this.log(
-            `AutoWebPerf::recurring, batch update ${testsToUpdate.length} tests` +
-            ` and appends ${resultsToUpdate.length} results.`);
+        // After each run with empty result.
+        this.runExtensions(extensions, 'afterRun', {
+          test: test,
+          result: null,
+        }, options);
+      });
 
-        testsToUpdate = [];
-        resultsToUpdate = [];
-        count = 0;
-      }
-    });
+    } else {
+      // Filter Tests that have passed nextTriggerTimestamp or haven't set with
+      // nextTriggerTimestamp.
+      tests = tests.filter(test => {
+        let recurring = test.recurring;
+        return recurring &&
+            (!recurring.nextTriggerTimestamp ||
+            recurring.nextTriggerTimestamp <= nowtime);
+      });
 
-    // Update the remaining.
-    this.connector.updateTestList(testsToUpdate, options);
-    this.connector.appendResultList(resultsToUpdate, options);
+      // Run tests and updates next trigger timestamp.
+      newResults = this.runTests(tests, options);
 
-    // After all runs.
+      // Update next trigger timestamp.
+      tests.forEach(test => {
+        this.updateNextTriggerTimestamp(test);
+      });
+    }
+
+    // Before all runs.
     this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
     }, options);
-  }
 
-  /**
-   * Run a single Test and return the Result object.
-   * @param {object} test Test object to run.
-   * @param {object} options
-   *
-   * Available options:
-   * - filters {Array<string>}: Use `options.filters` to filter
-   *     tests that match conditions. See `src/utils/pattern-filter.js` for
-   *     more details.
-   * - verbose {boolean}: Whether to show verbose messages in terminal.
-   * - debug {boolean}: Whether to show debug messages in terminal.
-   */
-  runTest(test, options) {
-    options = options || {};
+    // Update Tests.
+    this.connector.updateTestList(tests, options);
 
-    let nowtime = Date.now();
-    let statuses = [];
-
-    let newResult = {
-      id: nowtime + '-' + test.url,
-      type: options.recurring ? TestType.RECURRING : TestType.SINGLE,
-      status: Status.SUBMITTED,
-      label: test.label,
-      url: test.url,
-      createdTimestamp: nowtime,
-      modifiedTimestamp: nowtime,
-    }
-
-    this.dataSources.forEach(dataSource => {
-      if (!test[dataSource]) return;
-
-      try {
-        let gatherer = this.getGatherer(dataSource);
-        let settings = test[dataSource].settings;
-        let response = gatherer.run(test, {} /* options */);
-        statuses.push(response.status);
-        newResult[dataSource] = {
-          status: response.status,
-          statusText: response.statusText,
-          metadata: response.metadata,
-          settings: test[dataSource].settings,
-          metrics: response.metrics,
-          errors: response.errors,
-        };
-
-      } catch (error) {
-        newResult[dataSource] = {
-          status: Status.ERROR,
-          statusText: error,
-          settings: test[dataSource].settings,
-          metadata: {},
-          metrics: {},
-        }
-      }
-    });
-
-    // Update overall status.
-    newResult.status =  this.updateOverallStatus(statuses);
-    return newResult;
+    return {
+      tests: tests,
+      results: newResults,
+    };
   }
 
   /**
    * Retrieve test result for all filtered Results.
    * @param  {object} options
+   * @return {object} Procssed Results.
    *
    * Available options:
    * - filters {Array<string>}: Use `options.filters` to filter
@@ -459,6 +354,10 @@ class AutoWebPerf {
         return result.status !== Status.RETRIEVED;
       });
     }
+
+    this.logDebug('AutoWebPerf::retrieve, results.length=\n', results.length);
+
+    // FIXME: Add batch gathering support.
 
     let count = 0;
     results.forEach(result => {
@@ -499,21 +398,134 @@ class AutoWebPerf {
 
       resultsToUpdate.push(newResult);
 
-      count++;
-      if (this.batchUpdate && count >= this.batchUpdate) {
+      // Batch update to the connector.
+      if (this.batchUpdateBuffer &&
+          resultsToUpdate.length >= this.batchUpdateBuffer) {
         this.connector.updateResultList(resultsToUpdate, options);
         this.log(
             `AutoWebPerf::retrieve, batch appends ` +
             `${resultsToUpdate.length} results.`);
 
         resultsToUpdate = [];
-        count = 0;
       }
     });
 
     this.connector.updateResultList(resultsToUpdate, options);
     this.runExtensions(extensions, 'afterAllRetrieves', {results: results},
         options);
+
+    return {
+      results: results,
+    };
+  }
+
+  /**
+   * Run a single gatherer and return a detailed response from a gatherer.
+   * @param {object} test Test object to run.
+   * @param {object} options
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
+   * @return {type}          description
+   */
+  runTests(tests, options) {
+    options = options || {};
+    let extensions = options.extensions || Object.keys(this.extensions);
+    let overrideResults = options.overrideResults;
+    let resultsToUpdate = [], allNewResults = [];
+
+    // Before each run.
+    tests.forEach(test => {
+      this.runExtensions(extensions, 'beforeRun', {test: test});
+    });
+
+    if (options.runByBatch) {
+      // Run Tests with Data Sources that uses run batch mode.
+      // Note that run batch mode doesn't support batch update to the connector.
+      let testResultPairs = tests.map(test => {
+        return {
+          test: test,
+          result: this.createNewResult(test, options),
+        };
+      });
+
+      // Run all gatherers.
+      this.dataSources.forEach(dataSource =>  {
+        let responseList = this.runGathererInBatch(tests, dataSource, options);
+        for (let i = 0; i<testResultPairs.length; i++) {
+          testResultPairs[i].result[dataSource] = responseList[i];
+        }
+      });
+
+      // Update overall status and after each run.
+      testResultPairs.forEach(pair => {
+        let result = pair.result;
+
+        // Update the overall status.
+        let statuses = this.dataSources.map(dataSource => {
+          return result[dataSource].status;
+        });
+        result.status = this.updateOverallStatus(statuses);
+
+        // After each run in batch.
+        this.runExtensions(extensions, 'afterRun', {
+          test: pair.test,
+          result: result,
+        });
+
+        resultsToUpdate.push(pair.result);
+        allNewResults.push(pair.result);
+      });
+
+    } else {
+      // Run one test at a time and collect metrics from all data sources.
+      tests.forEach(test => {
+        let statuses = [];
+
+        // Create a dummy Result.
+        let newResult = this.createNewResult(test, options);
+
+        // Collect metrics from all data sources.
+        this.dataSources.forEach(dataSource =>  {
+          if (!test[dataSource]) return;
+
+          newResult[dataSource] = this.runGatherer(test, dataSource, options);
+          newResult[dataSource].settings = test[dataSource].settings;
+          statuses.push(newResult[dataSource].status);
+        });
+
+        // Update overall status.
+        newResult.status = this.updateOverallStatus(statuses);
+
+        // After each run
+        this.runExtensions(extensions, 'afterRun', {
+          test: test,
+          result: newResult,
+        });
+
+        // Collect tests and results for batch update if applicable.
+        resultsToUpdate.push(newResult);
+        allNewResults.push(newResult);
+
+        // Batch update to the connector if the buffer is full.
+        if (this.batchUpdateBuffer &&
+            resultsToUpdate.length >= this.batchUpdateBuffer) {
+          this.connector.appendResultList(resultsToUpdate, options);
+          this.log(`AutoWebPerf::retrieve, batch appends ` +
+              `${resultsToUpdate.length} results.`);
+          resultsToUpdate = [];
+        }
+      });
+    }
+
+    // Update the remaining.
+    this.connector.appendResultList(resultsToUpdate, options);
+
+    return allNewResults;
   }
 
   /**
@@ -536,6 +548,90 @@ class AutoWebPerf {
       let extension = this.extensions[extName];
       if (extension[functionName]) extension[functionName](context, options);
     });
+  }
+
+  /**
+   * Run a single gatherer and return a detailed response from a gatherer.
+   * @param {object} test Test object to run.
+   * @param {object} options
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
+   */
+  runGatherer(test, dataSource, options) {
+    options = options || {};
+    if (!test[dataSource]) return;
+
+    try {
+      let gatherer = this.getGatherer(dataSource);
+      let response = gatherer.run(test, options);
+      return response;
+
+    } catch (error) {
+      return {
+        status: Status.ERROR,
+        statusText: error,
+        metadata: {},
+        metrics: {},
+      }
+    }
+  }
+
+  /**
+   * Run all gatherers and return a detailed response from a gatherer.
+   * @param  {type} tests      description
+   * @param  {type} dataSource description
+   * @param  {type} options    description
+   * @return {type}            description
+   */
+  runGathererInBatch(tests, dataSource, options) {
+    let responseList = [];
+
+    try {
+      let gatherer = this.getGatherer(dataSource);
+      let response = gatherer.runBatch(tests, options);
+      let metricsList = response.metricsList || [];
+      responseList = metricsList.map(metrics => {
+        response.metrics = metrics;
+        delete response.metricsList;
+        return response;
+      });
+
+    } catch (error) {
+      responseList = tests.map(test => {
+        return {
+          status: Status.ERROR,
+          statusText: error,
+          metadata: {},
+        };
+      });
+    }
+
+    return responseList;
+  }
+
+  /**
+   * Return an empty Result object.
+   * @param {object} test Test object to run.
+   * @param {object} options
+   * @return {objet} An empty Result object.
+   */
+  createNewResult(test, options) {
+    let nowtime = Date.now();
+
+    return {
+      id: nowtime + '-' + test.url,
+      type: options.recurring ? TestType.RECURRING : TestType.SINGLE,
+      status: Status.SUBMITTED,
+      label: test.label,
+      url: test.url,
+      createdTimestamp: nowtime,
+      modifiedTimestamp: nowtime,
+    };
   }
 
   /**
@@ -591,6 +687,18 @@ class AutoWebPerf {
     } else {
       return Status.SUBMITTED;
     }
+  }
+
+  /**
+   * Update the next trigger timestamp to a Test.
+   * @param {object} test Test object to run.
+   */
+  updateNextTriggerTimestamp(test) {
+    let nowtime = Date.now();
+    let recurring = test.recurring;
+    let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
+    recurring.nextTriggerTimestamp = offset ? nowtime + offset : '';
+    recurring.activatedFrequency = recurring.frequency;
   }
 
   /**

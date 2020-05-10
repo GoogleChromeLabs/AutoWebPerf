@@ -52,12 +52,9 @@ let generateFakeResults = function(amount, options) {
       status: Status.SUBMITTED,
       fake: {
         status: Status.SUBMITTED,
-        metrics: undefined,
-        metadata: undefined,
         settings: {
           connection: '4G',
         },
-        lastRunNote: undefined,
       },
     };
 
@@ -125,8 +122,18 @@ class FakeGatherer extends Gatherer {
       status: Status.SUBMITTED,
     };
   }
+  runBatch(tests) {
+    let metricsList = tests.map(test => {
+      return {
+        SpeedIndex: 500,
+      };
+    });
+    return {
+      status: Status.RETRIEVED,
+      metricsList: metricsList,
+    }
+  }
   retrieve(result) {
-    result.fake.status = Status.RETRIEVED;
     return {
       status: Status.RETRIEVED,
       metadata: result.fake.metadata,
@@ -136,6 +143,7 @@ class FakeGatherer extends Gatherer {
       },
     };
   }
+  retrieveBatch(results){}
 }
 
 class FakeExtension extends Extension {
@@ -200,18 +208,22 @@ describe('AutoWebPerf with fake modules', () => {
     expect(awp.getResults()).toEqual(expectedResults);
   });
 
-  it('runs recurring through a list of tests and gets initial results.', async () => {
+  it('runs recurring and gets initial Results.', async () => {
+    let nowtime = Date.now();
+
+    // Activate recurring Tests.
     awp.connector.tests = generateFakeTests(10);
     let test = awp.connector.tests[0];
     test.recurring = {
       frequency: 'daily',
     }
-    let nowTime = Date.now();
     awp.recurring({activateOnly: true});
     expect(test.recurring.nextTrigger).not.toBe(null);
-    expect(test.recurring.nextTriggerTimestamp).not.toBe(null);
+    expect(test.recurring.nextTriggerTimestamp).toBeGreaterThan(nowtime);
+    expect(awp.getResults().length).toEqual(0);
 
-    test.recurring.nextTriggerTimestamp = nowTime;
+    // Run recurring.
+    test.recurring.nextTriggerTimestamp = nowtime;
     awp.recurring();
     cleanFakeResults(awp.connector.results);
 
@@ -233,10 +245,11 @@ describe('AutoWebPerf with fake modules', () => {
     expect(results[0].fake.metrics.SpeedIndex).toEqual(500);
   });
 
-  it('runs and retrieves all results with partial updates.', async () => {
+  it('runs and retrieves all results with partial updates with long list.',
+      async () => {
     let expectedResults;
     awp.connector.tests = generateFakeTests(95);
-    awp.batchUpdate = 10;
+    awp.batchUpdateBuffer = 10;
 
     expectedResults = generateFakeResults(95);
     awp.run();
@@ -249,10 +262,11 @@ describe('AutoWebPerf with fake modules', () => {
     expect(awp.getResults()).toEqual(expectedResults);
   });
 
-  it('runs and retrieves all results with partial updates.', async () => {
+  it('runs and retrieves all results with partial updates with short list.',
+      async () => {
     let expectedResults;
     awp.connector.tests = generateFakeTests(22);
-    awp.batchUpdate = 5;
+    awp.batchUpdateBuffer = 5;
 
     expectedResults = generateFakeResults(22);
     awp.run();
@@ -267,8 +281,8 @@ describe('AutoWebPerf with fake modules', () => {
 
   it('runs and retrieves all recurring results with partial updates.', async () => {
     awp.connector.tests = generateFakeTests(22);
-    awp.batchUpdate = 5;
-    let nowTime = Date.now();
+    awp.batchUpdateBuffer = 5;
+    let nowtime = Date.now();
     awp.connector.tests.forEach(test => {
       test.recurring = {
         frequency: 'daily',
@@ -277,7 +291,7 @@ describe('AutoWebPerf with fake modules', () => {
 
     awp.recurring({activateOnly: true});
     awp.connector.tests.forEach(test => {
-      test.recurring .nextTriggerTimestamp = nowTime;
+      test.recurring .nextTriggerTimestamp = nowtime;
     });
     awp.recurring();
     cleanFakeResults(awp.connector.results);
@@ -308,16 +322,32 @@ describe('AutoWebPerf with fake modules', () => {
     expect(awp.extensions.fake.afterRun.mock.calls.length).toBe(10);
   });
 
-  it('runs recurring through a list of tests and executes extensions.', async () => {
+  it('runs recurring through a list of tests and executes extensions.',
+      async () => {
     awp.connector.tests = generateFakeTests(10, {
       recurring: {frequency: 'daily'},
     });
 
     awp.recurring();
     expect(awp.extensions.fake.beforeAllRuns.mock.calls.length).toBe(1);
-    expect(awp.extensions.fake.afterAllRuns.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.beforeRun.mock.calls.length).toBe(10);
     expect(awp.extensions.fake.afterRun.mock.calls.length).toBe(10);
+    expect(awp.extensions.fake.afterAllRuns.mock.calls.length).toBe(1);
+  });
+
+  it('runs recurring through a list of tests that passed nextTriggerTimestamp',
+      async () => {
+    awp.connector.tests = generateFakeTests(10, {
+      recurring: {frequency: 'daily'},
+    });
+
+    let futureTime = Date.now() + 1000000;
+    awp.connector.tests[0].recurring.nextTriggerTimestamp = futureTime;
+    awp.connector.tests[1].recurring.nextTriggerTimestamp = futureTime;
+
+    let {tests, results} = awp.recurring();
+    expect(tests.length).toBe(8);
+    expect(results.length).toBe(8);
   });
 
   it('retrieves a list of results and executes extensions.', async () => {
@@ -330,7 +360,21 @@ describe('AutoWebPerf with fake modules', () => {
     expect(awp.extensions.fake.afterRetrieve.mock.calls.length).toBe(10);
   });
 
-  it('updates overall status based on responses from data sources.', async () => {
+  it('retrieves a list of metrics for each Result in batch mode.', async () => {
+    awp.connector.tests = generateFakeTests(10);
+    awp.run({runByBatch: true});
+
+    let results = awp.connector.results;
+    expect(results.length).toEqual(10);
+
+    results.forEach(result => {
+      let metrics = result.fake.metrics;
+      expect(metrics).not.toBe(undefined);
+    })
+  });
+
+  it('updates overall status based on responses from data sources.',
+      async () => {
     let result;
     let fakeGatherer1 = new FakeGatherer();
     let fakeGatherer2 = new FakeGatherer();
