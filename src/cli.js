@@ -57,7 +57,7 @@ async function begin() {
   let awp = new AutoWebPerf({
     connector: 'JSON',
     helper: 'Node',
-    dataSources: dataSources || ['webpagetest'],
+    dataSources: dataSources || ['webpagetest', 'psi', 'chromeuxreport'],
     extensions: extensions,
     json: { // Config for JSON connector.
       tests: argv['tests'],

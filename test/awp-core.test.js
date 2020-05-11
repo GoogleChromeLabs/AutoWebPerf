@@ -56,6 +56,7 @@ let generateFakeResults = function(amount, options) {
           connection: '4G',
         },
       },
+      errors: [],
     };
 
     if (options.status) {
@@ -472,5 +473,29 @@ describe('AutoWebPerf with fake modules', () => {
 
     result = awp.getResults()[3];
     expect(result.status).toEqual(Status.ERROR);
+  });
+
+  it('gets overall errors from all gatherers.', () => {
+    let result, errors;
+    result = {
+      url: 'example.com',
+      fake: {
+        status: Status.ERROR,
+        statusText: 'Fake error',
+      },
+    };
+    errors = awp.getOverallErrors(result);
+    expect(errors.length).toBe(1);
+    expect(errors[0]).toEqual('Fake error');
+
+    result = {
+      url: 'example.com',
+      fake: {
+        status: Status.RETRIEVED,
+        statusText: 'Done',
+      },
+    };
+    errors = awp.getOverallErrors(result);
+    expect(errors.length).toBe(0);
   });
 });

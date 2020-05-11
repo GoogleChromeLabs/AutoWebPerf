@@ -97,9 +97,13 @@ class WebPageTestGatherer extends Gatherer {
 
   run(test, options) {
     assert(test, 'Parameter test is missing.');
+    assert(test.label, 'test.label is not defined.');
     options = options || {};
 
     let settings = test.webpagetest.settings;
+    assert(settings, 'webpagetest.settings is not defined.');
+
+    let location = `${settings.locationId}.${settings.connection}`;
     let params = {
       'label': encodeURIComponent(test.label),
       'url': encodeURIComponent(test.url),
@@ -112,7 +116,7 @@ class WebPageTestGatherer extends Gatherer {
       'timeline': settings.hasTimeline || false,
       'block': settings.block || '',
       'script': settings.script || '',
-      'location': `${settings.locationId}.${settings.connection}` || '',
+      'location': location || '',
       'mobile': settings.device ? 1 : 0,
       'mobileDevice': settings.device || '',
     }

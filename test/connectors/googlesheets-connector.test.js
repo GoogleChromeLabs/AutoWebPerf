@@ -325,6 +325,32 @@ describe('GoogleSheetsConnector Results tab', () => {
     ]);
   });
 
+  it('appends a new set of results to an empty Results sheet', async () => {
+    let resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FirstContentfulPaint'],
+      ['', 'ID', 'Type', 'Status', 'URL', 'WPT FirstContentfulPaint'],
+    ];
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+
+    let newResult = {
+      selected: true,
+      id: 'id-9999',
+      type: 'single',
+      url: 'google.com',
+      status: Status.RETRIEVED,
+      webpagetest: {
+        metrics: {
+          SpeedIndex: 500,
+        },
+      },
+    };
+
+    connector.appendResultList([newResult]);
+    let expecteResults = connector.getResultList();
+    expect(expecteResults.length).toEqual(1);
+  });
+
   it('appends a new set of results to the Results sheet', async () => {
     let results, expecteResults;
     results = connector.getResultList();

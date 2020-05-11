@@ -234,12 +234,17 @@ class GoogleSheetsConnector extends Connector {
    * @param  {string} propertyKey The property key for the column. E.g. "webpagetest.metrics.CSS"
    * @return {object} GoogleSheets Range object
    */
-  getColumnRange(tabId, propertyKey) {
+  getColumnRange(tabId, propertyKey, includeSkipRows) {
     let tabConfig = this.tabConfigs[tabId];
     let sheet = this.getSheet(tabId);
     let columnIndex = this.getPropertyIndex(tabId, propertyKey);
-    let range = sheet.getRange(tabConfig.skipRows + 1,
-        columnIndex, sheet.getLastRow() - tabConfig.skipRows, 1);
+    let numRows = includeSkipRows ?
+        sheet.getLastRow() : sheet.getLastRow() - tabConfig.skipRows;
+    let rowStart = includeSkipRows ? 1 : tabConfig.skipRows + 1;
+
+    assert(numRows >= 1, 'The number of rows in the range must be at least 1');
+
+    let range = sheet.getRange(rowStart, columnIndex, numRows, 1);
     return range;
   }
 
@@ -306,7 +311,8 @@ class GoogleSheetsConnector extends Connector {
     }
 
     // Use the last row index as base for appending results.
-    let lastRowIndex = this.getColumnRange(tabId, 'id').getLastRow() + 1;
+    let lastRowIndex = this.getColumnRange(
+        tabId, 'id', true /* includeSkipRows */).getLastRow() + 1;
     this.updateList(tabId, resultsToUpdate, (result, rowIndex) => {
       rowIndex = lastRowIndex;
       lastRowIndex++;

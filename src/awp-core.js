@@ -391,7 +391,7 @@ class AutoWebPerf {
           options);
 
       // Update overall status.
-      newResult.status =  this.updateOverallStatus(statuses);
+      newResult.status =  this.getOverallStatus(statuses);
 
       this.log(`Retrieve: overall status=${newResult.status}`);
       this.logDebug('AutoWebPerf::retrieve, statuses=\n', statuses);
@@ -472,7 +472,10 @@ class AutoWebPerf {
           return result[dataSource] ?
               result[dataSource].status : Status.RETRIEVED;
         });
-        result.status = this.updateOverallStatus(statuses);
+        result.status = this.getOverallStatus(statuses);
+
+        // Collect errors from all gatherers.
+        result.errors = this.getOverallErrors(result);
 
         // After each run in batch.
         this.runExtensions(extensions, 'afterRun', {
@@ -502,7 +505,10 @@ class AutoWebPerf {
         });
 
         // Update overall status.
-        newResult.status = this.updateOverallStatus(statuses);
+        newResult.status = this.getOverallStatus(statuses);
+
+        // Collect errors from all gatherers.
+        newResult.errors = this.getOverallErrors(newResult);
 
         // After each run
         this.runExtensions(extensions, 'afterRun', {
@@ -633,6 +639,7 @@ class AutoWebPerf {
       url: test.url,
       createdTimestamp: nowtime,
       modifiedTimestamp: nowtime,
+      errors: [],
     };
   }
 
@@ -677,7 +684,7 @@ class AutoWebPerf {
    * @param {Array<string>} statuses
    * @return {string} Overall status
    */
-  updateOverallStatus(statuses) {
+  getOverallStatus(statuses) {
     // The overall status depends on the aggregation of all data sources.
     // If all data sources returne retrieved, the overall status is retrieved.
     // If any of the data source return error, the overall status is error.
@@ -701,6 +708,19 @@ class AutoWebPerf {
     let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
     recurring.nextTriggerTimestamp = offset ? nowtime + offset : '';
     recurring.activatedFrequency = recurring.frequency;
+  }
+
+  /**
+   * Update overall errors to a Result.
+   * @param {object} result Result object.
+   */
+  getOverallErrors(result) {
+    // Collect errors from all gatherers.
+    let errors = this.dataSources.map(dataSource => {
+      return result[dataSource] && result[dataSource].status === Status.ERROR ?
+          result[dataSource].statusText : null;
+    });
+    return errors.filter(e => e);
   }
 
   /**
