@@ -20,6 +20,7 @@ export default [
           'sync-request',
           './connectors/json-connector',
           './helpers/node-helper',
+          '@google-cloud/bigquery',
         ],
       }),
       babel({

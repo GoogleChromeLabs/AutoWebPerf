@@ -681,7 +681,7 @@ class GoogleSheetsConnector extends Connector {
     assert((config || {}).tabName, `tabName not found in ${tabId} tab config.`);
 
     let sheet = this.activeSpreadsheet.getSheetByName(config.tabName);
-    assert(sheet, `Sheet ${config.tabName} not found.`);
+    assert(sheet, `Sheet "${config.tabName}" not found.`);
     return sheet;
   }
 
