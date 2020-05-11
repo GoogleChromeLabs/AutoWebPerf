@@ -50,7 +50,7 @@ describe('AWP bundle for GoogleSheets', () => {
     awp = new AutoWebPerf({
       connector: 'GoogleSheets',
       helper: 'GoogleSheets',
-      dataSources: ['webpagetest', 'psi'],
+      dataSources: ['webpagetest', 'psi', 'chromeuxreport'],
       extensions: [
         'budgets',
         'googlesheets',
@@ -215,7 +215,7 @@ describe('AWP bundle for GoogleSheets', () => {
     expect(systemData[1][2]).toEqual('timeBased-retrieveResults');
   });
 
-  it('submits selected tests with batch mode and writes results', () => {
+  it('submits selected tests in batch mode and writes results', () => {
     let resultsData = fakeSheets['Results-1'].fakeData;
     expect(resultsData.length).toEqual(3);
 
@@ -258,6 +258,42 @@ describe('AWP bundle for GoogleSheets', () => {
     // Ensure it creates Retrieve trigger and records it in System tab.
     systemData = fakeSheets['System'].fakeData;
     expect(systemData[1][2]).toEqual('timeBased-retrieveResults');
+  });
+
+  it('submits selected tests and writes results with spreadArraysProperty',
+      () => {
+    let testsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'url', 'label', 'chromeuxreport.settings.locale'],
+      ['', 'URL', 'Label', 'Frequency', 'CrUX Locale'],
+      [true, 'example.com', 'Example', 'US'],
+      [true, 'web.dev', 'Example', 'US'],
+    ];
+    let resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url', 'chromeuxreport.metrics.FirstContentfulPaint.p75'],
+      ['', 'ID', 'Type', 'Status', 'URL', 'CrUX FirstContentfulPaint p75'],
+    ];
+    fakeSheets['Tests-1'] = initFakeSheet(testsData);
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+
+    // Running tests and writing to Results-1 tab.
+    awp.run({
+      filters: ['selected'],
+      runByBatch: true, // Mandatory for ChromeUXReport gatherer.
+      googlesheets: {
+        testsTab: 'Tests-1',
+        resultsTab: 'Results-1',
+        spreadArraysProperty: 'chromeuxreport.metrics',
+      },
+    });
+
+    resultsData = fakeSheets['Results-1'].fakeData;
+    expect(resultsData.length).toEqual(7);
+    expect(resultsData[3][5]).toBe(100);
+    expect(resultsData[4][5]).toBe(90);
+    expect(resultsData[5][5]).toBe(80);
+    expect(resultsData[6][5]).toBe(70);
   });
 
   it('submits recurring tests and updates next frequency timestamp in ' +

@@ -178,8 +178,9 @@ class AutoWebPerf {
           GathererClass = require('./gatherers/psi');
           break;
 
-        // case 'crux':
-        //   break;
+        case 'chromeuxreport':
+          GathererClass = require('./gatherers/chromeuxreport');
+          break;
 
         case 'fake':
           // Do nothing, for testing purpose.
@@ -456,6 +457,7 @@ class AutoWebPerf {
       // Run all gatherers.
       this.dataSources.forEach(dataSource =>  {
         let responseList = this.runGathererInBatch(tests, dataSource, options);
+
         for (let i = 0; i<testResultPairs.length; i++) {
           testResultPairs[i].result[dataSource] = responseList[i];
         }
@@ -467,7 +469,8 @@ class AutoWebPerf {
 
         // Update the overall status.
         let statuses = this.dataSources.map(dataSource => {
-          return result[dataSource].status;
+          return result[dataSource] ?
+              result[dataSource].status : Status.RETRIEVED;
         });
         result.status = this.updateOverallStatus(statuses);
 
@@ -574,7 +577,7 @@ class AutoWebPerf {
     } catch (error) {
       return {
         status: Status.ERROR,
-        statusText: error,
+        statusText: error.stack,
         metadata: {},
         metrics: {},
       }
@@ -593,19 +596,18 @@ class AutoWebPerf {
 
     try {
       let gatherer = this.getGatherer(dataSource);
-      let response = gatherer.runBatch(tests, options);
-      let metricsList = response.metricsList || [];
-      responseList = metricsList.map(metrics => {
-        response.metrics = metrics;
-        delete response.metricsList;
-        return response;
-      });
+      responseList = gatherer.runBatch(tests, options);
+
+      // If there's no response, it means that the specific gatherer doesn't
+      // support runBatch. Hence it won't add any corresponding metrics to the
+      // Result objects.
+      if (!responseList) return [];
 
     } catch (error) {
       responseList = tests.map(test => {
         return {
           status: Status.ERROR,
-          statusText: error,
+          statusText: error.stack,
           metadata: {},
         };
       });

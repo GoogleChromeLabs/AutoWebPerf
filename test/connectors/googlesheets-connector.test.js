@@ -15,8 +15,8 @@ let fakeSheets = {
   'Configs': initFakeSheet(fakeSheetData.fakeConfigSheetData),
   'System': initFakeSheet(fakeSheetData.fakeSystemSheetData),
   'Locations': initFakeSheet(fakeSheetData.fakeLocationsSheetData),
-  'Tests': initFakeSheet(fakeSheetData.fakeTestsSheetData),
-  'Results': initFakeSheet(fakeSheetData.fakeResultsSheetData),
+  'Tests-1': initFakeSheet(fakeSheetData.fakeTestsSheetData),
+  'Results-1': initFakeSheet(fakeSheetData.fakeResultsSheetData),
 };
 
 global.SpreadsheetApp = {
@@ -353,7 +353,7 @@ describe('GoogleSheetsConnector Results tab', () => {
   it('updates results to the Results sheet', async () => {
     let results, expecteResults;
     results = connector.getResultList();
-    let result =   {
+    let result = {
       selected: true,
       id: 'id-5678',
       type: 'recurring',
@@ -374,6 +374,97 @@ describe('GoogleSheetsConnector Results tab', () => {
     expect(expecteResults.length).toEqual(2);
     expect(expecteResults[1].status).toEqual(Status.ERROR);
     expect(expecteResults[1].url).toEqual('web.dev');
+  });
+
+  it('spreads array metrics into multiple rows', async () => {
+    fakeSheets['Results-1'] =
+        initFakeSheet(fakeSheetData.fakeEmptyResultsSheetData);
+
+    let results = [{
+      selected: true,
+      id: 'id-5678',
+      type: 'recurring',
+      url: 'web.dev',
+      status: Status.RETRIEVED,
+      webpagetest: {
+        metrics: [{
+          SpeedIndex: 500,
+        }, {
+          SpeedIndex: 600,
+        }, {
+          SpeedIndex: 700,
+        }, {
+          SpeedIndex: 800,
+        }],
+      },
+    }];
+
+    // Append results and spread webpagetest.metrics into multiple rows if it's
+    // an array.
+    connector.appendResultList(results, {
+      googlesheets: {
+        spreadArraysProperty: 'webpagetest.metrics',
+      },
+    });
+
+    let actualResults = connector.getResultList();
+    expect(actualResults.length).toEqual(4);
+
+    let duplicateResults = actualResults.filter(result => {
+      return result.status === Status.DUPLICATE;
+    });
+    expect(duplicateResults.length).toEqual(3);
+
+    let metricList = actualResults.map(result => result.webpagetest.metrics);
+    expect(metricList[0].SpeedIndex).toEqual(500);
+    expect(metricList[1].SpeedIndex).toEqual(600);
+    expect(metricList[2].SpeedIndex).toEqual(700);
+    expect(metricList[3].SpeedIndex).toEqual(800);
+  });
+
+  it('spreads array metrics into multiple rows even if no matched key in ' +
+      'the target sheet', async () => {
+    let resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FirstContentfulPaint'],
+      ['', 'ID', 'Type', 'Status', 'URL', 'WPT FirstContentfulPaint'],
+    ];
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+
+    let results = [{
+      selected: true,
+      id: 'id-5678',
+      type: 'recurring',
+      url: 'web.dev',
+      status: Status.RETRIEVED,
+      webpagetest: {
+        metrics: [{
+          SpeedIndex: 500,
+        }, {
+          SpeedIndex: 600,
+        }, {
+          SpeedIndex: 700,
+        }, {
+          SpeedIndex: 800,
+        }],
+      },
+    }];
+
+    // Append results and spread webpagetest.metrics into multiple rows if it's
+    // an array.
+    connector.appendResultList(results, {
+      googlesheets: {
+        spreadArraysProperty: 'webpagetest.metrics',
+      },
+    });
+
+    let actualResults = connector.getResultList();
+    expect(actualResults.length).toEqual(4);
+
+    let duplicateResults = actualResults.filter(result => {
+      return result.status === Status.DUPLICATE;
+    });
+    expect(duplicateResults.length).toEqual(3);
   });
 });
 

@@ -123,15 +123,15 @@ class FakeGatherer extends Gatherer {
     };
   }
   runBatch(tests) {
-    let metricsList = tests.map(test => {
+    let responseList = tests.map(test => {
       return {
-        SpeedIndex: 500,
+        status: Status.RETRIEVED,
+        metrics: {
+          SpeedIndex: 500,
+        }
       };
     });
-    return {
-      status: Status.RETRIEVED,
-      metricsList: metricsList,
-    }
+    return responseList;
   }
   retrieve(result) {
     return {

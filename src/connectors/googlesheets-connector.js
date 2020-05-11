@@ -264,18 +264,50 @@ class GoogleSheetsConnector extends Connector {
   /**
    * appendResultList - Append new results to the end of the existing Results.
    * @param  {Array<object>} newResults Array of new Results
+   *
+   * Available options:
+   * - options.googlesheets.spreadArraysProperty {string}: To specify a property
+   *     key for spreading an array of metrics into multiple rows of single
+   *     metric object.
    */
   appendResultList(newResults, options) {
     options = options || {};
     let googlesheets = options.googlesheets || {};
+    let resultsToUpdate = [];
 
     // If tabId is not specified, use the default Results tabId.
     let tabId = googlesheets.resultsTab || this.defaultResultsTab;
     let tabConfig = this.tabConfigs[tabId];
 
+    // Spread arrays into multple rows if specific properties are arrays.
+    if (googlesheets.spreadArraysProperty) {
+      newResults.forEach(result => {
+        try {
+          let value = eval(`result.${googlesheets.spreadArraysProperty}`);
+
+          // Break a result into multiple Duplicate rows, and keep the first row
+          // as the original status.
+          if (Array.isArray(value)) {
+            for (let i = 0; i <value.length; i++) {
+              let newResult = JSON.parse(JSON.stringify(result));
+              if (i > 0) newResult.status = Status.DUPLICATE;
+              eval(`newResult.${googlesheets.spreadArraysProperty} = value[i]`);
+              resultsToUpdate.push(newResult);
+            }
+          } else {
+            resultsToUpdate.push(result);
+          }
+        } catch (e) {
+          // Do nothing.
+        }
+      });
+    } else {
+      resultsToUpdate = newResults;
+    }
+
     // Use the last row index as base for appending results.
     let lastRowIndex = this.getColumnRange(tabId, 'id').getLastRow() + 1;
-    this.updateList(tabId, newResults, (result, rowIndex) => {
+    this.updateList(tabId, resultsToUpdate, (result, rowIndex) => {
       rowIndex = lastRowIndex;
       lastRowIndex++;
       return rowIndex;
