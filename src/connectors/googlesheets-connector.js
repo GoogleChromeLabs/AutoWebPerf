@@ -271,7 +271,7 @@ class GoogleSheetsConnector extends Connector {
    * @param  {Array<object>} newResults Array of new Results
    *
    * Available options:
-   * - options.googlesheets.spreadArraysProperty {string}: To specify a property
+   * - options.googlesheets.spreadArrayProperty {string}: To specify a property
    *     key for spreading an array of metrics into multiple rows of single
    *     metric object.
    */
@@ -285,25 +285,26 @@ class GoogleSheetsConnector extends Connector {
     let tabConfig = this.tabConfigs[tabId];
 
     // Spread arrays into multple rows if specific properties are arrays.
-    if (googlesheets.spreadArraysProperty) {
+    if (googlesheets.spreadArrayProperty) {
       newResults.forEach(result => {
         try {
-          let value = eval(`result.${googlesheets.spreadArraysProperty}`);
+          let spreadArray = eval(`result.${googlesheets.spreadArrayProperty}`);
 
           // Break a result into multiple Duplicate rows, and keep the first row
           // as the original status.
-          if (Array.isArray(value)) {
-            for (let i = 0; i <value.length; i++) {
+          if (Array.isArray(spreadArray) && spreadArray.length > 0) {
+            for (let i = 0; i <spreadArray.length; i++) {
               let newResult = JSON.parse(JSON.stringify(result));
               if (i > 0) newResult.status = Status.DUPLICATE;
-              eval(`newResult.${googlesheets.spreadArraysProperty} = value[i]`);
+              eval(`newResult.${googlesheets.spreadArrayProperty} = spreadArray[i]`);
               resultsToUpdate.push(newResult);
             }
           } else {
             resultsToUpdate.push(result);
           }
         } catch (e) {
-          // Do nothing.
+          // Adding entire result if the spreadArrayProperty has not value.
+          resultsToUpdate.push(result);
         }
       });
     } else {

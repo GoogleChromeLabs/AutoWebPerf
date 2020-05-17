@@ -403,57 +403,10 @@ describe('GoogleSheetsConnector Results tab', () => {
   });
 
   it('spreads array metrics into multiple rows', async () => {
-    fakeSheets['Results-1'] =
-        initFakeSheet(fakeSheetData.fakeEmptyResultsSheetData);
-
-    let results = [{
-      selected: true,
-      id: 'id-5678',
-      type: 'recurring',
-      url: 'web.dev',
-      status: Status.RETRIEVED,
-      webpagetest: {
-        metrics: [{
-          SpeedIndex: 500,
-        }, {
-          SpeedIndex: 600,
-        }, {
-          SpeedIndex: 700,
-        }, {
-          SpeedIndex: 800,
-        }],
-      },
-    }];
-
-    // Append results and spread webpagetest.metrics into multiple rows if it's
-    // an array.
-    connector.appendResultList(results, {
-      googlesheets: {
-        spreadArraysProperty: 'webpagetest.metrics',
-      },
-    });
-
-    let actualResults = connector.getResultList();
-    expect(actualResults.length).toEqual(4);
-
-    let duplicateResults = actualResults.filter(result => {
-      return result.status === Status.DUPLICATE;
-    });
-    expect(duplicateResults.length).toEqual(3);
-
-    let metricList = actualResults.map(result => result.webpagetest.metrics);
-    expect(metricList[0].SpeedIndex).toEqual(500);
-    expect(metricList[1].SpeedIndex).toEqual(600);
-    expect(metricList[2].SpeedIndex).toEqual(700);
-    expect(metricList[3].SpeedIndex).toEqual(800);
-  });
-
-  it('spreads array metrics into multiple rows even if no matched key in ' +
-      'the target sheet', async () => {
     let resultsData = [
       ['', '', '', '', '', ''],
-      ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metrics.FirstContentfulPaint'],
-      ['', 'ID', 'Type', 'Status', 'URL', 'WPT FirstContentfulPaint'],
+      ['selected', 'id', 'type', 'status', 'url', 'chromeuxreport.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
+      ['', 'ID', 'Type', 'Status', 'URL', 'CrUX SpeedIndex', 'PSI SpeedIndex'],
     ];
     fakeSheets['Results-1'] = initFakeSheet(resultsData);
 
@@ -463,7 +416,69 @@ describe('GoogleSheetsConnector Results tab', () => {
       type: 'recurring',
       url: 'web.dev',
       status: Status.RETRIEVED,
-      webpagetest: {
+      chromeuxreport: {
+        metrics: [{
+          SpeedIndex: 500,
+        }, {
+          SpeedIndex: 600,
+        }, {
+          SpeedIndex: 700,
+        }, {
+          SpeedIndex: 800,
+        }],
+      },
+      psi: {
+        metrics: {
+          SpeedIndex: 999,
+        },
+      }
+    }];
+
+    // Append results and spread chromeuxreport.metrics into multiple rows if it's
+    // an array.
+    connector.appendResultList(results, {
+      googlesheets: {
+        spreadArrayProperty: 'chromeuxreport.metrics',
+      },
+    });
+
+    let actualResults = connector.getResultList();
+    expect(actualResults.length).toEqual(4);
+
+    let duplicateResults = actualResults.filter(result => {
+      return result.status === Status.DUPLICATE;
+    });
+    expect(duplicateResults.length).toEqual(3);
+
+    let metricList = actualResults.map(result => result.chromeuxreport.metrics);
+    expect(metricList[0].SpeedIndex).toEqual(500);
+    expect(metricList[1].SpeedIndex).toEqual(600);
+    expect(metricList[2].SpeedIndex).toEqual(700);
+    expect(metricList[3].SpeedIndex).toEqual(800);
+
+    let psiMetricList = actualResults.map(result => result.psi.metrics);
+    expect(psiMetricList[0].SpeedIndex).toEqual(999);
+    expect(psiMetricList[1].SpeedIndex).toEqual(999);
+    expect(psiMetricList[2].SpeedIndex).toEqual(999);
+    expect(psiMetricList[3].SpeedIndex).toEqual(999);
+  });
+
+  it('spreads array metrics into multiple rows even if no matched key in ' +
+      'the target sheet', async () => {
+    let resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url', 'chromeuxreport.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
+      ['', 'ID', 'Type', 'Status', 'URL', 'CrUX SpeedIndex', 'PSI SpeedIndex'],
+    ];
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+
+    let results = [{
+      selected: true,
+      id: 'id-5678',
+      type: 'recurring',
+      url: 'web.dev',
+      status: Status.RETRIEVED,
+      chromeuxreport: {
         metrics: [{
           SpeedIndex: 500,
         }, {
@@ -476,11 +491,11 @@ describe('GoogleSheetsConnector Results tab', () => {
       },
     }];
 
-    // Append results and spread webpagetest.metrics into multiple rows if it's
+    // Append results and spread chromeuxreport.metrics into multiple rows if it's
     // an array.
     connector.appendResultList(results, {
       googlesheets: {
-        spreadArraysProperty: 'webpagetest.metrics',
+        spreadArrayProperty: 'chromeuxreport.metrics',
       },
     });
 
@@ -491,6 +506,45 @@ describe('GoogleSheetsConnector Results tab', () => {
       return result.status === Status.DUPLICATE;
     });
     expect(duplicateResults.length).toEqual(3);
+  });
+
+  it('spreads array metrics into multiple rows even if no matched ' +
+      'spreadArrayProperty key', async () => {
+    let resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url', 'psi.metrics.SpeedIndex'],
+      ['', 'ID', 'Type', 'Status', 'URL', 'PSI SpeedIndex'],
+    ];
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+
+    let results = [{
+      selected: true,
+      id: 'id-5678',
+      type: 'recurring',
+      url: 'web.dev',
+      status: Status.RETRIEVED,
+      psi: {
+        metrics: {
+          SpeedIndex: 500,
+        }
+      },
+    }];
+
+    // Append results and spread chromeuxreport.metrics into multiple rows if it's
+    // an array.
+    connector.appendResultList(results, {
+      googlesheets: {
+        spreadArrayProperty: 'chromeuxreport.metrics',
+      },
+    });
+
+    let actualResults = connector.getResultList();
+    expect(actualResults.length).toEqual(1);
+
+    let duplicateResults = actualResults.filter(result => {
+      return result.status === Status.DUPLICATE;
+    });
+    expect(duplicateResults.length).toEqual(0);
   });
 });
 

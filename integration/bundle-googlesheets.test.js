@@ -132,7 +132,7 @@ describe('AWP bundle for GoogleSheets', () => {
         dataSource: 'webpagetest',
       },
       gatracker: {},
-      batchUpdate: 10,
+      batchUpdateBuffer: 10,
       verbose: false,
       debug: false,
     });
@@ -260,7 +260,7 @@ describe('AWP bundle for GoogleSheets', () => {
     expect(systemData[1][2]).toEqual('timeBased-retrieveResults');
   });
 
-  it('submits selected tests and writes results with spreadArraysProperty',
+  it('submits selected tests and writes results with spreadArrayProperty',
       () => {
     let testsData = [
       ['', '', '', '', '', ''],
@@ -284,16 +284,53 @@ describe('AWP bundle for GoogleSheets', () => {
       googlesheets: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
-        spreadArraysProperty: 'chromeuxreport.metrics',
+        spreadArrayProperty: 'chromeuxreport.metrics',
       },
     });
 
     resultsData = fakeSheets['Results-1'].fakeData;
     expect(resultsData.length).toEqual(7);
+    expect(resultsData[3][4]).toBe('example.com');
     expect(resultsData[3][5]).toBe(100);
+    expect(resultsData[4][4]).toBe('example.com');
     expect(resultsData[4][5]).toBe(90);
+    expect(resultsData[5][4]).toBe('web.dev');
     expect(resultsData[5][5]).toBe(80);
+    expect(resultsData[6][4]).toBe('web.dev');
     expect(resultsData[6][5]).toBe(70);
+  });
+
+  it('submits selected tests without values of spreadArrayProperty', () => {
+    let testsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'url', 'label', 'webpagetest.settings.connection'],
+      ['', 'URL', 'Label', 'Frequency', 'WPT Connection'],
+      [true, 'example.com', 'Example', '4G'],
+      [true, 'web.dev', 'Example', '4G'],
+    ];
+    let resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url'],
+      ['', 'ID', 'Type', 'Status', 'URL'],
+    ];
+    fakeSheets['Tests-1'] = initFakeSheet(testsData);
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+
+    // Running tests and writing to Results-1 tab.
+    awp.run({
+      filters: ['selected'],
+      runByBatch: true, // Mandatory for ChromeUXReport gatherer.
+      googlesheets: {
+        testsTab: 'Tests-1',
+        resultsTab: 'Results-1',
+        spreadArrayProperty: 'something.else',
+      },
+    });
+
+    resultsData = fakeSheets['Results-1'].fakeData;
+    expect(resultsData.length).toEqual(5);
+    expect(resultsData[3][4]).toBe('example.com');
+    expect(resultsData[4][4]).toBe('web.dev');
   });
 
   it('submits recurring tests and updates next frequency timestamp in ' +
