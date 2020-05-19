@@ -176,9 +176,7 @@ class ChromeUXReportGatherer extends Gatherer {
 
     console.log('runBatch test');
 
-    return {
-      status: "test2",
-    };
+    return this.fakeResponses(tests);
 
 		// TODO: Replace the dummy response with real code. Make sure the length
     // of the responses match the length of Tests, i.e. # of origins.
@@ -189,7 +187,8 @@ class ChromeUXReportGatherer extends Gatherer {
 		assert(results, 'Parameter results is missing.');
 
     return {
-      status: "test",
+
+      status: Status.RETRIEVED,
     };
 
 		// TODO: Replace the dummy response with real code.
@@ -210,37 +209,205 @@ class ChromeUXReportGatherer extends Gatherer {
 
     let fakeMetrics = {
       'example.com': [{
-        YearMonth: '202005',
+        YearMonth: '202004',
+        TimeToFirstByte: {
+          p75: 500,
+          slowDensity: 0.2,
+          averageDensity: 0.2,
+          fastDensity: 0.6,
+        },
+        FirstPaint: {
+          p75: 900,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
+        },
         FirstContentfulPaint: {
-          p75: 100,
-          slowDensity: 0.5,
-          averageDensity: 0.3,
-          fastDensity: 0.2,
+          p75: 900,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
+        },
+        LargestContentfulPaint: {
+          p75: 1900,
+          slowDensity: 0.1,
+          averageDensity: 0.2,
+          fastDensity: 0.7,
+        },
+        CumulativeLayoutShift: {
+          p75: 0.05,
+          slowDensity: 0.15,
+          averageDensity: 0.15,
+          fastDensity: 0.8,
+        },
+        FirstInputDelay: {
+          p75: 25,
+          slowDensity: 0.25,
+          averageDensity: 0.25,
+          fastDensity: 0.95,
+        },
+        DOMContentLoaded: {
+          p75: 2000,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.80,
+        },
+        OnLoad: {
+          p75: 2000,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
         },
       }, {
         YearMonth: '202004',
+        TimeToFirstByte: {
+          p75: 500,
+          slowDensity: 0.2,
+          averageDensity: 0.2,
+          fastDensity: 0.6,
+        },
+        FirstPaint: {
+          p75: 900,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
+        },
         FirstContentfulPaint: {
-          p75: 90,
-          slowDensity: 0.5,
-          averageDensity: 0.3,
-          fastDensity: 0.2,
+          p75: 900,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
+        },
+        LargestContentfulPaint: {
+          p75: 1900,
+          slowDensity: 0.1,
+          averageDensity: 0.2,
+          fastDensity: 0.7,
+        },
+        CumulativeLayoutShift: {
+          p75: 0.05,
+          slowDensity: 0.15,
+          averageDensity: 0.15,
+          fastDensity: 0.8,
+        },
+        FirstInputDelay: {
+          p75: 25,
+          slowDensity: 0.25,
+          averageDensity: 0.25,
+          fastDensity: 0.95,
+        },
+        DOMContentLoaded: {
+          p75: 2000,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.80,
+        },
+        OnLoad: {
+          p75: 2000,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
         },
       }],
       'web.dev': [{
         YearMonth: '202005',
+        TimeToFirstByte: {
+          p75: 500,
+          slowDensity: 0.2,
+          averageDensity: 0.2,
+          fastDensity: 0.6,
+        },
+        FirstPaint: {
+          p75: 900,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
+        },
         FirstContentfulPaint: {
-          p75: 80,
-          slowDensity: 0.5,
-          averageDensity: 0.3,
-          fastDensity: 0.2,
+          p75: 900,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
+        },
+        LargestContentfulPaint: {
+          p75: 1900,
+          slowDensity: 0.1,
+          averageDensity: 0.2,
+          fastDensity: 0.7,
+        },
+        CumulativeLayoutShift: {
+          p75: 0.05,
+          slowDensity: 0.15,
+          averageDensity: 0.15,
+          fastDensity: 0.8,
+        },
+        FirstInputDelay: {
+          p75: 25,
+          slowDensity: 0.25,
+          averageDensity: 0.25,
+          fastDensity: 0.95,
+        },
+        DOMContentLoaded: {
+          p75: 2000,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.80,
+        },
+        OnLoad: {
+          p75: 2000,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
         },
       }, {
         YearMonth: '202004',
+        TimeToFirstByte: {
+          p75: 500,
+          slowDensity: 0.2,
+          averageDensity: 0.2,
+          fastDensity: 0.6,
+        },
+        FirstPaint: {
+          p75: 900,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
+        },
         FirstContentfulPaint: {
-          p75: 70,
-          slowDensity: 0.5,
-          averageDensity: 0.3,
-          fastDensity: 0.2,
+          p75: 900,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
+        },
+        LargestContentfulPaint: {
+          p75: 1900,
+          slowDensity: 0.1,
+          averageDensity: 0.2,
+          fastDensity: 0.7,
+        },
+        CumulativeLayoutShift: {
+          p75: 0.05,
+          slowDensity: 0.15,
+          averageDensity: 0.15,
+          fastDensity: 0.8,
+        },
+        FirstInputDelay: {
+          p75: 25,
+          slowDensity: 0.25,
+          averageDensity: 0.25,
+          fastDensity: 0.95,
+        },
+        DOMContentLoaded: {
+          p75: 2000,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.80,
+        },
+        OnLoad: {
+          p75: 2000,
+          slowDensity: 0.1,
+          averageDensity: 0.1,
+          fastDensity: 0.8,
         },
       }],
     }
