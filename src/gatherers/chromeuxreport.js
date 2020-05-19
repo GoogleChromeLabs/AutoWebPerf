@@ -28,16 +28,18 @@ class ChromeUXReportGatherer extends Gatherer {
     assert(config, 'Parameter config is missing.');
     assert(apiHelper, 'Parameter apiHelper is missing.');
 
-    this.projectId = config.projectId;
-    this.origins = config.origins;
-    this.keyFilename = options.keyFilename;
+    this.projectId = config.gcpProjectId;
+
+    //this.origins = config.origins;
+    //this.keyFilename = options.keyFilename;
 
 		// Create the BigQuery Handler.
-		this.bigQueryHandler = new BigQueryHandler({
+		/*this.bigQueryHandler = new BigQueryHandler({
       projectId: config.projectId,
 			keyFilename: this.keyFilename,
 			platform: config.platform, // 'Node' or 'GoogleSheets'.
     });
+    */
 
     // Query:
     // https://console.cloud.google.com/bigquery?sq=221270044539:1f5e2d56a02c41cab74794a57c5bab70
@@ -158,11 +160,6 @@ class ChromeUXReportGatherer extends Gatherer {
   run(test, options) {
     assert(test, 'Parameter test is missing.');
     options = options || {};
-
-		// TODO: Replace the dummy response with real code.
-    return {
-      status: Status.RETRIEVED,
-    };
   }
 
   retrieve(result, options) {
@@ -177,18 +174,28 @@ class ChromeUXReportGatherer extends Gatherer {
 	runBatch(tests, options) {
 		assert(tests, 'Parameter tests is missing.');
 
+    console.log('runBatch test');
+
+    return {
+      status: "test2",
+    };
+
 		// TODO: Replace the dummy response with real code. Make sure the length
     // of the responses match the length of Tests, i.e. # of origins.
-		return this.fakeResponses(tests);
+		//return this.fakeResponses(tests);
 	}
 
 	retrieveBatch(results, options) {
 		assert(results, 'Parameter results is missing.');
 
+    return {
+      status: "test",
+    };
+
 		// TODO: Replace the dummy response with real code.
-		return {
-			status: Status.RETRIEVED,
-		};
+		//return {
+		//	status: Status.RETRIEVED,
+		//};
 	}
 
 	/**

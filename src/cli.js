@@ -59,6 +59,7 @@ async function begin() {
   let action = argv['_'][0], output = argv['output'];
   let dataSources = argv['dataSources'] ? argv['dataSources'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
+  let runByBatch = argv['runByBatch'] ?  true : false;
   let debug = argv['debug'];
   let verbose = argv['verbose'];
 
@@ -87,6 +88,7 @@ async function begin() {
     case 'run':
       await awp.run({
         filters: filters,
+        runByBatch: runByBatch,
         debug: debug,
       });
       break;

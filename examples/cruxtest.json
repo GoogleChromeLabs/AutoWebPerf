@@ -1,0 +1,25 @@
+{
+  "config": {
+    "apiKeys": {
+      "webpagetest": "TEST_APIKEY",
+      "psi": "TEST_APIKEY",
+      "gcpProjectId": "google.com:auto-web-perf"
+    }
+  },
+  "tests": [
+    {
+      "selected": true,
+      "chromeuxreport": {
+        "origin":"https://web.dev"
+      },
+      "id": "1580105180079-https://wweb.dev"
+    },
+    {
+      "selected": true,
+      "chromeuxreport": {
+        "origin":"https://wwww.google.com"
+      },
+      "id": "1580105180079-https://www.google.com"
+    }
+  ]
+}

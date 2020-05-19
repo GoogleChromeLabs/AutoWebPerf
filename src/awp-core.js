@@ -213,7 +213,7 @@ class AutoWebPerf {
   /**
    * Run tests and writes output to results.
    * @param {object} options
-   * @return {object} Procssed Tests and Results.
+   * @return {object} Processed Tests and Results.
    *
    * Available options:
    * - filters {Array<string>}: Use `options.filters` to filter
