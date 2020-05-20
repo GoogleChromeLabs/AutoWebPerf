@@ -35,7 +35,7 @@ global.Browser = Browser;
 describe('AWP bundle for GoogleSheets', () => {
   beforeEach(() => {
     fakeSheets = {
-      'Configs': initFakeSheet(fakeSheetData.fakeConfigSheetData),
+      'EnvVars': initFakeSheet(fakeSheetData.fakeEnvVarsSheetData),
       'System': initFakeSheet(fakeSheetData.fakeSystemSheetData),
       'Locations': initFakeSheet(fakeSheetData.fakeLocationsSheetData),
       'Tests-1': initFakeSheet(fakeSheetData.fakeTestsSheetData),
@@ -96,8 +96,8 @@ describe('AWP bundle for GoogleSheets', () => {
           skipColumns: 0,
           skipRows: 3,
         }, {
-          tabName: 'Configs',
-          tabRole: 'config',
+          tabName: 'EnvVars',
+          tabRole: 'envVars',
           dataAxis: 'column',
           propertyLookup: 2, // Starts at 1
           skipRows: 1,
@@ -131,7 +131,6 @@ describe('AWP bundle for GoogleSheets', () => {
       budgets: {
         dataSource: 'webpagetest',
       },
-      gatracker: {},
       batchUpdateBuffer: 10,
       verbose: false,
       debug: false,

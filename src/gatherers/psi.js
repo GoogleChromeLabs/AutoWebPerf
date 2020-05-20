@@ -22,14 +22,15 @@ const {Metrics} = require('../common/metrics');
 const Gatherer = require('./gatherer');
 
 class PSIGatherer extends Gatherer {
-  constructor(config, apiHelper) {
+  constructor(config, envVars, apiHelper) {
     super();
     assert(config, 'Parameter config is missing.');
+    assert(envVars, 'Parameter apiHelper is missing.');
     assert(apiHelper, 'Parameter apiHelper is missing.');
 
     this.runApiEndpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
     this.resultApiEndpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
-    this.apiKey = config.apiKey;
+    this.apiKey = envVars['psiApiKey'];
     this.apiHelper = apiHelper;
 
     // TODO: Metadata keys should be standardized.

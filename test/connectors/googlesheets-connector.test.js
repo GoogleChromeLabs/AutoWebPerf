@@ -23,7 +23,7 @@ const Status = require('../../src/common/status');
 const {initFakeSheet, fakeSheetData} = require('./googlesheets-test-utils');
 
 let fakeSheets = {
-  'Configs': initFakeSheet(fakeSheetData.fakeConfigSheetData),
+  'EnvVars': initFakeSheet(fakeSheetData.fakeEnvVarsSheetData),
   'System': initFakeSheet(fakeSheetData.fakeSystemSheetData),
   'Locations': initFakeSheet(fakeSheetData.fakeLocationsSheetData),
   'Tests-1': initFakeSheet(fakeSheetData.fakeTestsSheetData),
@@ -91,8 +91,8 @@ let connectorConfig = {
     skipColumns: 0,
     skipRows: 3,
   }, {
-    tabName: 'Configs',
-    tabRole: 'config',
+    tabName: 'EnvVars',
+    tabRole: 'envVars',
     dataAxis: 'column',
     propertyLookup: 2, // Starts at 1
     skipRows: 1,
@@ -218,31 +218,29 @@ let fakeResults = [
 
 /* eslint-env jest */
 
-describe('GoogleSheetsConnector Config tab', () => {
+describe('GoogleSheetsConnector EnvVars tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    fakeSheets['Configs'] = initFakeSheet(fakeSheetData.fakeConfigSheetData);
+    fakeSheets['EnvVars'] = initFakeSheet(fakeSheetData.fakeEnvVarsSheetData);
   });
 
-  it('returns list of config values from the Config sheet', async () => {
-    let config = connector.getConfig();
-    expect(config).toEqual({
-      apiKeys: {
-        webpagetest: 'TEST_APIKEY',
-        psi: 'PSI_KEY',
-      }
+  it('returns list of envVars values from the EnvVars sheet', async () => {
+    let envVars = connector.getEnvVars();
+    expect(envVars).toEqual({
+      webPageTestApiKey: 'TEST_APIKEY',
+      psiApiKey: 'PSI_KEY',
     });
   });
 
-  it('get a value from Config sheet via getConfigVar', async () => {
-    expect(connector.getConfigVar('apiKeys.webpagetest')).toEqual('TEST_APIKEY');
-    expect(connector.getConfigVar('apiKeys.psi')).toEqual('PSI_KEY');
+  it('get a value from EnvVars sheet via getEnvVar', async () => {
+    expect(connector.getEnvVar('webPageTestApiKey')).toEqual('TEST_APIKEY');
+    expect(connector.getEnvVar('psiApiKey')).toEqual('PSI_KEY');
   });
 
-  it('set a value to Config sheet via setConfigVar', async () => {
-    connector.setConfigVar('apiKeys.webpagetest', 'TEST');
-    expect(connector.getConfigVar('apiKeys.webpagetest')).toEqual('TEST');
-    expect(connector.getConfigVar('apiKeys.psi')).toEqual('PSI_KEY');
+  it('set a value to EnvVars sheet via setEnvVar', async () => {
+    connector.setEnvVar('webPageTestApiKey', 'TEST');
+    expect(connector.getEnvVar('webPageTestApiKey')).toEqual('TEST');
+    expect(connector.getEnvVar('psiApiKey')).toEqual('PSI_KEY');
   });
 });
 
@@ -624,7 +622,7 @@ describe('GoogleSheetsConnector Locations tab', () => {
 describe('GoogleSheetsConnector additional functions', () => {
   beforeEach(() => {
     // Overrides properties for testing.
-    fakeSheets['Configs'] = initFakeSheet(fakeSheetData.fakeConfigSheetData);
+    fakeSheets['EnvVars'] = initFakeSheet(fakeSheetData.fakeEnvVarsSheetData);
     fakeSheets['System'] = initFakeSheet(fakeSheetData.fakeSystemSheetData);
     fakeSheets['Tests-1'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
     fakeSheets['Results-1'] = initFakeSheet(fakeSheetData.fakeResultsSheetData);
@@ -641,8 +639,8 @@ describe('GoogleSheetsConnector additional functions', () => {
 
   it('returns property lookup values for sheet with DataAxis.COLUMN', async () => {
     let propertyLookup;
-    propertyLookup = connector.getPropertyLookup('configTab');
-    expect(propertyLookup).toEqual(['apiKeys.webpagetest', 'apiKeys.psi']);
+    propertyLookup = connector.getPropertyLookup('envVarsTab');
+    expect(propertyLookup).toEqual(['webPageTestApiKey', 'psiApiKey']);
 
     propertyLookup = connector.getPropertyLookup('systemTab');
     expect(propertyLookup).toEqual([
@@ -652,7 +650,7 @@ describe('GoogleSheetsConnector additional functions', () => {
 
   it('returns property index with given property key', async () => {
     let index;
-    index = connector.getPropertyIndex('configTab', 'apiKeys.webpagetest');
+    index = connector.getPropertyIndex('envVarsTab', 'webPageTestApiKey');
     expect(index).toEqual(1);
 
     index = connector.getPropertyIndex('Results-1', 'status');

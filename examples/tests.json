@@ -1,9 +1,10 @@
 {
   "config": {
-    "apiKeys": {
-      "webpagetest": "TEST_APIKEY",
-      "psi": "TEST_APIKEY"
-    }
+    "webPageTestApiKey": "TEST_APIKEY",
+    "webPageTestEndpoint": null,
+    "psiApiKey": "TEST_APIKEY",
+    "gcpProjectId": "",
+    "gcpKeyFilePath": ""
   },
   "tests": [
     {
@@ -12,7 +13,7 @@
       "url": "https://thinkwithgoogle.com",
       "recurring": {
         "frequency": "Daily",
-        "nextTriggerTimestamp": 1583448462844,
+        "nextTriggerTimestamp": 1234,
         "nextTrigger": "Tue Jan 28 2020 03:14:19 GMT-0500 (Eastern Standard Time)",
         "activatedFrequency": "Daily"
       },
@@ -28,7 +29,7 @@
           "script": null
         },
         "metadata": {
-          "lastTestId": "200310_ME_53e19899dd8326a4a1b83d9f1b3791ff"
+          "lastTestId": "200118_KA_4022ee20eaf1deebb393585731de6576"
         }
       },
       "psi": {

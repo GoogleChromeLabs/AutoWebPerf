@@ -68,8 +68,8 @@ class GoogleSheetsConnector extends Connector {
           this.tabConfigs.systemTab = tabConfig;
           break;
 
-        case TabRole.CONFIG:
-          this.tabConfigs.configTab = tabConfig;
+        case TabRole.ENV_VARS:
+          this.tabConfigs.envVarsTab = tabConfig;
           break;
 
         // Note: the Locations tab is dedciated for WebPageTest-based tests.
@@ -83,7 +83,7 @@ class GoogleSheetsConnector extends Connector {
       }
     });
 
-    assert(this.tabConfigs.configTab, 'configTab is missing in config.tabs.');
+    assert(this.tabConfigs.envVarsTab, 'envVarsTab is missing in config.tabs.');
     assert(this.tabConfigs.systemTab, 'systemTab is missing in config.tabs.');
     assert(this.tabConfigs.locationsTab, 'locationsTab is missing in config.tabs.');
 
@@ -149,7 +149,7 @@ class GoogleSheetsConnector extends Connector {
   /**
    * getList - The helper function for getting arbitrary items, like Tests,
    * Results, or Config items.
-   * @param  {type} tabId The keys of tabConfigs. E.g. "configTab"
+   * @param  {type} tabId The keys of tabConfigs. E.g. "envVarsTab"
    * @param  {type} options Options: appendRowIndex, verbose or debug.
    */
   getList(tabId, options) {
@@ -586,7 +586,7 @@ class GoogleSheetsConnector extends Connector {
    * @param  {string} message Message for the UI prompt.
    */
   requestApiKey(message) {
-    let apiKey = this.getConfigVar('apiKeys.webpagetest');
+    let apiKey = this.getEnvVar('webPageTestApiKey');
     message = message || 'Enter your WebPageTest API Key';
     let requestCount = 0;
     while (!apiKey && requestCount < 3) {
@@ -601,7 +601,7 @@ class GoogleSheetsConnector extends Connector {
       requestCount++;
     }
     if (apiKey) {
-      this.setConfigVar('apiKeys.webpagetest', apiKey);
+      this.setEnvVar('webPageTestApiKey', apiKey);
     } else {
       Browser.msgBox('A WebPageTest API Key is required for this tool to' +
                      ' function. Please enter one on the hidden User_API_Key' +
@@ -610,30 +610,30 @@ class GoogleSheetsConnector extends Connector {
   }
 
   /**
-   * getConfig - Returns the entire Config as an object.
+   * getEnvVars - Returns the entire Config as an object.
    * @return {object} Config object.
    */
-  getConfig() {
-    let configValues = this.getList('configTab');
+  getEnvVars() {
+    let configValues = this.getList('envVarsTab');
     return configValues ? configValues[0] : null;
   }
 
   /**
-   * getConfigVar - Returns a specific variable from the Config tab.
+   * getEnvVar - Returns a specific variable from the EnvVars tab.
    * @param  {string} key
    * @return {any} value
    */
-  getConfigVar(key) {
-    return this.getVarFromTab('configTab', key);
+  getEnvVar(key) {
+    return this.getVarFromTab('envVarsTab', key);
   }
 
   /**
-   * setConfigVar - Set a value to a specific variable in the Config tab.
+   * setEnvVar - Set a value to a specific variable in the EnvVars tab.
    * @param  {string} key
    * @param  {string} value
    */
-  setConfigVar(key, value) {
-    this.setVarToTab('configTab', key, value);
+  setEnvVar(key, value) {
+    this.setVarToTab('envVarsTab', key, value);
   }
 
   /**
@@ -657,7 +657,7 @@ class GoogleSheetsConnector extends Connector {
   /**
    * getVarFromTab - A generic helper function to get the value of a varible in
    * a specific tab.
-   * @param  {string} tabId The keys of tabConfigs. E.g. "configTab"
+   * @param  {string} tabId The keys of tabConfigs. E.g. "envVarsTab"
    * @param  {string} key
    * @return {type} value
    */
@@ -673,7 +673,7 @@ class GoogleSheetsConnector extends Connector {
   /**
    * setVarToTab - A generic helper function to set a value of a varible in
    * a specific tab.
-   * @param  {string} tabId The keys of tabConfigs. E.g. "configTab"
+   * @param  {string} tabId The keys of tabConfigs. E.g. "envVarsTab"
    * @param  {type} key
    * @param  {type} value
    */

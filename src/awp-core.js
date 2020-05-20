@@ -60,9 +60,11 @@ class AutoWebPerf {
     this.debug = awpConfig.debug || false;
     this.verbose = awpConfig.verbose || false;
 
+    assert(awpConfig, 'awpConfig is missing');
     assert(awpConfig.dataSources, 'awpConfig.dataSources is missing.');
     assert(awpConfig.connector, 'awpConfig.connector is missing.');
     assert(awpConfig.helper, 'awpConfig.helper is missing.');
+    this.awpConfig = awpConfig;
 
     // Example data sources: ['webpagetest', 'psi']
     this.dataSources = awpConfig.dataSources;
@@ -99,18 +101,10 @@ class AutoWebPerf {
     switch (connectorName) {
       case 'json':
         ConnectorClass = require('./connectors/json-connector');
-        this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
-
-        // Get the ApiKeys variables from the Config through Connector.
-        this.apiKeys = this.connector.getConfig().apiKeys;
         break;
 
       case 'googlesheets':
         ConnectorClass = require('./connectors/googlesheets-connector');
-        this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
-
-        // Get the ApiKeys variables from the Config through Connector.
-        this.apiKeys = this.connector.getConfig().apiKeys;
         break;
 
       case 'fake':
@@ -121,6 +115,13 @@ class AutoWebPerf {
         throw new Error(
             `Connector ${awpConfig.connector} is not supported.`);
         break;
+    }
+
+    // Get environment varaibles through the Connector.
+    this.envVars = {};
+    if (ConnectorClass) {
+      this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
+      this.envVars = this.connector.getEnvVars();
     }
 
     this.log(`Use extensions: ${awpConfig.extensions}`);
@@ -151,7 +152,8 @@ class AutoWebPerf {
                 `Extension ${extension} is not supported.`);
             break;
         }
-        this.extensions[extension] = new ExtensionClass(extConfig);
+        this.extensions[extension] = new ExtensionClass(extConfig,
+            this.envVars);
       });
     }
 
@@ -179,6 +181,8 @@ class AutoWebPerf {
     // FIXME: Remove the hardcoded require path without breaking RollUp bundle.
     if (!this.gatherers[name]) {
       let GathererClass = null;
+      let gathererConfig = this.awpConfig[name] || {};
+
       switch (name) {
         case 'webpagetest':
           GathererClass = require('./gatherers/webpagetest');
@@ -201,11 +205,8 @@ class AutoWebPerf {
           break;
       }
 
-      this.gatherers[name] = new GathererClass({
-          apiKey: this.apiKeys[name],
-        },
-        this.apiHandler,
-        options);
+      this.gatherers[name] = new GathererClass(gathererConfig, this.envVars,
+          this.apiHandler, options);
     }
     return this.gatherers[name];
   }

@@ -38,8 +38,8 @@ class JSONConnector extends Connector {
 
   }
 
-  getConfig() {
-    return this.testsData.config;
+  getEnvVars() {
+    return this.testsData.envVars;
   }
 
   getTestList() {
@@ -51,7 +51,7 @@ class JSONConnector extends Connector {
     fse.outputFileSync(
       filepath,
       JSON.stringify({
-        "config": this.testsData.config,
+        "config": this.testsData.envVars,
         "tests": newTests,
       }, null, 2));
   }

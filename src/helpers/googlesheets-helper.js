@@ -34,7 +34,7 @@ const TabRole = {
   TESTS: 'tests',
   RESULTS: 'results',
   LATEST_RESULTS: 'latestResults',
-  CONFIG: 'config',
+  ENV_VARS: 'envVars',
   SYSTEM: 'system',
   LOCATIONS: 'locations',
 };

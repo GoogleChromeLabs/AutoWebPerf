@@ -15,7 +15,7 @@
  */
 
 class Extention {
-  constructor(config) {}
+  constructor(config, envVars) {}
   // Run
   beforeRun(context, options) {}
   afterRun(context, options) {}

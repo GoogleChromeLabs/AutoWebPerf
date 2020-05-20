@@ -26,12 +26,15 @@ let fakeApiHandler = {
   fetch: () => {}
 };
 let psiGatherer;
+let psiConfig = {};
+let envVars = {
+  psiApiKey: 'TEST_APIKEY',
+}
 
 describe('PSIGatherer unit test', () => {
   beforeEach(() => {
-    psiGatherer = new PSIGatherer({
-      apiKey: 'TEST_APIKEY',
-    }, fakeApiHandler, {} /* options */);
+    psiGatherer = new PSIGatherer(psiConfig, envVars, fakeApiHandler,
+        {} /* options */);
   });
 
   it('submits test and get full response with test ID', async () => {
