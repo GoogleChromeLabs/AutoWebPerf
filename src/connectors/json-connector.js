@@ -39,7 +39,9 @@ class JSONConnector extends Connector {
   }
 
   getConfig() {
-    return this.testsData.config;
+    let config = this.testsData.config;
+    config.connector = 'json';
+    return config;
   }
 
   getTestList() {

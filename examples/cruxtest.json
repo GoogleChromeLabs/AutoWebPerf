@@ -2,9 +2,9 @@
   "config": {
     "apiKeys": {
       "webpagetest": "TEST_APIKEY",
-      "psi": "TEST_APIKEY",
-      "gcpProjectId": "google.com:auto-web-perf"
-    }
+      "psi": "TEST_APIKEY"
+    },
+    "gcpProjectId": "google.com:auto-web-perf"
   },
   "tests": [
     {

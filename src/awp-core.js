@@ -59,6 +59,7 @@ class AutoWebPerf {
   constructor(awpConfig) {
     this.debug = awpConfig.debug || false;
     this.verbose = awpConfig.verbose || false;
+    this.config = {};
 
     assert(awpConfig.dataSources, 'awpConfig.dataSources is missing.');
     assert(awpConfig.connector, 'awpConfig.connector is missing.');
@@ -102,7 +103,7 @@ class AutoWebPerf {
         this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
 
         // Get the ApiKeys variables from the Config through Connector.
-        this.apiKeys = this.connector.getConfig().apiKeys;
+        this.config = this.connector.getConfig();
         break;
 
       case 'googlesheets':
@@ -110,7 +111,7 @@ class AutoWebPerf {
         this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
 
         // Get the ApiKeys variables from the Config through Connector.
-        this.apiKeys = this.connector.getConfig().apiKeys;
+        this.config = this.connector.getConfig();
         break;
 
       case 'fake':
@@ -201,9 +202,8 @@ class AutoWebPerf {
           break;
       }
 
-      this.gatherers[name] = new GathererClass({
-          apiKey: this.apiKeys[name],
-        },
+      this.gatherers[name] = new GathererClass(
+        this.config,
         this.apiHandler,
         options);
     }

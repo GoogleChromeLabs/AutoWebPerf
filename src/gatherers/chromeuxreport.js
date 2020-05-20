@@ -28,17 +28,28 @@ class ChromeUXReportGatherer extends Gatherer {
     assert(config, 'Parameter config is missing.');
     assert(apiHelper, 'Parameter apiHelper is missing.');
 
-    this.projectId = config.gcpProjectId;
+    this.gcpProjectId = config.gcpProjectId;
+    this.config = config;
+
+    console.log('config', config);
+
+    console.log('apiHelper', apiHelper);
+
+    console.log('options', options);
+
+    if(this.config.connector=='json') {
+      this.bigQueryHandler = new BigQueryHandler({
+        projectId: config.gcpProjectId,
+        keyFilename: this.keyFilename,
+        platform: config.platform, // 'Node' or 'GoogleSheets'.
+      });
+    }
 
     //this.origins = config.origins;
     //this.keyFilename = options.keyFilename;
 
 		// Create the BigQuery Handler.
-		/*this.bigQueryHandler = new BigQueryHandler({
-      projectId: config.projectId,
-			keyFilename: this.keyFilename,
-			platform: config.platform, // 'Node' or 'GoogleSheets'.
-    });
+		/*
     */
 
     // Query:
@@ -159,42 +170,25 @@ class ChromeUXReportGatherer extends Gatherer {
 
   run(test, options) {
     assert(test, 'Parameter test is missing.');
-    options = options || {};
   }
 
   retrieve(result, options) {
 		assert(result, 'Parameter result is missing.');
-
-		// TODO: Replace the dummy response with real code.
-		return {
-      status: Status.RETRIEVED,
-    };
   }
 
 	runBatch(tests, options) {
 		assert(tests, 'Parameter tests is missing.');
 
-    console.log('runBatch test');
+
+    console.log('gcpProjectId', this.gcpProjectId);
+    console.log('tests', tests);
+
+
 
     return this.fakeResponses(tests);
-
-		// TODO: Replace the dummy response with real code. Make sure the length
-    // of the responses match the length of Tests, i.e. # of origins.
-		//return this.fakeResponses(tests);
 	}
 
 	retrieveBatch(results, options) {
-		assert(results, 'Parameter results is missing.');
-
-    return {
-
-      status: Status.RETRIEVED,
-    };
-
-		// TODO: Replace the dummy response with real code.
-		//return {
-		//	status: Status.RETRIEVED,
-		//};
 	}
 
 	/**
@@ -210,56 +204,23 @@ class ChromeUXReportGatherer extends Gatherer {
     let fakeMetrics = {
       'example.com': [{
         YearMonth: '202004',
-        TimeToFirstByte: {
-          p75: 500,
-          slowDensity: 0.2,
-          averageDensity: 0.2,
-          fastDensity: 0.6,
+        Device: 'phone',
+        DesktopDensity : 0.2,
+        PhoneDensity : 0.75,
+        TabletDensity: 0.05,
+        EffectiveConnectionType: {
+          '4GDensity': 0.90,
+          '3gDensity': 0.90,
+          '2gDensity': 0.10,
+          'slow2GDensity': 0.00,
+          'offlineDensity': 0.00
         },
-        FirstPaint: {
-          p75: 900,
-          slowDensity: 0.1,
-          averageDensity: 0.1,
-          fastDensity: 0.8,
+        NotificatonPermission: {
+          'acceptDensity': 0.2,
+          'ignoreDensity': 0.2,
+          'denyDensity': 0.3,
+          'blockDensity': 0.3,
         },
-        FirstContentfulPaint: {
-          p75: 900,
-          slowDensity: 0.1,
-          averageDensity: 0.1,
-          fastDensity: 0.8,
-        },
-        LargestContentfulPaint: {
-          p75: 1900,
-          slowDensity: 0.1,
-          averageDensity: 0.2,
-          fastDensity: 0.7,
-        },
-        CumulativeLayoutShift: {
-          p75: 0.05,
-          slowDensity: 0.15,
-          averageDensity: 0.15,
-          fastDensity: 0.8,
-        },
-        FirstInputDelay: {
-          p75: 25,
-          slowDensity: 0.25,
-          averageDensity: 0.25,
-          fastDensity: 0.95,
-        },
-        DOMContentLoaded: {
-          p75: 2000,
-          slowDensity: 0.1,
-          averageDensity: 0.1,
-          fastDensity: 0.80,
-        },
-        OnLoad: {
-          p75: 2000,
-          slowDensity: 0.1,
-          averageDensity: 0.1,
-          fastDensity: 0.8,
-        },
-      }, {
-        YearMonth: '202004',
         TimeToFirstByte: {
           p75: 500,
           slowDensity: 0.2,
@@ -311,6 +272,22 @@ class ChromeUXReportGatherer extends Gatherer {
       }],
       'web.dev': [{
         YearMonth: '202005',
+        DesktopDensity : 0.2,
+        PhoneDensity : 0.75,
+        TabletDensity: 0.05,
+        EffectiveConnectionType: {
+          '4GDensity': 0.90,
+          '3gDensity': 0.90,
+          '2gDensity': 0.10,
+          'slow2GDensity': 0.00,
+          'offlineDensity': 0.00,
+        },
+        NotificatonPermission: {
+          'acceptDensity': 0.2,
+          'ignoreDensity': 0.2,
+          'denyDensity': 0.3,
+          'blockDensity': 0.3,
+        },
         TimeToFirstByte: {
           p75: 500,
           slowDensity: 0.2,
@@ -361,6 +338,22 @@ class ChromeUXReportGatherer extends Gatherer {
         },
       }, {
         YearMonth: '202004',
+        DesktopDensity : 0.2,
+        PhoneDensity : 0.75,
+        TabletDensity: 0.05,
+        EffectiveConnectionType: {
+          '4GDensity': 0.90,
+          '3gDensity': 0.90,
+          '2gDensity': 0.10,
+          'slow2GDensity': 0.00,
+          'offlineDensity': 0.00,
+        },
+        NotificatonPermission: {
+          'acceptDensity': 0.2,
+          'ignoreDensity': 0.2,
+          'denyDensity': 0.3,
+          'blockDensity': 0.3,
+        },
         TimeToFirstByte: {
           p75: 500,
           slowDensity: 0.2,

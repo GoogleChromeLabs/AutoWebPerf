@@ -60,6 +60,7 @@ async function begin() {
   let dataSources = argv['dataSources'] ? argv['dataSources'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let runByBatch = argv['runByBatch'] ?  true : false;
+  let keyFileName = argv['keyFileName'] ? argv['keyFileName'] : null;
   let debug = argv['debug'];
   let verbose = argv['verbose'];
 
@@ -82,6 +83,7 @@ async function begin() {
     },
     verbose: verbose,
     debug: debug,
+    keyFileName: keyFileName
   });
 
   switch(action) {
