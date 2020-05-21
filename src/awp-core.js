@@ -280,7 +280,7 @@ class AutoWebPerf {
           Frequency[recurring.frequency.toUpperCase()];
     });
 
-    this.logDebug('AutoWebPerf::recurring, tests.length=\n', tests.length);
+    //this.logDebug('AutoWebPerf::recurring, tests.length=\n', tests.length);
 
     // Before all runs.
     this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
@@ -468,15 +468,13 @@ class AutoWebPerf {
       });
 
       // Run all gatherers.
-      this.dataSources.forEach(dataSource =>  {
-        
-        await runGathererInBatch(tests, dataSource, options).then(responseList => {
+      for(const dataSource of this.dataSources) {
+        await this.runGathererInBatch(tests, dataSource, options).then(responseList => {
           for (let i = 0; i<testResultPairs.length; i++) {
             testResultPairs[i].result[dataSource] = responseList[i];
           }
         });
-
-      });
+      }
 
       // Update overall status and after each run.
       testResultPairs.forEach(pair => {
@@ -627,6 +625,7 @@ class AutoWebPerf {
         // Result objects.
         if (!responseList) return [];
 
+        return responseList;
       });
 
     } catch (error) {
@@ -637,9 +636,8 @@ class AutoWebPerf {
           metadata: {},
         };
       });
+      return responseList;
     }
-
-    //return responseList;
   }
 
   /**
