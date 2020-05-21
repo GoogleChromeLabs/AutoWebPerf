@@ -222,7 +222,7 @@ class AutoWebPerf {
    * - verbose {boolean}: Whether to show verbose messages in terminal.
    * - debug {boolean}: Whether to show debug messages in terminal.
    */
-  run(options) {
+  async run(options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
 
@@ -232,18 +232,20 @@ class AutoWebPerf {
     // Before all runs.
     this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
 
-    let newResults = this.runTests(tests, options);
+    await this.runTests(tests, options).then(newResults => {
 
-    // After all runs.
-    this.runExtensions(extensions, 'afterAllRuns', {
-      tests: tests,
-      results: newResults,
-    }, options);
+      // After all runs.
+      this.runExtensions(extensions, 'afterAllRuns', {
+        tests: tests,
+        results: newResults,
+      }, options);
 
-    return {
-      tests: tests,
-      results: newResults,
-    };
+      return {
+        tests: tests,
+        results: newResults,
+      };
+
+    });
   }
 
   /**
@@ -443,7 +445,7 @@ class AutoWebPerf {
    * - debug {boolean}: Whether to show debug messages in terminal.
    * @return {type}          description
    */
-  runTests(tests, options) {
+  async runTests(tests, options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
     let overrideResults = options.overrideResults;
@@ -466,11 +468,13 @@ class AutoWebPerf {
 
       // Run all gatherers.
       this.dataSources.forEach(dataSource =>  {
-        let responseList = this.runGathererInBatch(tests, dataSource, options);
+        
+        await runGathererInBatch(tests, dataSource, options).then(responseList => {
+          for (let i = 0; i<testResultPairs.length; i++) {
+            testResultPairs[i].result[dataSource] = responseList[i];
+          }
+        });
 
-        for (let i = 0; i<testResultPairs.length; i++) {
-          testResultPairs[i].result[dataSource] = responseList[i];
-        }
       });
 
       // Update overall status and after each run.
@@ -607,17 +611,22 @@ class AutoWebPerf {
    * @param  {type} options    description
    * @return {type}            description
    */
-  runGathererInBatch(tests, dataSource, options) {
+  async runGathererInBatch(tests, dataSource, options) {
     let responseList = [];
 
     try {
       let gatherer = this.getGatherer(dataSource);
-      responseList = gatherer.runBatch(tests, options);
 
-      // If there's no response, it means that the specific gatherer doesn't
-      // support runBatch. Hence it won't add any corresponding metrics to the
-      // Result objects.
-      if (!responseList) return [];
+      await gatherer.runBatch(tests, options).then(res => {
+
+        responseList = res;
+
+        // If there's no response, it means that the specific gatherer doesn't
+        // support runBatch. Hence it won't add any corresponding metrics to the
+        // Result objects.
+        if (!responseList) return [];
+
+      });
 
     } catch (error) {
       responseList = tests.map(test => {
@@ -629,7 +638,7 @@ class AutoWebPerf {
       });
     }
 
-    return responseList;
+    //return responseList;
   }
 
   /**
