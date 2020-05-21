@@ -3,7 +3,7 @@
   "envVars": {
     "webpagetestApiKey": "TEST_APIKEY",
     "psiApiKey": "TEST_APIKEY",
-    "gcpKeyFilePath": "service_accounts/google.com_auto-web-perf-0b5dfe68b2fa.json",
+    "gcpKeyFilePath": "/Users/gilbertoc/awp/service_accounts/google.com_auto-web-perf-0b5dfe68b2fa.json",
     "gcpProjectId": "google.com:auto-web-perf"
   },
 

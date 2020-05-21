@@ -57,21 +57,32 @@ class ChromeUXReportGatherer extends Gatherer {
     if(tests.length) {
       tests.forEach(test => {
         originsArray.push(test.chromeuxreport.origin);
-        originsString += "\"" + test.chromeuxreport.origin + "\" ,";
+        originsString += "\"" + test.chromeuxreport.origin + "\", ";
       });
-      originsString = originsString.substring(0,originsString.length-1);
+      originsString = originsString.substring(0,originsString.length-2);
 
 
+      let query = this.deviceQuery(originsString);
 
-      let rows = await this.bigQueryHandler.query(originsString);
+      //console.log('query', query);
+      let rows = await this.bigQueryHandler.query(query);
       
       console.log('rows', rows);
 
+      return rows;
+
+      /*
+      return tests.map(test => {
+        return {
+          status: Status.RETRIEVED,
+          origin: test.url,
+          metrics: fakeMetrics[test.url] || fakeMetrics['web.dev'],
+        }
+      });
+      */
     }
-
-    // this.bigQueryHandler.query()
-
-    return this.fakeResponses(tests);
+      
+    return null;
 	}
 
 	retrieveBatch(results, options) {
