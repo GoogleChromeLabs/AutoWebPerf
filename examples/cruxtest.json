@@ -1,4 +1,12 @@
 {
+
+  "envVars": {
+    "webpagetestApiKey": "TEST_APIKEY",
+    "psiApiKey": "TEST_APIKEY",
+    "gcpKeyFilePath": "service_accounts/google.com_auto-web-perf-0b5dfe68b2fa.json",
+    "gcpProjectId": "google.com:auto-web-perf"
+  },
+
   "config": {
     "apiKeys": {
       "webpagetest": "TEST_APIKEY",
@@ -6,20 +14,17 @@
     },
     "gcpProjectId": "google.com:auto-web-perf"
   },
-  "tests": [
-    {
+  "tests": [{
       "selected": true,
       "chromeuxreport": {
-        "origin":"https://web.dev"
-      },
-      "id": "1580105180079-https://wweb.dev"
+        "origin": "https://web.dev"
+      }
     },
     {
       "selected": true,
       "chromeuxreport": {
-        "origin":"https://wwww.google.com"
-      },
-      "id": "1580105180079-https://www.google.com"
+        "origin": "https://wwww.google.com"
+      }
     }
   ]
 }

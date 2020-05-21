@@ -181,11 +181,29 @@ class ChromeUXReportGatherer extends Gatherer {
 
 
     console.log('gcpProjectId', this.gcpProjectId);
-    console.log('tests', tests);
 
+    var originsArray = [];
+    var originsString = "";
 
+    if(tests.length) {
+      tests.forEach(test => {
+        originsArray.push(test.chromeuxreport.origin);
+        originsString += "\"" + test.chromeuxreport.origin + "\" ,";
+      });
+      originsString = originsString.substring(0,originsString.length-1);
 
-    return this.fakeResponses(tests);
+      var query = this.deviceQuery(originsString);
+      this.bigQueryHandler.query(query).then(data => {
+        console.log('data', data);
+
+        return data;
+
+      });
+    }
+
+    // this.bigQueryHandler.query()
+
+    //return this.fakeResponses(tests);
 	}
 
 	retrieveBatch(results, options) {
@@ -413,6 +431,67 @@ class ChromeUXReportGatherer extends Gatherer {
       }
     });
   }
+
+  deviceQuery(origins) {
+    const query = `SELECT
+          yyyymm as Date,
+          Origin,
+          Device,
+          p75_ttfb,
+          p75_fp,
+          p75_fcp,
+          p75_lcp,
+          p75_fid,
+          p75_cls,
+          p75_dcl,
+          p75_ol,
+          IF(fast_fp>0, fast_fp /(fast_fp + avg_fp + slow_fp), null) AS fast_fp,
+          IF(avg_fp>0, avg_fp / (fast_fp + avg_fp + slow_fp), null) AS avg_fp,
+          IF(slow_fp>0, slow_fp / (fast_fp + avg_fp + slow_fp), null) AS slow_fp,
+          IF(fast_fcp>0, fast_fcp / (fast_fcp + avg_fcp + slow_fcp), null) AS fast_fcp,
+          IF(avg_fcp>0, avg_fcp / (fast_fcp + avg_fcp + slow_fcp), null) AS avg_fcp,
+          IF(slow_fcp>0, slow_fcp / (fast_fcp + avg_fcp + slow_fcp), null) AS slow_fcp,
+          IF(fast_lcp>0, fast_lcp / (fast_lcp + avg_lcp + slow_lcp), null) AS fast_lcp,
+          IF(avg_lcp>0, avg_lcp / (fast_lcp + avg_lcp + slow_lcp), null) AS avg_lcp,
+          IF(slow_lcp>0, slow_lcp / (fast_lcp + avg_lcp + slow_lcp), null) AS slow_lcp,
+          IF(fast_fid>0, fast_fid / (fast_fid + avg_fid + slow_fid), null) AS fast_fid,
+          IF(avg_fid>0, avg_fid / (fast_fid + avg_fid + slow_fid), null) AS avg_fid,
+          IF(slow_fid>0, slow_fid / (fast_fid + avg_fid + slow_fid), null) AS slow_fid,
+          IF(fast_dcl>0, fast_dcl / (fast_dcl + avg_dcl + slow_dcl), null) AS fast_dcl,
+          IF(avg_dcl>0, avg_dcl / (fast_dcl + avg_dcl + slow_dcl), null) AS avg_dcl,
+          IF(slow_dcl>0, slow_dcl / (fast_dcl + avg_dcl + slow_dcl), null) AS slow_dcl,
+          IF(fast_ol>0, fast_ol / (fast_ol + avg_ol + slow_ol), null) AS fast_ol,
+          IF(avg_ol>0, avg_ol / (fast_ol + avg_ol + slow_ol), null) AS avg_ol,
+          IF(slow_ol>0, slow_ol / (fast_ol + avg_ol + slow_ol), null) AS slow_ol,
+          IF(fast_ttfb>0, fast_ttfb / (fast_ttfb + avg_ttfb + slow_ttfb), null) AS fast_ttfb,
+          IF(avg_ttfb>0, avg_ttfb / (fast_ttfb + avg_ttfb + slow_ttfb), null) AS avg_ttfb,
+          IF(slow_ttfb>0, slow_ttfb / (fast_ttfb + avg_ttfb + slow_ttfb), null) AS slow_ttfb,
+          IF(small_cls>0, small_cls / (small_cls + medium_cls + large_cls), null) AS small_cls,
+          IF(medium_cls>0, medium_cls / (small_cls + medium_cls + large_cls), null) AS medium_cls,
+          IF(large_cls>0, large_cls / (small_cls + medium_cls + large_cls), null) AS large_cls,
+          desktopDensity,
+          phoneDensity,
+          tabletDensity,
+          _4GDensity,
+          _3GDensity,
+          _2GDensity,
+          slow2GDensity,
+          offlineDensity,
+          notification_permission_accept,
+          notification_permission_deny,
+          notification_permission_ignore,
+          notification_permission_dismiss
+           FROM
+             \`chrome-ux-report.materialized.device_summary\`
+           WHERE
+             origin IN (` + origins + `)
+           ORDER BY
+             Origin,
+             Date;`
+
+    return query;
+  }
+
 }
 
 module.exports = ChromeUXReportGatherer;
