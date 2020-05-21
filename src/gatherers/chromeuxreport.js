@@ -192,13 +192,12 @@ class ChromeUXReportGatherer extends Gatherer {
       });
       originsString = originsString.substring(0,originsString.length-1);
 
-      var query = this.deviceQuery(originsString);
-      this.bigQueryHandler.query(query).then(data => {
-        console.log('data', data);
 
-        return data;
 
-      });
+      let rows = await this.bigQueryHandler.query(query);
+      
+      console.log('rows', rows);
+
     }
 
     // this.bigQueryHandler.query()
