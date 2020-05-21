@@ -16,7 +16,7 @@
 
 class Connector {
   constructor(config, apiHandler) {}
-  getConfig() {}
+  getEnvVars() {}
   getTestList(options) {}
   updateTestList(newTests, options) {}
   getResultList(options) {}

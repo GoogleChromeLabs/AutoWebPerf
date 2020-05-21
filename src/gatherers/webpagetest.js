@@ -23,14 +23,16 @@ const {Metrics} = require('../common/metrics');
 const Gatherer = require('./gatherer');
 
 class WebPageTestGatherer extends Gatherer {
-  constructor(config, apiHelper, options) {
+  constructor(config, envVars, apiHelper, options) {
     super();
     assert(config, 'Parameter config is missing.');
     assert(apiHelper, 'Parameter apiHelper is missing.');
 
+    envVars = envVars || {};
+
     this.runApiEndpoint = 'https://webpagetest.org/runtest.php';
     this.resultApiEndpoint = 'https://webpagetest.org/jsonResult.php';
-    this.apiKey = config.apiKey;
+    this.apiKey = envVars['webPageTestApiKey'];
     this.apiHelper = apiHelper;
 
     options = options || {};

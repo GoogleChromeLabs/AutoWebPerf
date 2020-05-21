@@ -22,9 +22,10 @@ const setObject = require('../utils/set-object');
 const Extension = require('./extension');
 
 class BudgetsExtension extends Extension {
-  constructor(config) {
+  constructor(config, envVars) {
     super();
     config = config || {};
+    this.envVars = envVars;
     this.defaultDataSource = config.dataSource || 'webpagetest';
 
     this.budgetMetricMap = {

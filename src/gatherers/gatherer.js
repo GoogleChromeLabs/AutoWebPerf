@@ -15,16 +15,51 @@
  */
 
 class Gatherer {
-  constructor(config, apiHelper, options) {}
+  /**
+   * constructor
+   * @param  {object} config The config object specific for the gatherer.
+   * @param  {object} envVars The object of all environment variables.
+   * @param  {object} apiHelper API helper instance.
+   * @param  {object} options Options object.
+   */
+  constructor(config, envVars, apiHelper, options) {}
+
+  /**
+   * Run a single Test.
+   * @param  {object} test A Test object.
+   * @param  {object} options Options object.
+   * @return {object} Response object, including status proeprty.
+   */
   run(test, options) {
     return null; // Return null by default.
   }
+
+  /**
+   * Run a list of Tests in batch.
+   * @param  {Array<object>} tests List of Test objects.
+   * @param  {object} options Options object.
+   * @return {object} Response object, including status proeprty.
+   */
   runBatch(tests, options) {
     return null; // Return null by default.
   }
+
+  /**
+   * Rtrieve a single Result.
+   * @param  {object} result A Result object.
+   * @param  {object} options Options object.
+   * @return {object} Response object, including status proeprty.
+   */
   retrieve(result, options) {
     return null; // Return null by default.
   }
+
+  /**
+   * Retrieve a list of Results in batch.
+   * @param  {Array<object>} results List of Result objects
+   * @param  {object} options Options object.
+   * @return {object} Response object, including status proeprty.
+   */
   retrieveBatch(results, options) {
     return null; // Return null by default.
   }

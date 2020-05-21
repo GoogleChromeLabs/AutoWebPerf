@@ -46,12 +46,13 @@ class GoogleSheetsExtension extends Extension {
    * @param {object} config The config for this extension, as the "googlesheets"
    *     property in awpConfig loaded from src/awp-core.js.
    */
-  constructor(config) {
+  constructor(config, envVars) {
     super();
     assert(config.connector, 'connector is missing in config.');
     assert(config.apiHandler, 'apiHandler is missing in config.');
     assert(config.gaAccount, 'gaAccount is missing in config.');
 
+    this.envVars = envVars;
     this.connector = config.connector;
     this.apiHandler = config.apiHandler;
     this.userTimeZone = GoogleSheetsHelper.getUserTimeZone();

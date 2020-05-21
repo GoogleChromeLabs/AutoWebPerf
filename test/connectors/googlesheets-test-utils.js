@@ -18,10 +18,10 @@
 const assert = require('../../src/utils/assert');
 
 const fakeSheetData = {
-  fakeConfigSheetData: [
+  fakeEnvVarsSheetData: [
     ['Name', 'key', 'value'],
-    ['WPT API Key', 'apiKeys.webpagetest', 'TEST_APIKEY'],
-    ['PSI API Key', 'apiKeys.psi', 'PSI_KEY'],
+    ['WPT API Key', 'webPageTestApiKey', 'TEST_APIKEY'],
+    ['PSI API Key', 'psiApiKey', 'PSI_KEY'],
   ],
   fakeSystemSheetData: [
     ['Name', 'key', 'value'],

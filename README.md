@@ -1,8 +1,44 @@
 # AutoWebPerf (AWP)
 
-> AutoWebPerf automates web performance audits and collects multiple audit
-sources including WebPageTest and PageSpeedInsight, with the support of running
-recurring audits.
+> AutoWebPerf provides a flexible and scalable framework for running web
+performance audits with arbitrary audit tools like WebPageTest and
+PageSpeedInsights. This library enables developers to collect metrics
+consistently and store metrics to a preferred data store such as local JSON
+files, Google Sheets, BigQuery, or an in-house SQL database.
+
+## How it works
+
+AutoWebPerf takes a list of **Tests** from an arbitrary data store platform,
+such as local JSONs, Google Sheets, BigQuery, or a self-hosted SQL database.
+With the list of Tests, it executes audits based on each Test config, collects
+metrics from individual data sources into a list of **Results**.
+
+The process of running an audit through an measurement tool (e.g. WebPageTest)
+is defined in the individual **Gatherer**. The logic of reading and writing
+with a data platform (e.g. local JSON) is implemented in a **Connector**.
+
+### Feature highlights
+
+- A library of web audit automation that can be plugged-in to any platforms,
+like Google Sheets, GCP App Engine, or simply a cron job that writes to JSON
+file.
+- Providing the ability to run recurring tests with customizable frequency
+(e.g. daily, weekly, monthly, etc), network conditions, and other audit configs,
+etc.
+- Metric gatherers are designed as modules that are decoupled with the output
+data format and automation logic.
+- Connector modules are designed to write audit results to specific data format
+or platforms. e.g. a connector for GoogleSheets.
+(See ```src/connectors/googlesheets-connector``` for details)
+
+### How does this compare to the rest of Google's speed measurement tools?
+
+AutoWebPerf serves as a performance audit aggregator that automates the process
+of performance audit and metrics collection through multiple speed measurement
+tools including WebPageTest, PageSpeedInsight, and Chrome UX Report. As each
+individual speed measurement tool provides audit metrics, AutoWebPerf aggregates
+the results and writes to any preferred data storage platform, such as local
+JSONs, cloud-based database, or GoogleSheets.
 
 ## Getting Started
 

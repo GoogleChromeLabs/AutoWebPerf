@@ -26,12 +26,15 @@ let fakeApiHandler = {
 };
 
 let wptGatherer;
+let wptConfig = {};
+let envVars = {
+  webPageTestApiKey: 'TEST_APIKEY',
+};
 
 describe('WPTGatherer unit test', () => {
   beforeEach(() => {
-    wptGatherer = new WPTGatherer({
-      apiKey: 'TEST_APIKEY',
-    }, fakeApiHandler, {} /* options */);
+    wptGatherer = new WPTGatherer(wptConfig, envVars, fakeApiHandler,
+        {} /* options */);
   });
 
   it('submits test and get initial response with test ID', async () => {
