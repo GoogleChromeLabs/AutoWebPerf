@@ -263,7 +263,7 @@ class AutoWebPerf {
    * - verbose {boolean}: Whether to show verbose messages in terminal.
    * - debug {boolean}: Whether to show debug messages in terminal.
    */
-  recurring(options) {
+  async recurring(options) {
     options = options || {};
     options.recurring = true;
 
@@ -318,7 +318,7 @@ class AutoWebPerf {
       });
 
       // Run tests and updates next trigger timestamp.
-      newResults = this.runTests(tests, options);
+      newResults = await this.runTests(tests, options);
 
       // Update next trigger timestamp.
       tests.forEach(test => {
@@ -470,9 +470,10 @@ class AutoWebPerf {
       // Run all gatherers.
       for(const dataSource of this.dataSources) {
         await this.runGathererInBatch(tests, dataSource, options).then(responseList => {
-          for (let i = 0; i<testResultPairs.length; i++) {
-            testResultPairs[i].result[dataSource] = responseList[i];
-          }
+          if(responseList)
+            for (let i = 0; i<testResultPairs.length; i++) {
+              testResultPairs[i].result[dataSource] = responseList[i];
+            }
         });
       }
 
@@ -611,15 +612,10 @@ class AutoWebPerf {
    * @return {type}            description
    */
   async runGathererInBatch(tests, dataSource, options) {
-    let responseList = [];
-
     try {
       let gatherer = this.getGatherer(dataSource);
 
-      await gatherer.runBatch(tests, options).then(res => {
-
-        responseList = res;
-
+      await gatherer.runBatch(tests, options).then(responseList => {
         // If there's no response, it means that the specific gatherer doesn't
         // support runBatch. Hence it won't add any corresponding metrics to the
         // Result objects.
@@ -629,7 +625,7 @@ class AutoWebPerf {
       });
 
     } catch (error) {
-      return responseList = tests.map(test => {
+      return tests.map(test => {
         return {
           status: Status.ERROR,
           statusText: error.stack,

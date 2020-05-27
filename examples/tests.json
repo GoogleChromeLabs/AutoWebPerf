@@ -1,10 +1,9 @@
 {
-  "config": {
-    "webPageTestApiKey": "TEST_APIKEY",
-    "webPageTestEndpoint": null,
+  "envVars": {
+    "webpagetestApiKey": "TEST_APIKEY",
     "psiApiKey": "TEST_APIKEY",
-    "gcpProjectId": "",
-    "gcpKeyFilePath": ""
+    "gcpKeyFilePath": "/Users/gilbertoc/awp/service_accounts/google.com_auto-web-perf-0b5dfe68b2fa.json",
+    "gcpProjectId": "google.com:auto-web-perf"
   },
   "tests": [
     {

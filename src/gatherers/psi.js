@@ -159,6 +159,10 @@ class PSIGatherer extends Gatherer {
     return this.run(resultObj, options);
   }
 
+  async runBatch(tests, options) {
+    return null;
+  }
+
   fakeRunResponse() {
     return {
       "captchaResult": "CAPTCHA_NOT_NEEDED",

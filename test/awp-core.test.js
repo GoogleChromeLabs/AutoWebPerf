@@ -102,8 +102,10 @@ class FakeConnector extends Connector {
   }
   getConfig() {
     return {
-      apiKeys: {
-        'fake': 'TEST_APIKEY'
+      "envVars": {
+        "webpagetestApiKey": "TEST_APIKEY",
+        "psiApiKey": "TEST_APIKEY",
+        "gcpProjectId": "google.com:auto-web-perf"
       }
     };
   }
@@ -134,7 +136,7 @@ class FakeGatherer extends Gatherer {
       status: Status.SUBMITTED,
     };
   }
-  runBatch(tests) {
+  async runBatch(tests) {
     let responseList = tests.map(test => {
       return {
         status: Status.RETRIEVED,
@@ -315,7 +317,7 @@ describe('AutoWebPerf with fake modules', () => {
 
   it('runs through a list of tests and executes extensions.', async () => {
     awp.connector.tests = generateFakeTests(10);
-    awp.run();
+    await awp.run();
     expect(awp.extensions.fake.beforeAllRuns.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.afterAllRuns.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.beforeRun.mock.calls.length).toBe(10);
@@ -340,7 +342,7 @@ describe('AutoWebPerf with fake modules', () => {
       recurring: {frequency: 'daily'},
     });
 
-    awp.recurring();
+    await awp.recurring();
     expect(awp.extensions.fake.beforeAllRuns.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.beforeRun.mock.calls.length).toBe(10);
     expect(awp.extensions.fake.afterRun.mock.calls.length).toBe(10);
@@ -357,7 +359,7 @@ describe('AutoWebPerf with fake modules', () => {
     awp.connector.tests[0].recurring.nextTriggerTimestamp = futureTime;
     awp.connector.tests[1].recurring.nextTriggerTimestamp = futureTime;
 
-    let {tests, results} = awp.recurring();
+    let {tests, results} = await awp.recurring();
     expect(tests.length).toBe(8);
     expect(results.length).toBe(8);
   });
@@ -374,14 +376,16 @@ describe('AutoWebPerf with fake modules', () => {
 
   it('retrieves a list of metrics for each Result in batch mode.', async () => {
     awp.connector.tests = generateFakeTests(10);
-    awp.run({runByBatch: true});
+    await awp.run({runByBatch: true});
 
     let results = awp.connector.results;
     expect(results.length).toEqual(10);
 
     results.forEach(result => {
-      let metrics = result.fake.metrics;
-      expect(metrics).not.toBe(undefined);
+      if(result.fake) {
+        let metrics = result.fake.metrics;
+        expect(metrics).not.toBe(undefined);
+      }
     })
   });
 
@@ -406,11 +410,11 @@ describe('AutoWebPerf with fake modules', () => {
         }
       }
     };
-    awp.apiKeys = {
-      fake1: 'TEST_APIKEY',
-      fake2: 'TEST_APIKEY',
-      fake3: 'TEST_APIKEY',
-    }
+    awp.envVars = {
+      "webpagetestApiKey": "TEST_APIKEY",
+      "psiApiKey": "TEST_APIKEY",
+      "gcpProjectId": "google.com:auto-web-perf"
+    };
     awp.dataSources = ['fake1', 'fake2', 'fake3'];
 
     // When all gatherers return submitted.
