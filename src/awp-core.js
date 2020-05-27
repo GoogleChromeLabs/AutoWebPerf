@@ -629,14 +629,13 @@ class AutoWebPerf {
       });
 
     } catch (error) {
-      responseList = tests.map(test => {
+      return responseList = tests.map(test => {
         return {
           status: Status.ERROR,
           statusText: error.stack,
           metadata: {},
         };
       });
-      return responseList;
     }
   }
 

@@ -48,13 +48,11 @@ class ChromeUXReportGatherer extends Gatherer {
 	async runBatch(tests, options) {
 		assert(tests, 'Parameter tests is missing.');
 
-
-    console.log('gcpProjectId', this.gcpProjectId);
-
     var originsArray = [];
     var originsString = "";
 
     if(tests.length) {
+
       tests.forEach(test => {
         originsArray.push(test.chromeuxreport.origin);
         originsString += "\"" + test.chromeuxreport.origin + "\", ";
@@ -67,22 +65,27 @@ class ChromeUXReportGatherer extends Gatherer {
       //console.log('query', query);
       let rows = await this.bigQueryHandler.query(query);
       
-      console.log('rows', rows);
+      var results = [],
+          originsOrder = {},
+          originsIndex = 0;
 
-      return rows;
-
-      /*
-      return tests.map(test => {
-        return {
+      tests.map(test => {
+        results.push({
           status: Status.RETRIEVED,
-          origin: test.url,
-          metrics: fakeMetrics[test.url] || fakeMetrics['web.dev'],
-        }
+          origin: test.chromeuxreport.origin,
+          metrics : []
+        });
+        originsOrder[test.chromeuxreport.origin]=originsIndex;
+        originsIndex++;
       });
-      */
-    }
+
+      rows.forEach(row => {
+        var index = originsOrder[row.Origin];
+        results[index].metrics.push(row);
+      });
       
-    return null;
+      return results;
+    }
 	}
 
 	retrieveBatch(results, options) {
