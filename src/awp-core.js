@@ -612,20 +612,22 @@ class AutoWebPerf {
    * @return {type}            description
    */
   async runGathererInBatch(tests, dataSource, options) {
+    let responseList = [];
+
     try {
       let gatherer = this.getGatherer(dataSource);
 
-      await gatherer.runBatch(tests, options).then(responseList => {
+      await gatherer.runBatch(tests, options).then(res => {
         // If there's no response, it means that the specific gatherer doesn't
         // support runBatch. Hence it won't add any corresponding metrics to the
         // Result objects.
-        if (!responseList) return [];
-
+        if (!res) return [];
+        responseList = res;
         return responseList;
       });
 
     } catch (error) {
-      return tests.map(test => {
+      responseList = tests.map(test => {
         return {
           status: Status.ERROR,
           statusText: error.stack,
@@ -633,6 +635,7 @@ class AutoWebPerf {
         };
       });
     }
+    return responseList;
   }
 
   /**
