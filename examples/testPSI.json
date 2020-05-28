@@ -1,0 +1,18 @@
+{
+  "envVars": {
+    "psiApiKey": "TEST_APIKEY"
+  },
+  "tests": [
+    {
+      "selected": true,
+      "label": "YT",
+      "url": "https://www.youtube.com",
+      "psi": {
+        "settings": {
+          "locale": "en-GB",
+          "strategy": "mobile"
+        }
+      }
+    }
+  ]
+}

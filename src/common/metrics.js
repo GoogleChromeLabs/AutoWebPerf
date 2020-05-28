@@ -37,6 +37,7 @@ const MetricKeys = [
   'FirstCPUIdle',
   'LargestContentfulPaint',
   'CumulativeLayoutShift',
+  'FirstInputDelay',
 
   // resourceSize
   'TotalSize',
@@ -48,9 +49,10 @@ const MetricKeys = [
   'Images',
   'WebPImages',
   'OptimizedImages',
-  'ReponsiveImages',
+  'ResponsiveImages',
   'OffscreenImages',
   'Videos',
+  'Medias',
   'ThirdParty',
   'RenderBlockingResources',
 
