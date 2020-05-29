@@ -60,17 +60,17 @@ describe('PSIGatherer unit test', () => {
   it('submits test and handles with incomplete or error response', async () => {
     let test = {
       selected: true,
-      url: 'google.com',
-      label: 'Google',
+      label: "YT",
+      url: "https://www.youtube.com",
       psi: {
         settings: {
-          locale: 'en-US',
-          strategy: 'mobile'
+          locale: "en-GB",
+          strategy: "mobile"
         }
-      },
+      }
     };
 
-    // When returning empty response.
+    // Test empty response.
     let response, fakeResponse;
     psiGatherer.fakeRunResponse = () => {
       return null;
@@ -79,7 +79,7 @@ describe('PSIGatherer unit test', () => {
     expect(response.status).toEqual(Status.ERROR);
     expect(response.statusText).not.toBe('Success');
 
-    // When returning empty response.
+    // Test Lighthouse data.
     fakeResponse = {};
     setObject(fakeResponse,
         'lighthouseResult.audits.metrics.details.items[0].speedIndex',
@@ -90,20 +90,59 @@ describe('PSIGatherer unit test', () => {
     response = psiGatherer.run(test, {} /* options */);
     expect(response.status).toEqual(Status.RETRIEVED);
     expect(response.statusText).toEqual('Success');
-    expect(response.metrics.SpeedIndex).toEqual(2000);
+    expect(response.metrics.lighthouse.SpeedIndex).toEqual(2000);
+
+    // Test CrUX data.
+    fakeResponse = {};
+    setObject(fakeResponse,
+        'loadingExperience.metrics.LARGEST_CONTENTFUL_PAINT_MS',
+        {
+          "percentile": 3610,
+          "distributions": [
+            {
+              "min": 2500,
+              "max": 4000,
+              "proportion": 0.24342440183268282
+            },
+            {
+              "min": 0,
+              "max": 2500,
+              "proportion": 0.55002168297603571
+            },
+            {
+              "min": 4000,
+              "proportion": 0.2065539151912815
+            }
+          ],
+          "category": "AVERAGE"
+        });
+    psiGatherer.fakeRunResponse = () => {
+      return fakeResponse;
+    };
+    response = psiGatherer.run(test, {} /* options */);
+
+    expect(response.status).toEqual(Status.RETRIEVED);
+    expect(response.statusText).toEqual('Success');
+    expect(response.metrics.crux.LargestContentfulPaint).toEqual({
+      "category": "AVERAGE",
+      "percentile": 3610,
+      "good": 0.5500216829760357,
+      "ni": 0.24342440183268282,
+      "poor": 0.2065539151912815
+    });
   });
 
   it('follows standardized metric names', async () => {
     let test = {
       selected: true,
-      url: 'google.com',
-      label: 'Google',
+      label: "YT",
+      url: "https://www.youtube.com",
       psi: {
         settings: {
-          locale: 'en-US',
-          strategy: 'mobile'
+          locale: "en-GB",
+          strategy: "mobile"
         }
-      },
+      }
     };
 
     let response = psiGatherer.run(test, {} /* options */);

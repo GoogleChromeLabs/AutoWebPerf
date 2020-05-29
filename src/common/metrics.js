@@ -67,6 +67,10 @@ const MetricKeys = [
   'Manifest',
   'ServiceWorker',
   'Offline',
+
+  // tools
+  'crux',
+  'lighthouse',
 ];
 
 class Metrics {

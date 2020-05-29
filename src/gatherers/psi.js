@@ -80,7 +80,6 @@ class PSIGatherer extends Gatherer {
   run(test, options) {
     assert(test, 'Parameter test is missing.');
     options = options || {};
-
     let settings = test.psi.settings;
     let params = {
       'url': encodeURIComponent(test.url),
@@ -113,10 +112,28 @@ class PSIGatherer extends Gatherer {
       let res = this.apiHelper.fetch(url);
       json = JSON.parse(res);
     }
-
     let metadata = {}, metrics = new Metrics(), errors = [];
-    if (json && json.lighthouseResult) {
-      this.preprocessData(json);
+
+    if(json) {
+      if(json.loadingExperience) {
+        this.preprocessData(json,'crux');
+      }
+
+      if (json.lighthouseResult) {
+        if(json.lighthouseResult.audits['resource-summary']) {
+          this.preprocessData(json,'lighthouseResourceSummary');
+        }
+        // summing up the render blocking resources
+        let blockingResourceSize = 0;
+        const blockingResources = json.lighthouseResult.audits['render-blocking-resources'];
+        if (blockingResources) {
+          blockingResources.details.items.forEach((br) => {
+            blockingResourceSize += br.totalBytes;
+          });
+          metrics.set('RenderBlockingResources', blockingResourceSize);
+        }
+      }
+
       Object.keys(this.metadataMap).forEach(key => {
         try {
           eval(`metadata.${key} = json.${this.metadataMap[key]}`);
@@ -133,16 +150,6 @@ class PSIGatherer extends Gatherer {
           errors.push(e.message);
         }
       });
-      // summing up the render blocking resources
-      let blockingResourceSize = 0;
-      const blockingResources = json.lighthouseResult.audits['render-blocking-resources'];
-      if (blockingResources) {
-        blockingResources.details.items.forEach((br) => {
-          blockingResourceSize += br.totalBytes;
-        });
-        metrics.set('RenderBlockingResources', blockingResourceSize);
-      }
-
       return {
         status: Status.RETRIEVED,
         statusText: 'Success',
@@ -154,7 +161,7 @@ class PSIGatherer extends Gatherer {
     } else {
       return {
         status: Status.ERROR,
-        statusText: 'No Lighthouse result found in PSI response.',
+        statusText: 'No result found in PSI response.',
         errors: errors,
       }
     }
@@ -168,62 +175,64 @@ class PSIGatherer extends Gatherer {
     return null;
   }
 
-  preprocessData(json) {
+  preprocessData(json, dataSource) {
+    if(dataSource == 'crux') {
+      let processedLoadingExperience = {};
+      let expMetrics = json.loadingExperience.metrics;
+      let expMetricsToProcess = {
+        lcp: expMetrics.LARGEST_CONTENTFUL_PAINT_MS,
+        fid: expMetrics.FIRST_INPUT_DELAY_MS,
+        fcp: expMetrics.FIRST_CONTENTFUL_PAINT_MS,
+        cls: expMetrics.CUMULATIVE_LAYOUT_SHIFT_SCORE
+      };
 
-    // Processing CrUX data.
-    let processedLoadingExperience = {};
-    let expMetrics = json.loadingExperience.metrics;
-    let expMetricsToProcess = {
-      lcp: expMetrics.LARGEST_CONTENTFUL_PAINT_MS,
-      fid: expMetrics.FIRST_INPUT_DELAY_MS,
-      fcp: expMetrics.FIRST_CONTENTFUL_PAINT_MS,
-      cls: expMetrics.CUMULATIVE_LAYOUT_SHIFT_SCORE
-    };
-
-    for (let metric in expMetricsToProcess) {
-      let metricObj = expMetricsToProcess[metric];
-      // Sort metrics by good / ni / fast buckets and populate processed data.
-      metricObj.distributions.sort((a, b) => (a.min > b.min) ? 1 : -1);
-      processedLoadingExperience[metric] = {
-        category: metricObj.category,
-        percentile: metricObj.percentile,
-        good: metricObj.distributions[0].proportion,
-        ni: metricObj.distributions[1].proportion,
-        poor: metricObj.distributions[2].proportion,
+      for (let metric in expMetricsToProcess) {
+        let metricObj = expMetricsToProcess[metric];
+        if (metricObj) {
+          // Sort metrics by good / ni / fast buckets and populate processed data.
+          metricObj.distributions.sort((a, b) => (a.min > b.min) ? 1 : -1);
+          processedLoadingExperience[metric] = {
+            category: metricObj.category,
+            percentile: metricObj.percentile,
+            good: metricObj.distributions[0].proportion,
+            ni: metricObj.distributions[1].proportion,
+            poor: metricObj.distributions[2].proportion,
+          }
+        }
       }
+      json.processedLoadingExperience = processedLoadingExperience;
     }
-    // Processing resource-summary
-    let processedRessourceSummaryItems = {};
-    let ressourceSummaryItems = json.lighthouseResult.audits['resource-summary'].details.items;
-    ressourceSummaryItems.forEach((element) => {
-      switch(element.label) {
-        case 'Document':
-          processedRessourceSummaryItems.HTMLSize = element.transferSize;
-        break;
-        case 'Script':
-          processedRessourceSummaryItems.JavascriptSize = element.transferSize;
-        break;
-        case 'Stylesheet':
-          processedRessourceSummaryItems.CSSSize = element.transferSize;
-        break;
-        case 'Font':
-          processedRessourceSummaryItems.FontsSize = element.transferSize;
-        break;
-        case 'Image':
-          processedRessourceSummaryItems.ImagesSize = element.transferSize;
-        break;
-        case 'Media':
-          processedRessourceSummaryItems.MediasSize = element.transferSize;
-        break;
-        case 'Third-party':
-          processedRessourceSummaryItems.ThirdPartySize = element.transferSize;
-        break;
-      }
-    });
-
-    // Augment json object.
-    json.processedLoadingExperience = processedLoadingExperience;
-    json.processedRessourceSummaryItems = processedRessourceSummaryItems;
+    
+    if(dataSource == 'lighthouseResourceSummary') {
+      let processedRessourceSummaryItems = {};
+      let ressourceSummaryItems = json.lighthouseResult.audits['resource-summary'].details.items;
+      ressourceSummaryItems.forEach((element) => {
+        switch(element.label) {
+          case 'Document':
+            processedRessourceSummaryItems.HTMLSize = element.transferSize;
+          break;
+          case 'Script':
+            processedRessourceSummaryItems.JavascriptSize = element.transferSize;
+          break;
+          case 'Stylesheet':
+            processedRessourceSummaryItems.CSSSize = element.transferSize;
+          break;
+          case 'Font':
+            processedRessourceSummaryItems.FontsSize = element.transferSize;
+          break;
+          case 'Image':
+            processedRessourceSummaryItems.ImagesSize = element.transferSize;
+          break;
+          case 'Media':
+            processedRessourceSummaryItems.MediasSize = element.transferSize;
+          break;
+          case 'Third-party':
+            processedRessourceSummaryItems.ThirdPartySize = element.transferSize;
+          break;
+        }
+      });
+      json.processedRessourceSummaryItems = processedRessourceSummaryItems;
+    }
   }
 
   fakeRunResponse() {
