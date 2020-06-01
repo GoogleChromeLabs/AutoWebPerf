@@ -70,7 +70,7 @@ class AutoWebPerf {
     // Example data sources: ['webpagetest', 'psi']
     this.dataSources = awpConfig.dataSources;
 
-    this.log(`Use helper ${awpConfig.helper}`);
+    this.log(`Use helper: ${awpConfig.helper}`);
     switch (awpConfig.helper.toLowerCase()) {
       case 'node':
         let {NodeApiHandler} = require('./helpers/node-helper');
@@ -92,7 +92,7 @@ class AutoWebPerf {
         break;
     }
 
-    this.log(`Use connector ${awpConfig.connector}`);
+    this.log(`Use connector: ${awpConfig.connector}`);
     let ConnectorClass, connectorName = awpConfig.connector.toLowerCase();
     let connectorConfig = awpConfig[connectorName];
 
@@ -228,7 +228,7 @@ class AutoWebPerf {
     let extensions = options.extensions || Object.keys(this.extensions);
 
     let tests = this.connector.getTestList(options);
-    this.logDebug('AutoWebPerf::run, tests.length=\n', tests.length);
+    this.logDebug(`AutoWebPerf::run with ${tests.length} tests`);
 
     // Before all runs.
     this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
@@ -245,7 +245,6 @@ class AutoWebPerf {
         tests: tests,
         results: newResults,
       };
-
     });
   }
 
@@ -280,12 +279,13 @@ class AutoWebPerf {
           Frequency[recurring.frequency.toUpperCase()];
     });
 
-    //this.logDebug('AutoWebPerf::recurring, tests.length=\n', tests.length);
-
     // Before all runs.
     this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
 
     if (options.activateOnly) {
+      this.logDebug(`AutoWebPerf::recurring with ${tests.length} tests, ` +
+          `activate only.`);
+
       // Update next trigger timestamp only.
       tests.forEach(test => {
         // Before each run.
@@ -316,6 +316,8 @@ class AutoWebPerf {
             (!recurring.nextTriggerTimestamp ||
             recurring.nextTriggerTimestamp <= nowtime);
       });
+
+      this.logDebug(`AutoWebPerf::recurring with ${tests.length} tests`);
 
       // Run tests and updates next trigger timestamp.
       newResults = await this.runTests(tests, options);
@@ -353,7 +355,7 @@ class AutoWebPerf {
    * - verbose {boolean}: Whether to show verbose messages in terminal.
    * - debug {boolean}: Whether to show debug messages in terminal.
    */
-  retrieve(options) {
+  async retrieve(options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
     let resultsToUpdate = [];
@@ -513,9 +515,11 @@ class AutoWebPerf {
         this.dataSources.forEach(dataSource =>  {
           if (!test[dataSource]) return;
 
-          newResult[dataSource] = this.runGatherer(test, dataSource, options);
-          newResult[dataSource].settings = test[dataSource].settings;
-          statuses.push(newResult[dataSource].status);
+          let response = this.runGatherer(test, dataSource, options);
+          if (response) {
+            newResult[dataSource] = response;
+            statuses.push(newResult[dataSource].status);
+          }
         });
 
         // Update overall status.

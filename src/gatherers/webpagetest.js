@@ -35,6 +35,8 @@ class WebPageTestGatherer extends Gatherer {
     this.apiKey = envVars['webPageTestApiKey'];
     this.apiHelper = apiHelper;
 
+    assert(this.apiKey, 'Unable to locate "webPageTestApiKey" in envVars');
+
     options = options || {};
     this.debug = options.debug;
 
@@ -283,7 +285,7 @@ class WebPageTestGatherer extends Gatherer {
         status = Status.RETRIEVED;
         statusText = 'Success';
         if (errors.length > 0) {
-          statusText = 'Success with errors: \n' + errors.join('\n');
+          statusText = 'Success with errors';
         }
         break;
 
@@ -320,13 +322,12 @@ class WebPageTestGatherer extends Gatherer {
       statusCode: 200,
       statusText: 'Ok',
       data: {
-        testId: '200118_KA_4022ee20eaf1deebb393585731de6576',
-        ownerKey: '9c58809d442152143c04bb7f1a711224aac3cfde',
-        jsonUrl: 'https://webpagetest.org/jsonResult.php?test=200118_KA_4022ee20eaf1deebb393585731de6576',
-        xmlUrl: 'https://webpagetest.org/xmlResult/200118_KA_4022ee20eaf1deebb393585731de6576/',
-        userUrl: 'https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/',
-        summaryCSV: 'https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/page_data.csv',
-        detailCSV: 'https://webpagetest.org/result/200118_KA_4022ee20eaf1deebb393585731de6576/requests.csv'
+        testId: '200601_X6_efeb625266aacabaece9ffe9d4bcd207',
+        jsonUrl: 'https://webpagetest.org/jsonResult.php?test=200601_X6_efeb625266aacabaece9ffe9d4bcd207',
+        xmlUrl: 'https://webpagetest.org/xmlResult/200601_X6_efeb625266aacabaece9ffe9d4bcd207/',
+        userUrl: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/',
+        summaryCSV: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/page_data.csv',
+        detailCSV: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/requests.csv'
       }
     };
   }

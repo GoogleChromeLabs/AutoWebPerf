@@ -23,21 +23,6 @@ class NodeApiHandler extends ApiHandler {
   }
 }
 
-class NodeOutputHandler {
-  constructor(isDebug) {
-    this.isDebug = isDebug || false;
-  }
-
-  log(str) {
-    console.log(str);
-  }
-
-  debug(str) {
-    if (this.isDebug) console.error(str);
-  }
-}
-
 module.exports = {
   NodeApiHandler,
-  NodeOutputHandler,
 };

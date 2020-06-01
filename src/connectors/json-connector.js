@@ -21,66 +21,119 @@ const path = require('path');
 const assert = require('../utils/assert');
 const Connector = require('./connector');
 
+/**
+ * the connector handles read and write actions with local JSON files as a data
+ * store. This connector works together with `src/helpers/node-helper.js`.
+ */
 class JSONConnector extends Connector {
   constructor(config) {
     super();
-    assert(config.tests, 'tests is missing in config.');
-    assert(config.results, 'results is missing in config.');
+    assert(config.testsJsonPath, 'testsJsonPath is missing in config.');
+    assert(config.resultsJsonPath, 'resultsJsonPath is missing in config.');
 
-    this.tests = config.tests;
-    this.resultPath = config.results;
-
-    this.testsData = JSON.parse(
-        fse.readFileSync(path.resolve(`${this.tests}`)));
+    this.testsJsonPath = config.testsJsonPath;
+    this.resultsJsonPath = config.resultsJsonPath;
+    this.testsJson = null;
+    this.resultsJson = null;
   }
 
-  healthCheck() {
+  getTestsJson() {
+    if (this.testsJson) return this.testsJson;
 
+    let filepath = path.resolve(`${this.resultsJsonPath}`);
+    return JSON.parse(fse.readFileSync(path.resolve(`${this.testsJsonPath}`)));
+  }
+
+  getResultsJson() {
+    if (this.resultsJson) return this.resultsJson;
+
+    let filepath = path.resolve(`${this.resultsJsonPath}`);
+    if (fse.existsSync(filepath)) {
+      let rawdata = fse.readFileSync(filepath);
+      let content = rawdata.toString();
+      if (content) {
+        return JSON.parse(content);
+      }
+    }
+    return {};
   }
 
   getEnvVars() {
-    return this.testsData.envVars;
+    let testsJson = this.getTestsJson();
+    let envVars = (testsJson || {}).envVars;
+    return envVars;
   }
 
-  getTestList() {
-    return this.testsData.tests;
+  getTestList(options) {
+    let testsJson = this.getTestsJson();
+
+    // Manually add index to all test objects.
+    let index = 0;
+    testsJson.tests.forEach(test => {
+      test.json = {
+        index: index++,
+      }
+    });
+
+    return testsJson.tests;
   }
 
   updateTestList(newTests) {
-    let filepath = path.resolve(`${this.tests}`);
+    let filepath = path.resolve(`${this.testsJsonPath}`);
+    let tests = this.getTestList();
+
+    let rowIndexToTests = {};
+    newTests.forEach(newTest => {
+      rowIndexToTests[newTest.json.index] = newTest;
+    });
+
+    let index = 0;
+    let testsToUpdate = [];
+    tests.forEach(test => {
+      test = rowIndexToTests[index] || test;
+      delete test.json;
+      testsToUpdate.push(test);
+      index++;
+    })
+
     fse.outputFileSync(
       filepath,
       JSON.stringify({
-        "config": this.testsData.envVars,
-        "tests": newTests,
+        envVars: this.getEnvVars(),
+        tests: testsToUpdate,
       }, null, 2));
+
+    // Reset the tests json cache.
+    this.testsJson = null;
   }
 
-  getResultList() {
+  getResultList(options) {
+    let results = [];
     try {
-      let filepath = path.resolve(`${this.resultPath}`);
-      if (fse.existsSync(filepath)) {
-        let rawdata = fse.readFileSync(filepath);
-        return JSON.parse(rawdata).results;
-      }
-      return [];
+      let resultsJson = this.getResultsJson();
+      results = resultsJson.results || [];
+
     } catch (error) {
       console.log(error);
-      return [];
+
+    } finally {
+      return results;
     }
   }
 
-  appendResultList(newResults) {
+  appendResultList(newResults, options) {
     let results = this.getResultList();
-    let filepath = path.resolve(`${this.resultPath}`);
     fse.outputFileSync(
-      filepath,
+      path.resolve(`${this.resultsJsonPath}`),
       JSON.stringify({
-        "results": results.concat(newResults),
+        results: results.concat(newResults),
       }, null, 2));
+
+    // Reset the results json cache.
+    this.resultsJson = null;
   }
 
-  updateResultList(newResults) {
+  updateResultList(newResults, options) {
     let results = this.getResultList();
     let idToResults = {};
 
@@ -92,12 +145,14 @@ class JSONConnector extends Connector {
       return idToResults[result.id] || result;
     });
 
-    let filepath = path.resolve(`${this.resultPath}`);
     fse.outputFileSync(
-      filepath,
+      path.resolve(`${this.resultsJsonPath}`),
       JSON.stringify({
-        "results": results,
+        results: results,
       }, null, 2));
+
+    // Reset the results json cache.
+    this.resultsJson = null;
   }
 }
 

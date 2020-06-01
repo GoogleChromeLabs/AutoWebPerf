@@ -38,18 +38,18 @@ class ChromeUXReportGatherer extends Gatherer {
   }
 
   run(test, options) {
-    assert(test, 'Parameter test is missing.');
+    throw new Error('Please use runByBatch mode for ChromeUXReportGatherer');
   }
 
   retrieve(result, options) {
-		assert(result, 'Parameter result is missing.');
+    throw new Error('Please use runByBatch mode for ChromeUXReportGatherer');
   }
 
 	async runBatch(tests, options) {
 		assert(tests, 'Parameter tests is missing.');
 
     var originsArray = [];
-    var originsString = "";
+    var originsString = '';
 
     if(tests.length) {
 
@@ -64,7 +64,7 @@ class ChromeUXReportGatherer extends Gatherer {
 
       //console.log('query', query);
       let rows = await this.bigQueryHandler.query(query);
-      
+
       var results = [],
           originsOrder = {},
           originsIndex = 0;
@@ -83,12 +83,13 @@ class ChromeUXReportGatherer extends Gatherer {
         var index = originsOrder[row.Origin];
         results[index].metrics.push(row);
       });
-      
+
       return results;
     }
 	}
 
 	retrieveBatch(results, options) {
+    // Do nothing.
 	}
 
 	/**

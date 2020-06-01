@@ -1,0 +1,21 @@
+{
+  "envVars": {
+    "webPageTestApiKey": "TEST_APIKEY",
+    "psiApiKey": "TEST_APIKEY",
+    "gcpKeyFilePath": "tmp/gcp-service-account.json",
+    "gcpProjectId": "google.com:auto-web-perf"
+  },
+  "tests": [{
+      "url": "https://web.dev",
+      "chromeuxreport": {
+        "origin": "https://web.dev"
+      }
+    },
+    {
+      "url": "https://www.google.com",
+      "chromeuxreport": {
+        "origin": "https://www.google.com"
+      }
+    }
+  ]
+}

@@ -2,14 +2,13 @@ import commonjs from 'rollup-plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
 import babel from 'rollup-plugin-babel';
 import replace from '@rollup/plugin-replace';
-import visualizer from 'rollup-plugin-visualizer';
 import banner from 'rollup-plugin-banner';
 import npmPackageJson from './package.json';
 
 export default [{
   input: 'src/awp-core.js',
   output: {
-    file: 'build/bundle-googlesheets.js',
+    file: 'build/googlesheets-bundle.js',
     format: 'cjs',
     esModule: false,
   },
@@ -31,7 +30,6 @@ export default [{
       jail: './src',
       dedupe: [],
     }),
-    visualizer(),
     banner(`
   @license Copyright 2020 Google Inc. All Rights Reserved.
   Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
@@ -41,4 +39,4 @@ export default [{
   Built at: ${new Date().toUTCString()}
       `),
   ]
-}, ];
+}];

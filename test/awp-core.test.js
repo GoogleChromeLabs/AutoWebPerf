@@ -134,12 +134,14 @@ class FakeGatherer extends Gatherer {
   run(test) {
     return {
       status: Status.SUBMITTED,
+      settings: test.fake.settings,
     };
   }
   async runBatch(tests) {
     let responseList = tests.map(test => {
       return {
         status: Status.RETRIEVED,
+        settings: test.fake.settings,
         metrics: {
           SpeedIndex: 500,
         }

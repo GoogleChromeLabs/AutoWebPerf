@@ -2,8 +2,8 @@
   "envVars": {
     "webPageTestApiKey": "TEST_APIKEY",
     "psiApiKey": "TEST_APIKEY",
-    "gcpKeyFilePath": "/Users/gilbertoc/awp/service_accounts/google.com_auto-web-perf-0b5dfe68b2fa.json",
-    "gcpProjectId": "google.com:auto-web-perf"
+    "gcpKeyFilePath": "TEST_KEYFILENAME",
+    "gcpProjectId": "TEST_PROJECT_ID"
   },
   "tests": [
     {
@@ -13,6 +13,7 @@
       "recurring": {
         "frequency": "Daily",
         "nextTriggerTimestamp": 1234,
+        "nextTrigger": "Tue Jan 28 2020 03:14:19 GMT-0500 (Eastern Standard Time)",
         "activatedFrequency": "Daily"
       },
       "webpagetest": {
@@ -27,7 +28,7 @@
           "script": null
         },
         "metadata": {
-          "lastTestId": "200601_X6_efeb625266aacabaece9ffe9d4bcd207"
+          "lastTestId": "200118_KA_4022ee20eaf1deebb393585731de6576"
         }
       },
       "psi": {
@@ -36,6 +37,7 @@
           "strategy": "mobile"
         }
       },
+      "chromeuxreport": {},
       "budgets": {
         "dataSource": "webpagetest",
         "budget": {
@@ -49,7 +51,8 @@
           "Images": 500,
           "Videos": 500
         }
-      }
+      },
+      "id": "1580105180079-https://thinkwithgoogle.com"
     }
   ]
 }

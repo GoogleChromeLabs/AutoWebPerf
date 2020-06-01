@@ -104,7 +104,7 @@ class PSIGatherer extends Gatherer {
     if (options.debug) console.log(url);
 
     let json = {};
-    if (this.apiKey === 'TEST_APIKEY') { 
+    if (this.apiKey === 'TEST_APIKEY') {
     // "psiApiKey": "***REMOVED***"
       json = this.fakeRunResponse();
 
@@ -137,8 +137,9 @@ class PSIGatherer extends Gatherer {
       Object.keys(this.metadataMap).forEach(key => {
         try {
           eval(`metadata.${key} = json.${this.metadataMap[key]}`);
-        } catch (error) {
-          errors.push(error);
+        } catch (e) {
+          errors.push(`Unable to assign json.${this.metadataMap[key]} to ` +
+              `metadata: ${e.message}`);
         }
       });
       Object.keys(this.metricsMap).forEach(key => {
@@ -147,7 +148,8 @@ class PSIGatherer extends Gatherer {
         try {
           eval(`metrics.set(key, json.${this.metricsMap[key]});`);
         } catch (e) {
-          errors.push(e.message);
+          errors.push(`Unable to assign json.${this.metricsMap[key]} to ` +
+              `metrics: ${e.message}`);
         }
       });
       return {
@@ -176,7 +178,7 @@ class PSIGatherer extends Gatherer {
   }
 
   preprocessData(json, dataSource) {
-    if(dataSource == 'crux') {
+    if(dataSource === 'crux') {
       let processedLoadingExperience = {};
       let expMetrics = json.loadingExperience.metrics;
       let expMetricsToProcess = {
@@ -202,8 +204,8 @@ class PSIGatherer extends Gatherer {
       }
       json.processedLoadingExperience = processedLoadingExperience;
     }
-    
-    if(dataSource == 'lighthouseResourceSummary') {
+
+    if(dataSource === 'lighthouseResourceSummary') {
       let processedRessourceSummaryItems = {};
       let ressourceSummaryItems = json.lighthouseResult.audits['resource-summary'].details.items;
       ressourceSummaryItems.forEach((element) => {

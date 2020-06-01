@@ -46,6 +46,9 @@ Examples:
   # Run recurring tests
   ./awp recurring --tests=examples/tests.json --results=output/results.json
 
+  # Activate recurring tests without running actual tests.
+  ./awp recurringActivate --tests=examples/tests.json --results=output/results.json
+
   # Retrieve pending results
   ./awp retrieve --tests=examples/tests.json --results=output/results.json
   `;
@@ -60,7 +63,6 @@ async function begin() {
   let dataSources = argv['dataSources'] ? argv['dataSources'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let runByBatch = argv['runByBatch'] ?  true : false;
-  let keyFileName = argv['keyFileName'] ? argv['keyFileName'] : null;
   let debug = argv['debug'];
   let verbose = argv['verbose'];
 
@@ -78,43 +80,35 @@ async function begin() {
     dataSources: dataSources || ['webpagetest', 'psi', 'chromeuxreport'],
     extensions: extensions,
     json: { // Config for JSON connector.
-      tests: argv['tests'],
-      results: argv['results'],
+      testsJsonPath: argv['tests'],
+      resultsJsonPath: argv['results'],
     },
     verbose: verbose,
     debug: debug,
-    keyFileName: keyFileName
   });
+
+  let options = {
+    filters: filters,
+    runByBatch: runByBatch,
+    debug: debug,
+  };
 
   switch(action) {
     case 'run':
-      await awp.run({
-        filters: filters,
-        runByBatch: runByBatch,
-        debug: debug,
-      });
+      await awp.run(options);
       break;
 
     case 'recurringActivate':
-      await awp.recurring({
-        activateOnly: true,
-        filters: filters,
-        debug: debug,
-      });
+      options.activateOnly = true;
+      await awp.recurring(options);
       break;
 
     case 'recurring':
-      await awp.recurring({
-        filters: filters,
-        debug: debug,
-      });
+      await awp.recurring(options);
       break;
 
     case 'retrieve':
-      await awp.retrieve({
-        filters: filters,
-        debug: debug,
-      });
+      await awp.retrieve(options);
       break;
 
     default:
