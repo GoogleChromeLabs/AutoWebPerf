@@ -100,12 +100,12 @@ class FakeConnector extends Connector {
     this.tests = [];
     this.results = [];
   }
-  getConfig() {
+  getEnvVars() {
     return {
-      "envVars": {
-        "webpagetestApiKey": "TEST_APIKEY",
-        "psiApiKey": "TEST_APIKEY",
-        "gcpProjectId": "google.com:auto-web-perf"
+      envVars: {
+        webPageTestApiKey: 'TEST_APIKEY',
+        psiApiKey: 'TEST_APIKEY',
+        gcpProjectId: 'TEST_PROJECTID'
       }
     };
   }
@@ -413,9 +413,9 @@ describe('AutoWebPerf with fake modules', () => {
       }
     };
     awp.envVars = {
-      "webpagetestApiKey": "TEST_APIKEY",
-      "psiApiKey": "TEST_APIKEY",
-      "gcpProjectId": "google.com:auto-web-perf"
+      webPageTestApiKey: 'TEST_APIKEY',
+      psiApiKey: 'TEST_APIKEY',
+      gcpProjectId: 'TEST_PROJECTID'
     };
     awp.dataSources = ['fake1', 'fake2', 'fake3'];
 
