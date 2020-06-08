@@ -158,7 +158,7 @@ class GoogleSheetsExtension extends Extension {
     options = options || {};
 
     let pendingResults = results.filter(result => {
-      return result.status !== Status.RETRIEVED;
+      return result.status === Status.SUBMITTED;
     });
 
     if (pendingResults.length > 0) {

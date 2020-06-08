@@ -52,8 +52,6 @@ describe('AWP bundle for GoogleSheets', () => {
       'LatestResults-1': initFakeSheet(fakeSheetData.fakeEmptyResultsSheetData),
       'Tests-2': initFakeSheet(fakeSheetData.fakeTestsSheetData),
       'Results-2': initFakeSheet(fakeSheetData.fakeEmptyResultsSheetData),
-      // 'Tests-PSI': initFakeSheet(fakeSheetData.fakePSITestsSheetData),
-      // 'Results-PSI': initFakeSheet(fakeSheetData.fakeEmptyPSIResultsSheetData),
     };
 
     awp = new AutoWebPerf({
@@ -126,14 +124,14 @@ describe('AWP bundle for GoogleSheets', () => {
           skipRows: 2,
           skipColumns: 0,
         }],
-        validationsMaps: [{
-          targetTab: 'Tests-1',
-          targetProperty: 'webpagetest.settings.location',
-          validationTab: 'Locations',
-          validationProperty: 'name',
-        }],
+        // validationsMaps: [{
+        //   targetTab: 'Tests-1',
+        //   targetProperty: 'webpagetest.settings.location',
+        //   validationTab: 'Locations',
+        //   validationProperty: 'name',
+        // }],
         // For GA tracking
-        gaAccount: 'UA-123145069-1',
+        gaAccount: 'UA-123456789-1',
         awpVersion: 'awp-dev',
         isSendTrackEvent: false,
       },
@@ -272,14 +270,15 @@ describe('AWP bundle for GoogleSheets', () => {
       async () => {
     let testsData = [
       ['', '', '', '', ''],
-      ['selected', 'origin', 'url'],
+      ['selected', 'chromeuxreport.origin', 'url'],
       ['', 'Origin', 'URL'],
-      [true, 'https://example.com', 'https://example.com'],
-      [true, 'https://web.dev', 'https://web.dev'],
+      [true, 'example.com', 'https://example.com'],
+      [true, 'web.dev', 'https://web.dev'],
     ];
     let resultsData = [
-      ['', '', '', '', '', ''],
-      ['yyyymm', 'origin', 'device', 'chromeuxreport.metrics.75p_fcp'],
+      ['', '', '', ''],
+      ['chromeuxreport.metrics.Date', 'chromeuxreport.metrics.Origin',
+          'chromeuxreport.metrics.Device', 'chromeuxreport.metrics.FirstContentfulPaint.p75'],
       ['Date', 'Origin', 'Device', 'FCP p75'],
     ];
     fakeSheets['Tests-1'] = initFakeSheet(testsData);
@@ -297,15 +296,16 @@ describe('AWP bundle for GoogleSheets', () => {
     });
 
     resultsData = fakeSheets['Results-1'].fakeData;
-    expect(resultsData.length).toEqual(5);
-    /*expect(resultsData[3][4]).toBe('example.com');
-    expect(resultsData[3][5]).toBe(100);
-    expect(resultsData[4][4]).toBe('example.com');
-    expect(resultsData[4][5]).toBe(90);
-    expect(resultsData[5][4]).toBe('web.dev');
-    expect(resultsData[5][5]).toBe(80);
-    expect(resultsData[6][4]).toBe('web.dev');
-    expect(resultsData[6][5]).toBe(70);*/
+    expect(resultsData.length).toEqual(6);
+    expect(resultsData[3][1]).toBe('https://example.com');
+    expect(resultsData[3][2]).toBe('mobile');
+    expect(resultsData[3][3]).toBe(900);
+    expect(resultsData[4][1]).toBe('https://web.dev');
+    expect(resultsData[4][2]).toBe('mobile');
+    expect(resultsData[4][3]).toBe(1000);
+    expect(resultsData[5][1]).toBe('https://web.dev');
+    expect(resultsData[5][2]).toBe('mobile');
+    expect(resultsData[5][3]).toBe(1100);
   });
 
   it('submits selected tests without values of spreadArrayProperty', async () => {

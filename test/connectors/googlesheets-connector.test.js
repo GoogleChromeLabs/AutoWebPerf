@@ -141,6 +141,7 @@ let fakeTests = [
     webpagetest: {
       settings: {
         connection: '4G',
+        location: 'TestLocation',
       }
     },
     googlesheets: {
@@ -158,6 +159,7 @@ let fakeTests = [
     webpagetest: {
       settings: {
         connection: '3G',
+        location: 'TestLocation',
       }
     },
     googlesheets: {
@@ -175,6 +177,7 @@ let fakeTests = [
     webpagetest: {
       settings: {
         connection: '3G',
+        location: 'TestLocation',
       }
     },
     googlesheets: {
@@ -228,19 +231,20 @@ describe('GoogleSheetsConnector EnvVars tab', () => {
     let envVars = connector.getEnvVars();
     expect(envVars).toEqual({
       webPageTestApiKey: 'TEST_APIKEY',
-      psiApiKey: 'PSI_KEY',
+      psiApiKey: 'TEST_PSI_KEY',
+      gcpProjectId: 'TEST_PROJECTID',
     });
   });
 
   it('get a value from EnvVars sheet via getEnvVar', async () => {
     expect(connector.getEnvVar('webPageTestApiKey')).toEqual('TEST_APIKEY');
-    expect(connector.getEnvVar('psiApiKey')).toEqual('PSI_KEY');
+    expect(connector.getEnvVar('psiApiKey')).toEqual('TEST_PSI_KEY');
   });
 
   it('set a value to EnvVars sheet via setEnvVar', async () => {
     connector.setEnvVar('webPageTestApiKey', 'TEST');
     expect(connector.getEnvVar('webPageTestApiKey')).toEqual('TEST');
-    expect(connector.getEnvVar('psiApiKey')).toEqual('PSI_KEY');
+    expect(connector.getEnvVar('psiApiKey')).toEqual('TEST_PSI_KEY');
   });
 });
 
@@ -640,7 +644,8 @@ describe('GoogleSheetsConnector additional functions', () => {
   it('returns property lookup values for sheet with DataAxis.COLUMN', async () => {
     let propertyLookup;
     propertyLookup = connector.getPropertyLookup('envVarsTab');
-    expect(propertyLookup).toEqual(['webPageTestApiKey', 'psiApiKey']);
+    expect(propertyLookup).toEqual([
+        'webPageTestApiKey', 'psiApiKey', 'gcpProjectId']);
 
     propertyLookup = connector.getPropertyLookup('systemTab');
     expect(propertyLookup).toEqual([
@@ -673,5 +678,32 @@ describe('GoogleSheetsConnector additional functions', () => {
 
   it('throws error if not able to find a specific sheet', () => {
     expect(() => {connector.getSheet('NonExistingTab')}).toThrow(Error);
+  });
+
+  it('returns the last row with values', () => {
+    let resultsData, lastRowIndex;
+    resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url', 'chromeuxreport.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
+      ['Selected', 'ID', 'Type', 'Status', 'URL', 'CrUX SpeedIndex', 'PSI SpeedIndex'],
+      ['', '', '', '', '', ''],
+      ['', '', '', '', '', ''],
+      ['', '', '', '', '', ''],
+    ];
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+    lastRowIndex = connector.getTabLastRow('Results-1');
+    expect(lastRowIndex).toEqual(3);
+
+    resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url', 'chromeuxreport.metrics.SpeedIndex'],
+      ['Selected', 'ID', 'Type', 'Status', 'URL', 'CrUX SpeedIndex'],
+      ['true', 'id-1234', 'test', 'Retrieved', 'web.dev', '1234'],
+      ['true', 'id-5678', 'test', 'Retrieved', 'web.dev', '1234'],
+      ['', '', '', '', '', ''],
+    ];
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+    lastRowIndex = connector.getTabLastRow('Results-1');
+    expect(lastRowIndex).toEqual(5);
   });
 });

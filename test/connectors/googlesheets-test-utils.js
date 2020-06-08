@@ -21,7 +21,8 @@ const fakeSheetData = {
   fakeEnvVarsSheetData: [
     ['Name', 'key', 'value'],
     ['WPT API Key', 'webPageTestApiKey', 'TEST_APIKEY'],
-    ['PSI API Key', 'psiApiKey', 'PSI_KEY'],
+    ['PSI API Key', 'psiApiKey', 'TEST_PSI_KEY'],
+    ['GCP Project ID', 'gcpProjectId', 'TEST_PROJECTID'],
   ],
   fakeSystemSheetData: [
     ['Name', 'key', 'value'],
@@ -36,12 +37,14 @@ const fakeSheetData = {
     ['Old location', 'location-old', '0', 'should-be-deleted'],
   ],
   fakeTestsSheetData: [
-    ['', '', '', '', '', ''],
-    ['selected', 'url', 'label', 'recurring.frequency', 'recurring.nextTriggerTimestamp', 'webpagetest.settings.connection'],
-    ['', 'URL', 'Label', 'Frequency', 'Next Trigger Timestamp', 'WPT Connection'],
-    [true, 'google.com', 'Google', 'Daily', null, '4G'],
-    [false, 'examples.com', 'Example', null, null, '3G'],
-    [true, 'web.dev', 'Web.Dev', 'Daily', null, '3G'],
+    ['', '', '', '', '', '', ''],
+    ['selected', 'url', 'label', 'recurring.frequency',
+        'recurring.nextTriggerTimestamp', 'webpagetest.settings.connection',
+        'webpagetest.settings.location'],
+    ['', 'URL', 'Label', 'Frequency', 'Next Trigger Timestamp', 'WPT Connection', 'WPT Location'],
+    [true, 'google.com', 'Google', 'Daily', null, '4G', 'TestLocation'],
+    [false, 'examples.com', 'Example', null, null, '3G', 'TestLocation'],
+    [true, 'web.dev', 'Web.Dev', 'Daily', null, '3G', 'TestLocation'],
   ],
   fakeResultsSheetData: [
     ['', '', '', '', '', ''],

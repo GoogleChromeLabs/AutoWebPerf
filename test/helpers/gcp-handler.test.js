@@ -67,12 +67,22 @@ describe('BigQueryHandler test', () => {
           jobReference: {
             jobId: 'fake-id',
           },
+          schema: {
+            fields: [{
+              name: 'date',
+            }, {
+              name: 'field-1',
+            }, {
+              name: 'field-2',
+            }
+          ],
+          },
           jobComplete: true,
           pageToken: getPageToken(),
           rows: [{
-            date: '202001', value: 123
+            f: [{v: '202001'}, {v: 123}, {v:456}],
           }, {
-            date: '202002', value: 456,
+            f: [{v: '202002'}, {v: 123}, {v:456}],
           }],
         }),
       }

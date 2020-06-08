@@ -233,19 +233,21 @@ class AutoWebPerf {
     // Before all runs.
     this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
 
-    await this.runTests(tests, options).then(newResults => {
+    // Run tests.
+    let newResults = await this.runTests(tests, options);
 
-      // After all runs.
-      this.runExtensions(extensions, 'afterAllRuns', {
-        tests: tests,
-        results: newResults,
-      }, options);
+    // After all runs.
+    this.runExtensions(extensions, 'afterAllRuns', {
+      tests: tests,
+      results: newResults,
+    }, options);
 
-      return {
-        tests: tests,
-        results: newResults,
-      };
-    });
+    this.logDebug(`AutoWebPerf::run completed with ${tests.length} tests`);
+
+    return {
+      tests: tests,
+      results: newResults,
+    };
   }
 
   /**
@@ -336,6 +338,9 @@ class AutoWebPerf {
 
     // Update Tests.
     this.connector.updateTestList(tests, options);
+
+    this.logDebug(`AutoWebPerf::recurring completed with ${tests.length} ` +
+        `tests`);
 
     return {
       tests: tests,
@@ -429,6 +434,8 @@ class AutoWebPerf {
     this.connector.updateResultList(resultsToUpdate, options);
     this.runExtensions(extensions, 'afterAllRetrieves', {results: results},
         options);
+
+    this.logDebug(`AutoWebPerf::retrieved ${results.length} results.`);
 
     return {
       results: results,
@@ -621,7 +628,7 @@ class AutoWebPerf {
     try {
       let gatherer = this.getGatherer(dataSource);
 
-      await gatherer.runBatch(tests, options).then(res => {
+      await gatherer.runBatchAsync(tests, options).then(res => {
         // If there's no response, it means that the specific gatherer doesn't
         // support runBatch. Hence it won't add any corresponding metrics to the
         // Result objects.

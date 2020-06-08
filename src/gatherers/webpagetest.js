@@ -313,10 +313,6 @@ class WebPageTestGatherer extends Gatherer {
     };
   }
 
-  async runBatch(tests, options) {
-    return null;
-  }
-
   fakeRunResponse() {
     return {
       statusCode: 200,

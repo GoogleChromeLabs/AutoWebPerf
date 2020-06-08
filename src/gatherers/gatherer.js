@@ -40,7 +40,7 @@ class Gatherer {
    * @param  {object} options Options object.
    * @return {object} Response object, including status proeprty.
    */
-  runBatch(tests, options) {
+  async runBatchAsync(tests, options) {
     return null; // Return null by default.
   }
 
@@ -60,7 +60,7 @@ class Gatherer {
    * @param  {object} options Options object.
    * @return {object} Response object, including status proeprty.
    */
-  retrieveBatch(results, options) {
+  async retrieveBatchAsync(results, options) {
     return null; // Return null by default.
   }
 }

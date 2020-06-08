@@ -54,6 +54,7 @@ class GoogleSheetsConnector extends Connector {
     this.activeSpreadsheet = SpreadsheetApp.getActive();
     this.defaultTestsTab = config.defaultTestsTab;
     this.defaultResultsTab = config.defaultResultsTab;
+    this.isRequestApiKey = config.isRequestApiKey;
 
     // Construct individual tab config from this.tabs.
     this.tabConfigs = {};
@@ -88,7 +89,7 @@ class GoogleSheetsConnector extends Connector {
     assert(this.tabConfigs.locationsTab, 'locationsTab is missing in config.tabs.');
 
     // The list of validation rules for all tabs.
-    this.validationsMaps = config.validationsMaps;
+    this.validationsMaps = config.validationsMaps || [];
 
     // Mapping of conditional formatting, used by resultsTab and latestResultsTab.
     this.columnConditions = {
@@ -140,7 +141,9 @@ class GoogleSheetsConnector extends Connector {
     this.initUserTimeZone();
 
     // Request for WebPageTest API Key.
-    this.requestApiKey();
+    if (this.isRequestApiKey) {
+      this.requestApiKey();
+    }
 
     // Record the last timestamp of init.
     this.setSystemVar(SystemVars.LAST_INIT_TIMESTAMP, Date.now());
@@ -258,10 +261,32 @@ class GoogleSheetsConnector extends Connector {
         sheet.getLastRow() : sheet.getLastRow() - tabConfig.skipRows;
     let rowStart = includeSkipRows ? 1 : tabConfig.skipRows + 1;
 
+    assert(columnIndex, `Unable to get column index for property '${propertyKey}'`);
     assert(numRows >= 1, 'The number of rows in the range must be at least 1');
 
     let range = sheet.getRange(rowStart, columnIndex, numRows, 1);
     return range;
+  }
+
+  /**
+   * getLastRow - Return the last row with at least one value of a specific tab.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @return {number} Index of the last row with values.
+   */
+  getTabLastRow(tabId) {
+    let tabConfig = this.tabConfigs[tabId];
+    let sheet = this.getSheet(tabId);
+    let sheetValues = sheet.getDataRange().getValues();
+    sheetValues = sheetValues.map(rowValues => {
+      let values = rowValues.join('').trim();
+      return !!values;
+    });
+
+    let rowIndex = sheetValues.length;
+    while(!sheetValues[rowIndex - 1]) {
+      rowIndex--;
+    }
+    return rowIndex;
   }
 
   /**
@@ -328,8 +353,7 @@ class GoogleSheetsConnector extends Connector {
     }
 
     // Use the last row index as base for appending results.
-    let lastRowIndex = this.getColumnRange(
-        tabId, 'id', true /* includeSkipRows */).getLastRow() + 1;
+    let lastRowIndex = this.getTabLastRow(tabId) + 1;
     this.updateList(tabId, resultsToUpdate, (result, rowIndex) => {
       rowIndex = lastRowIndex;
       lastRowIndex++;
@@ -510,7 +534,16 @@ class GoogleSheetsConnector extends Connector {
     let tabConfig = this.tabConfigs[tabId];
     let sheet = this.getSheet(tabId);
     let lastRow = sheet.getLastRow();
-    sheet.deleteRows(tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
+
+    if (lastRow > tabConfig.skipRows) {
+      sheet.deleteRows(tabConfig.skipRows + 1, lastRow - tabConfig.skipRows);
+      sheet.insertRowAfter(tabConfig.skipRows);
+
+      // Reset the format of the last row.
+      sheet.setRowHeight(tabConfig.skipRows + 1, 24 /* Pixels */);
+      let lastRowRange = this.getRowRange(tabId, tabConfig.skipRows + 1);
+      lastRowRange.clear();
+    }
   }
 
   /**

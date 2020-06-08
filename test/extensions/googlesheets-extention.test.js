@@ -128,7 +128,7 @@ describe('GoogleSheetsExtension afterRun', () => {
         id: 'id-1234',
         label: '1234',
         url: 'web.dev',
-        status: 'submitted',
+        status: Status.SUBMITTED,
       },
     };
     extension.afterRun(context, {googlesheets: {resultsTab: 'Results-1'}});
@@ -147,7 +147,7 @@ describe('GoogleSheetsExtension afterAllRuns', () => {
       results: [{
         id: 'id-1234',
         label: '1234',
-        status: 'submitted',
+        status: Status.SUBMITTED,
       }],
     };
 

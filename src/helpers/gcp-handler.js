@@ -94,6 +94,7 @@ class BigQueryHandler {
         {
           let request = {
             query: query,
+            useLegacySql: false,
           };
           let queryResults = BigQuery.Jobs.query(request, this.projectId);
           let jobId = queryResults.jobReference.jobId;
@@ -132,6 +133,18 @@ class BigQueryHandler {
             timeElapseMs = new Date().getTime() - startMs;
             if (timeElapseMs >= timeout) throw new Error('BigQuery timeout');
           }
+
+          // Parse rows with specific field names.
+          let fields = queryResults.schema.fields.map(field => field.name);
+          rows = rows.map(row => {
+            let newRow = {};
+            let columnIndex = 0;
+            fields.forEach(column => {
+              newRow[column] = row.f[columnIndex].v;
+              columnIndex++;
+            });
+            return newRow;
+          });
           return rows;
         }
         break;
