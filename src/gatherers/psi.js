@@ -75,6 +75,22 @@ class PSIGatherer extends Gatherer {
       'lighthouse.ServiceWorker': 'lighthouseResult.audits["service-worker"].score',
       'lighthouse.Offline': 'lighthouseResult.audits["works-offline"].score',
     };
+
+    let bytesToKb = (x) => Math.round(x / 1000);
+    this.metricsConversion = {
+      'lighthouse.HTML': bytesToKb,
+      'lighthouse.Javascript': bytesToKb,
+      'lighthouse.CSS': bytesToKb,
+      'lighthouse.Fonts': bytesToKb,
+      'lighthouse.Images': bytesToKb,
+      'lighthouse.Medias': bytesToKb,
+      'lighthouse.ThirdParty': bytesToKb,
+      'lighthouse.UnusedCSS': bytesToKb,
+      'lighthouse.WebPImages': bytesToKb,
+      'lighthouse.OptimizedImages': bytesToKb,
+      'lighthouse.ResponsiveImages': bytesToKb,
+      'lighthouse.OffscreenImages': bytesToKb,
+    };
   }
 
   run(test, options) {
@@ -142,11 +158,18 @@ class PSIGatherer extends Gatherer {
               `metadata: ${e.message}`);
         }
       });
+
+      let value;
       Object.keys(this.metricsMap).forEach(key => {
         // Using eval for the assigning to support non-string and non-numeric
         // value, like Date object.
         try {
-          eval(`metrics.set(key, json.${this.metricsMap[key]});`);
+          eval(`value = json.${this.metricsMap[key]};`);
+          if (this.metricsConversion[key]) {
+            value = this.metricsConversion[key](value);
+          }
+          metrics.set(key, value);
+
         } catch (e) {
           errors.push(`Unable to assign json.${this.metricsMap[key]} to ` +
               `metrics: ${e.message}`);

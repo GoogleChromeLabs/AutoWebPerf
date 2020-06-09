@@ -82,14 +82,6 @@ let connectorConfig = {
     propertyLookup: 2, // Starts at 1
     skipColumns: 0,
     skipRows: 3,
-    latestResultsTab: 'Latest Results',
-  }, {
-    tabName: 'Latest Results',
-    tabRole: 'latestResults',
-    dataAxis: 'row',
-    propertyLookup: 2, // Starts at 1
-    skipColumns: 0,
-    skipRows: 3,
   }, {
     tabName: 'EnvVars',
     tabRole: 'envVars',

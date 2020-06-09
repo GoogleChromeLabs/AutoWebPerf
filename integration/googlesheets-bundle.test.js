@@ -49,7 +49,6 @@ describe('AWP bundle for GoogleSheets', () => {
       'Locations': initFakeSheet(fakeSheetData.fakeLocationsSheetData),
       'Tests-1': initFakeSheet(fakeSheetData.fakeTestsSheetData),
       'Results-1': initFakeSheet(fakeSheetData.fakeEmptyResultsSheetData),
-      'LatestResults-1': initFakeSheet(fakeSheetData.fakeEmptyResultsSheetData),
       'Tests-2': initFakeSheet(fakeSheetData.fakeTestsSheetData),
       'Results-2': initFakeSheet(fakeSheetData.fakeEmptyResultsSheetData),
     };
@@ -78,14 +77,6 @@ describe('AWP bundle for GoogleSheets', () => {
           tabRole: 'results',
           dataAxis: 'row',
           propertyLookup:2, // Starts at 1
-          skipColumns: 0,
-          skipRows: 3,
-          latestResultsTab: 'LatestResults-1',
-        }, {
-          tabName: 'LatestResults-1',
-          tabRole: 'latestResults',
-          dataAxis: 'row',
-          propertyLookup: 2, // Starts at 1
           skipColumns: 0,
           skipRows: 3,
         }, {
@@ -506,43 +497,5 @@ describe('AWP bundle for GoogleSheets', () => {
 
     systemData = fakeSheets['System'].fakeData;
     expect(systemData[1][2]).toEqual('');
-  });
-
-  it('retrieve all pending results and updates Latest Results tab', () => {
-    let resultsData = [
-      ['', '', '', '', '', '', ''],
-      ['selected', 'id', 'type', 'status', 'label', 'url', 'webpagetest.metadata.id', 'webpagetest.metrics.SpeedIndex'],
-      ['', 'ID', 'Type', 'Status', 'Label', 'URL', 'WPT ID', 'WPT SpeedIndex'],
-      [false, 'id-1234', 'single', 'Submitted', 'label-1', 'google.com', 'id-1234', 500],
-      [false, 'id-5678', 'recurring', 'Submitted', 'label-1', 'google.com', 'id-5678', 800],
-      [false, 'id-6666', 'single', 'Submitted', 'label-2', 'web.dev', 'id-6666', 500],
-      [false, 'id-7777', 'recurring', 'Submitted', 'label-2', 'web.dev', 'id-7777', 800],
-    ];
-    fakeSheets['Results-1'] = initFakeSheet(resultsData);
-
-    let lastestResultsData = [
-      ['', '', '', '', '', '', ''],
-      ['selected', 'id', 'type', 'status', 'label', 'url', 'webpagetest.metadata.id', 'webpagetest.metrics.SpeedIndex'],
-      ['', 'ID', 'Type', 'Status', 'Label', 'URL', 'WPT ID', 'WPT SpeedIndex'],
-      [false, 'id-1234', 'single', 'Submitted', 'google.com', 'google.com', 'id-1234', 500],
-    ];
-    fakeSheets['LatestResults-1'] = initFakeSheet(lastestResultsData);
-
-    awp.connector.apiHelper.fetch = () => {
-      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
-    };
-
-    awp.retrieve({
-      filters: ['status!==""', 'status!=="Retrieved"', 'status!=="Error"'],
-      googlesheets: {
-        testsTab: 'Tests-1',
-        resultsTab: 'Results-1',
-      },
-    });
-
-    resultsData = fakeSheets['Results-1'].fakeData;
-    lastestResultsData = fakeSheets['LatestResults-1'].fakeData;
-    expect(lastestResultsData[3]).toEqual(resultsData[4]);
-    expect(lastestResultsData[4]).toEqual(resultsData[6]);
   });
 });

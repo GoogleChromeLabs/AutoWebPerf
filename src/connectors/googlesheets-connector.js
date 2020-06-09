@@ -91,7 +91,7 @@ class GoogleSheetsConnector extends Connector {
     // The list of validation rules for all tabs.
     this.validationsMaps = config.validationsMaps || [];
 
-    // Mapping of conditional formatting, used by resultsTab and latestResultsTab.
+    // Mapping of conditional formatting, used by resultsTab.
     this.columnConditions = {
       'webpagetest.metrics.lighthouse.Performance': [0.4, 0.75],
       'webpagetest.metrics.lighthouse.ProgressiveWebApp': [0.4, 0.75],
@@ -112,6 +112,15 @@ class GoogleSheetsConnector extends Connector {
       'webpagetest.metrics.VisualComplete': [8000, 4300],
       'webpagetest.metrics.LoadEvent': [10000, 5000],
       'webpagetest.metrics.Connections': [30, 10],
+      'psi.metrics.lighthouse.Performance': [0.4, 0.75],
+      'psi.metrics.lighthouse.ProgressiveWebApp': [0.4, 0.75],
+      'psi.metrics.lighthouse.SpeedIndex': [5800, 4300],
+      'psi.metrics.lighthouse.FirstContentfulPaint': [4000, 2000],
+      'psi.metrics.lighthouse.FirstMeaningfulPaint': [4000, 2000],
+      'psi.metrics.lighthouse.LargestContentfulPaint': [4000,2500],
+      'psi.metrics.lighthouse.CumulativeLayoutShift': [0.25,0.1],
+      'psi.metrics.lighthouse.TimeToInteractive': [7300, 5200],
+      'psi.metrics.lighthouse.TotalBlockingTime': [600,300],
     };
 
     this.healthCheck();

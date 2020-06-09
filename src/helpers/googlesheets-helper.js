@@ -33,7 +33,6 @@ class GoogleSheetsApiHandler extends ApiHandler {
 const TabRole = {
   TESTS: 'tests',
   RESULTS: 'results',
-  LATEST_RESULTS: 'latestResults',
   ENV_VARS: 'envVars',
   SYSTEM: 'system',
   LOCATIONS: 'locations',

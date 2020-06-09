@@ -18,6 +18,7 @@
 
 const GoogleSheetsExtension = require('../../src/extensions/googlesheets-extension');
 const setObject = require('../../src/utils/set-object');
+const patternFilter = require('../../src/utils/pattern-filter');
 const Status = require('../../src/common/status');
 const {SystemVars} = require('../../src/helpers/googlesheets-helper');
 const {SpreadsheetApp, Session, Utilities} = require('../connectors/googlesheets-test-utils');
@@ -42,7 +43,10 @@ let connector = {
     },
   },
   getList: (tabId) => {return dataByTabId[tabId];},
-  getResultList: (options) => {return dataByTabId[options.resultsTab]},
+  getResultList: (options) => {
+    let results = dataByTabId[options.googlesheets.resultsTab];
+    return patternFilter(results, options.filters);
+  },
   updateList: jest.fn(),
   getSystemVar: (key) => {return systemVars[key];},
   setSystemVar: (key, value) => {systemVars[key] = value;},
@@ -212,83 +216,6 @@ describe('GoogleSheetsExtension afterAllRetrieves', () => {
     extension.afterAllRetrieves({results: fakeResults}, {googlesheets: {resultsTab: 'Results-1'}});
     expect(GoogleSheetsHelper.deleteTriggerByFunction).toHaveBeenCalledWith(
         'retrieveResults');
-  });
-
-  it('updates corresponding latest results tab to the given results tabId',
-      () => {
-    let fakeResults = [{
-      id: 'id-1234',
-      label: '1234',
-      url: 'google.com',
-      status: Status.RETRIEVED,
-    }];
-    dataByTabId = {
-      'Results-1': fakeResults,
-      'LatestResults-1': [],
-    };
-
-    extension.afterAllRetrieves({results: fakeResults},
-        {googlesheets: {resultsTab: 'Results-1'}});
-    expect(connector.updateList).toHaveBeenCalledWith('LatestResults-1',
-        fakeResults, null /* use default rowIndex */);
-  });
-
-  it('updates latest results tab with the latest result for each label', () => {
-    let fakeResults = [{
-      id: 'id-1234',
-      label: '1234',
-      url: 'google.com',
-      status: Status.RETRIEVED,
-      webpagetest: {
-        metrics: {
-          SpeedIndex: 300,
-        },
-      },
-    }, {
-      id: 'id-1234',
-      label: '1234',
-      url: 'google.com',
-      status: Status.RETRIEVED,
-      webpagetest: {
-        metrics: {
-          SpeedIndex: 500,
-        },
-      },
-    }, {
-      id: 'id-1234',
-      label: '1234',
-      url: 'google.com',
-      status: Status.SUBMITTED,
-      webpagetest: {
-        metrics: {
-          SpeedIndex: 800,
-        },
-      },
-    }];
-    dataByTabId = {
-      'Results-1': fakeResults,
-      'LatestResults-1': [],
-    };
-
-    extension.afterAllRetrieves({results: fakeResults},
-        {googlesheets: {resultsTab: 'Results-1'}});
-    expect(connector.updateList).toHaveBeenCalledWith(
-        'LatestResults-1', [fakeResults[1]], null /* use default rowIndex */);
-  });
-
-  it('skips updating latest results tab when no results retrieved', () => {
-    let fakeResult = {
-      id: 'id-1234',
-      label: '1234',
-      url: 'google.com',
-      status: Status.RETRIEVED,
-    };
-    dataByTabId = {
-      'Results-1': [fakeResult],
-      'LatestResults-1': [],
-    };
-    extension.afterAllRetrieves({results: []}, {googlesheets: {resultsTab: 'Results-1'}});
-    expect(connector.updateList).not.toHaveBeenCalled();
   });
 
   it('computes custom values required for Google Analytics', () => {

@@ -38,7 +38,7 @@ const TrackingType = {
  * - After all runs, create trigger for retrieving results.
  * - After each retrieve, update modifiedDate and send analytic signals to
  *     Google Analytics.
- * - After all retrieves, update to latestResultsTab and delete trigger for
+ * - After all retrieves, delete trigger for
  *     retreiving results.
  */
 class GoogleSheetsExtension extends Extension {
@@ -209,43 +209,16 @@ class GoogleSheetsExtension extends Extension {
     let resultsTabIds = Object.keys(this.connector.tabConfigs).filter(tabId => {
       return this.connector.tabConfigs[tabId].tabRole === 'results';
     });
-    let allResults = [];
+    let pendingResults = [];
 
-    // Running through all results tabs to update latest results tab if needed.
+    // Get results from all Results tab.
     resultsTabIds.forEach(tabId => {
       let tabConfig = this.connector.tabConfigs[tabId];
-      let latestResultsTab = tabConfig.latestResultsTab;
-
-      let results = this.connector.getResultList({resultsTab: tabId});
-      allResults = allResults.concat(results);
-
-      let retrievedResults = results.filter(result => {
-        return result.status === Status.RETRIEVED;
+      let results = this.connector.getResultList({
+        googlesheets: {resultsTab: tabId},
+        filters: [`status==="${Status.SUBMITTED}"`],
       });
-
-      // Update corresponding latest results tab.
-      if (tabId === googlesheets.resultsTab && latestResultsTab &&
-          retrievedResults.length > 0) {
-        // Collect all latest retrieved results by labels.
-        // let labels = retrievedResults.map(result => result.label);
-        let resultsByLabel = {};
-        retrievedResults.forEach(result => {
-          resultsByLabel[result.label] = result;
-        });
-
-        let newLatestResults = [];
-        Object.keys(resultsByLabel).forEach(label => {
-          newLatestResults.push(resultsByLabel[label]);
-        });
-
-        this.connector.updateList(latestResultsTab, newLatestResults,
-            null /* use default rowIndex */);
-      }
-    });
-
-    // Delete trigger if all results are retrieved.
-    let pendingResults = allResults.filter(result => {
-      return result.status !== Status.RETRIEVED;
+      pendingResults = pendingResults.concat(results);
     });
 
     if (pendingResults.length === 0) {
