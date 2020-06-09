@@ -12,6 +12,12 @@
           "locale": "en-GB",
           "strategy": "mobile"
         }
+      },
+      "budgets": {
+        "metricPath": "psi.metrics.lighthouse.[METRIC_NAME]",
+        "budget": {
+          "FirstContentfulPaint": 500
+        }
       }
     }
   ]

@@ -26,7 +26,6 @@ class BudgetsExtension extends Extension {
     super();
     config = config || {};
     this.envVars = envVars;
-    this.defaultDataSource = config.dataSource || 'webpagetest';
 
     this.budgetMetricMap = {
       'FirstContentfulPaint': ['milliseconds', 'seconds', 'overRatio'],
@@ -58,11 +57,9 @@ class BudgetsExtension extends Extension {
     assert(result, 'result is missing.');
     if (!budgets || budgets === {}) return;
 
-    // Use webpagetest as default data source.
-    let dataSource = budgets.dataSource || this.defaultDataSource;
-    let metricValues = (result[dataSource] || {}).metrics;
-    if (!metricValues) metricValues = {};
+    assert(budgets.budget, '"budget" is not defined in the budgets property.');
 
+    let errors = [];
     result.budgets = {...budgets};
     result.budgets.metrics = {};
 
@@ -72,44 +69,60 @@ class BudgetsExtension extends Extension {
       if (!budget || !targets) return;
 
       result.budgets.metrics[metric] = {};
-      let resultMetric = result.budgets.metrics[metric];
-      let metricValue;
 
-      targets.forEach(target => {
-        switch (target) {
-          case 'milliseconds':
-            setObject(resultMetric, `budget.milliseconds`, budget);
-            setObject(resultMetric, `metric.milliseconds`, metricValues[metric]);
-            break;
+      // Skip the budget calculation if metricPath is not defined.
+      // Sample metricPath:
+      // - 'webpagetest.metrics.lighthouse.[METRIC_NAME]',
+      // - 'psi.metrics.crux.[METRIC_NAME].good'
+      let metricPath = result.budgets.metricPath;
+      if (!metricPath) return;
 
-          case 'seconds':
-            setObject(resultMetric, `budget.seconds`,
-                this.round(budget / 1000, 2));
-            setObject(resultMetric, `metric.seconds`,
-                this.round(metricValues[metric] / 1000, 2));
-            break;
+      try {
+        let resultMetric = result.budgets.metrics[metric];
+        let metricValue, actualMetricPath;
+        actualMetricPath = metricPath.replace('[METRIC_NAME]', metric);
+        metricValue = eval(`result.${actualMetricPath}`);
 
-          case 'overRatio':
-            metricValue = metricValues[metric];
-            resultMetric[target] = metricValue ?
-                this.round((metricValue - budget) / budget, 2) : null;
-            break;
+        targets.forEach(target => {
+          switch (target) {
+            case 'milliseconds':
+              setObject(resultMetric, `budget.milliseconds`, budget);
+              setObject(resultMetric, `metric.milliseconds`, metricValue);
+              break;
 
-          case 'KB':
-            setObject(resultMetric, `budget.KB`, budget);
-            setObject(resultMetric, `metric.KB`, metricValues[metric]);
-            break;
+            case 'seconds':
+              setObject(resultMetric, `budget.seconds`,
+                  this.round(budget / 1000, 2));
+              setObject(resultMetric, `metric.seconds`,
+                  this.round(metricValue / 1000, 2));
+              break;
 
-          case 'bytes':
-            setObject(resultMetric, `budget.bytes`, budget * 1000);
-            break;
+            case 'overRatio':
+              resultMetric[target] = metricValue ?
+                  this.round((metricValue - budget) / budget, 2) : null;
+              break;
 
-          default:
-            throw new Error(
-                `Target ${target} is not supported in BudgetsExtension`);
-            break;
-        }
-      });
+            case 'KB':
+              setObject(resultMetric, `budget.KB`, budget);
+              setObject(resultMetric, `metric.KB`, metricValue);
+              break;
+
+            case 'bytes':
+              setObject(resultMetric, `budget.bytes`, budget * 1000);
+              break;
+
+            default:
+              throw new Error(
+                  `Target ${target} is not supported in BudgetsExtension`);
+              break;
+          }
+        });
+
+      } catch (e) {
+        let message = `[Budgets] Unable to get metric value for ${metric} ` +
+            `with path: ${metricPath}`;
+        result.errors = (result.errors || []).concat(message);
+      }
     });
   }
 

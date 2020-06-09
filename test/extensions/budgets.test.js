@@ -16,21 +16,20 @@
 
 'use strict';
 
-const PerfBudgetsExtension = require('../../src/extensions/budgets');
-
-let perfBudgetExtension = new PerfBudgetsExtension({
-  budgets: {
-    dataSource: 'webpagetest',
-  },
-});
+const BudgetsExtension = require('../../src/extensions/budgets');
+let extension;
 
 describe('Budgets unit test', () => {
+  beforeEach(() => {
+    extension = new BudgetsExtension({});
+  });
+
   it('adds budget metrics to a result after run.', async () => {
     let test = {
       url: 'google.com',
       webpagetest: {},
       budgets: {
-        dataSource: 'webpagetest',
+        metricPath: 'webpagetest.metrics.[METRIC_NAME]',
         budget: {
           FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
@@ -49,7 +48,10 @@ describe('Budgets unit test', () => {
       },
     };
 
-    perfBudgetExtension.afterRun({test: test, result: result});
+    extension.afterRun({
+      test: test,
+      result: result
+    });
 
     expect(result).toEqual({
       url: 'google.com',
@@ -61,7 +63,7 @@ describe('Budgets unit test', () => {
         }
       },
       budgets: {
-        dataSource: 'webpagetest',
+        metricPath: 'webpagetest.metrics.[METRIC_NAME]',
         budget: {
           FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
@@ -114,7 +116,7 @@ describe('Budgets unit test', () => {
         }
       },
       budgets: {
-        dataSource: 'webpagetest',
+        metricPath: 'webpagetest.metrics.[METRIC_NAME]',
         budget: {
           FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
@@ -122,7 +124,9 @@ describe('Budgets unit test', () => {
       }
     };
 
-    perfBudgetExtension.afterRetrieve({result: result});
+    extension.afterRetrieve({
+      result: result
+    });
 
     expect(result).toEqual({
       url: 'google.com',
@@ -133,7 +137,7 @@ describe('Budgets unit test', () => {
         }
       },
       budgets: {
-        dataSource: 'webpagetest',
+        metricPath: 'webpagetest.metrics.[METRIC_NAME]',
         budget: {
           FirstContentfulPaint: 1000,
           SpeedIndex: 3000,
@@ -165,4 +169,53 @@ describe('Budgets unit test', () => {
       }
     });
   });
+
+  it('adds errors to the Result object after retrieve when error occurs in ' +
+    'budgets extension', async () => {
+      let result = {
+        url: 'google.com',
+        webpagetest: {
+          metrics: {
+            FirstContentfulPaint: 1500,
+            SpeedIndex: 6000,
+          }
+        },
+        budgets: {
+          metricPath: 'fake.metric.path',
+          budget: {
+            FirstContentfulPaint: 1000,
+            SpeedIndex: 3000,
+          },
+        }
+      };
+
+      extension.afterRetrieve({
+        result: result
+      });
+
+      expect(result).toEqual({
+        url: 'google.com',
+        webpagetest: {
+          metrics: {
+            FirstContentfulPaint: 1500,
+            SpeedIndex: 6000
+          }
+        },
+        budgets: {
+          metricPath: 'fake.metric.path',
+          budget: {
+            FirstContentfulPaint: 1000,
+            SpeedIndex: 3000
+          },
+          metrics: {
+            FirstContentfulPaint: {},
+            SpeedIndex: {}
+          }
+        },
+        errors: [
+          '[Budgets] Unable to get metric value for FirstContentfulPaint with path: fake.metric.path',
+          '[Budgets] Unable to get metric value for SpeedIndex with path: fake.metric.path'
+        ]
+      });
+    });
 });
