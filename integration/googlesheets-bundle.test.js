@@ -209,7 +209,7 @@ describe('AWP bundle for GoogleSheets', () => {
 
     // Ensure it creates Retrieve trigger and records it in System tab.
     systemData = fakeSheets['System'].fakeData;
-    expect(systemData[1][2]).toEqual('timeBased-retrieveResults');
+    expect(systemData[1][2]).toEqual('timeBased-retrievePendingResults');
   });
 
   it('submits selected tests in batch mode and writes results', async () => {
@@ -254,7 +254,7 @@ describe('AWP bundle for GoogleSheets', () => {
 
     // Ensure it creates Retrieve trigger and records it in System tab.
     systemData = fakeSheets['System'].fakeData;
-    expect(systemData[1][2]).toEqual('timeBased-retrieveResults');
+    expect(systemData[1][2]).toEqual('timeBased-retrievePendingResults');
   });
 
   it('submits selected tests and writes results with spreadArrayProperty',

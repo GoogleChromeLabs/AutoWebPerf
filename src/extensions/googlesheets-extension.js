@@ -30,6 +30,8 @@ const TrackingType = {
   INIT: 'Initialise',
 };
 
+const RETRIEVE_PENDING_RESULTS_FUNC = 'retrievePendingResults';
+
 /**
  * The extension for providing additional actions for AWP on GoogleSheets.
  * In a nutshell, it provides the following additions:
@@ -166,9 +168,11 @@ class GoogleSheetsExtension extends Extension {
       if (options.verbose) console.log(`${SystemVars.RETRIEVE_TRIGGER_ID} = ${triggerId}`);
 
       if (!triggerId) {
-        triggerId = GoogleSheetsHelper.createTimeBasedTrigger('retrieveResults', 10 /* minutes */);
+        triggerId = GoogleSheetsHelper.createTimeBasedTrigger(
+            RETRIEVE_PENDING_RESULTS_FUNC, 10 /* minutes */);
         this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, triggerId);
-        if (options.verbose) console.log(`Time-based Trigger created for retrieveResults: ${triggerId}`);
+        if (options.verbose) console.log(
+            `Time-based Trigger created for RETRIEVE_PENDING_RESULTS_FUNC: ${triggerId}`);
       }
     }
   }
@@ -184,7 +188,8 @@ class GoogleSheetsExtension extends Extension {
     // Format modifiedDate
     if (result.modifiedTimestamp) {
       result.modifiedDate = GoogleSheetsHelper.getFormattedDate(
-          new Date(result.modifiedTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:MM');
+          new Date(result.modifiedTimestamp), this.userTimeZone,
+          'MM/dd/YYYY HH:MM');
     }
 
     // Send retrieved action to Google Analytics.
@@ -223,9 +228,9 @@ class GoogleSheetsExtension extends Extension {
 
     if (pendingResults.length === 0) {
       if (options.verbose) {
-        console.log('Deleting Trigger for retrieveResults...');
+        console.log('Deleting Trigger for RETRIEVE_PENDING_RESULTS_FUNC...');
       }
-      GoogleSheetsHelper.deleteTriggerByFunction('retrieveResults');
+      GoogleSheetsHelper.deleteTriggerByFunction(RETRIEVE_PENDING_RESULTS_FUNC);
       this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, '');
     }
   }

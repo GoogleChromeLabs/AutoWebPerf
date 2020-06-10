@@ -23,6 +23,8 @@ const Status = require('../../src/common/status');
 const {SystemVars} = require('../../src/helpers/googlesheets-helper');
 const {SpreadsheetApp, Session, Utilities} = require('../connectors/googlesheets-test-utils');
 
+const RETRIEVE_PENDING_RESULTS_FUNC = 'retrievePendingResults';
+
 global.Session = Session;
 global.Utilities = Utilities;
 global.SpreadsheetApp = SpreadsheetApp;
@@ -215,7 +217,7 @@ describe('GoogleSheetsExtension afterAllRetrieves', () => {
     };
     extension.afterAllRetrieves({results: fakeResults}, {googlesheets: {resultsTab: 'Results-1'}});
     expect(GoogleSheetsHelper.deleteTriggerByFunction).toHaveBeenCalledWith(
-        'retrieveResults');
+        RETRIEVE_PENDING_RESULTS_FUNC);
   });
 
   it('computes custom values required for Google Analytics', () => {
