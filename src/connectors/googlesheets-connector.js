@@ -56,6 +56,9 @@ class GoogleSheetsConnector extends Connector {
     this.defaultResultsTab = config.defaultResultsTab;
     this.isRequestApiKey = config.isRequestApiKey;
 
+    // Caching for preventing querying the same data repeatedly.
+    this.propertyLookupCache = {};
+
     // Construct individual tab config from this.tabs.
     this.tabConfigs = {};
     config.tabs.forEach(tabConfig => {
@@ -249,10 +252,10 @@ class GoogleSheetsConnector extends Connector {
    * @param  {number} rowIndex The row index in a sheet. (starting from 1)
    * @return {object} GoogleSheets Range object
    */
-  getRowRange(tabId, rowIndex) {
+  getRowRange(tabId, rowIndex, numRows) {
     let sheet = this.getSheet(tabId);
     let lastColumn = sheet.getLastColumn();
-    return sheet.getRange(rowIndex, 1, 1, lastColumn);
+    return sheet.getRange(rowIndex, 1, numRows || 1, lastColumn);
   }
 
   /**
@@ -363,7 +366,7 @@ class GoogleSheetsConnector extends Connector {
 
     // Use the last row index as base for appending results.
     let lastRowIndex = this.getTabLastRow(tabId) + 1;
-    this.updateList(tabId, resultsToUpdate, (result, rowIndex) => {
+    this.appendList(tabId, resultsToUpdate, (result, rowIndex) => {
       rowIndex = lastRowIndex;
       lastRowIndex++;
       return rowIndex;
@@ -395,23 +398,30 @@ class GoogleSheetsConnector extends Connector {
    * @return {Array<string>} Array of property keys.
    */
   getPropertyLookup(tabId) {
+    // Return cached value if already queried.
+    if (this.propertyLookupCache[tabId]) return this.propertyLookupCache[tabId];
+
     let tabConfig = this.tabConfigs[tabId];
     let sheet = this.getSheet(tabId);
     let skipRows = tabConfig.skipRows || 0;
     let skipColumns = tabConfig.skipColumns || 0;
+    let propertyLookup;
 
     if (tabConfig.dataAxis === DataAxis.ROW) {
       let data = sheet.getRange(
           tabConfig.propertyLookup, skipColumns + 1,
-          1, sheet.getLastColumn() - skipColumns - 1).getValues();
-      return data[0];
+          1, sheet.getLastColumn() - skipColumns).getValues();
+      propertyLookup = data[0];
 
     } else {
       let data = sheet.getRange(
           skipRows + 1, tabConfig.propertyLookup,
           sheet.getLastRow() - skipRows, 1).getValues();
-      return data.map(x => x[0]);
+      propertyLookup = data.map(x => x[0]);
     }
+
+    this.propertyLookupCache[tabId] = propertyLookup;
+    return propertyLookup;
   }
 
   /**
@@ -501,16 +511,17 @@ class GoogleSheetsConnector extends Connector {
   }
 
   /**
-   * updateList - The helper function for updating arbitrary items, like Tests,
+   * updateList - The helper function to update arbitrary items, like Tests,
    * Results, or Config items.
    * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
    * @param  {Array<object>} items Array of new items.
    * @param  {Function} rowIndexFunc The function that returns rowIndex for each item.
    */
   updateList(tabId, items, rowIndexFunc) {
+    if (!items || items.length === 0) return;
+
     let tabConfig = this.tabConfigs[tabId];
-    let data = this.getSheet(tabId).getDataRange().getValues();
-    let propertyLookup = data[tabConfig.propertyLookup - 1];
+    let propertyLookup = this.getPropertyLookup(tabId);
 
     let rowIndex = tabConfig.skipRows + 1;
     items.forEach(item => {
@@ -533,6 +544,48 @@ class GoogleSheetsConnector extends Connector {
       range.setValues([values]);
       rowIndex++;
     });
+  }
+
+  /**
+   * appendList - The helper function to append arbitrary items, like Tests,
+   * Results, or Config items.
+   * @param  {string} tabId The keys of tabConfigs. E.g. "testsTab"
+   * @param  {Array<object>} items Array of new items.
+   * @param  {Function} rowIndexFunc The function that returns rowIndex for each item.
+   */
+  appendList(tabId, items, rowIndexFunc) {
+    if (!items || items.length === 0) return;
+
+    let tabConfig = this.tabConfigs[tabId];
+    let propertyLookup = this.getPropertyLookup(tabId);
+    let firstRowIndex, allValues = [];
+
+    let rowIndex = tabConfig.skipRows + 1;
+    items.forEach(item => {
+      let values = [];
+      propertyLookup.forEach(lookup => {
+        if (typeof lookup !== 'string') {
+          throw new Error(
+              `${tabId} Tab: Property lookup ${lookup} is not a string`);
+        }
+        try {
+          let value = lookup ? eval(`item.${lookup}`) : '';
+          values.push(value);
+        } catch (error) {
+          values.push('');
+        }
+      });
+
+      if (!firstRowIndex) {
+        firstRowIndex = rowIndexFunc ? rowIndexFunc(item, rowIndex) : rowIndex;
+      }
+      allValues.push(values);
+      rowIndex++;
+    });
+
+    // Update in batch.
+    let range = this.getRowRange(tabId, firstRowIndex, items.length);
+    range.setValues(allValues);
   }
 
   /**

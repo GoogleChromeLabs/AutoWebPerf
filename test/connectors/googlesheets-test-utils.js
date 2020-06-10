@@ -82,6 +82,14 @@ const fakeSheetData = {
 
 const initFakeSheet = (fakeData) => {
   let sheet = {};
+
+  // Backfill rows with non-consistent length of cells.
+  let maxColumnLength = Math.max(...fakeData.map(row => row.length));
+  fakeData.forEach(row => {
+    while (row.length < maxColumnLength) {
+      row.push('');
+    }
+  });
   sheet.fakeData = [...fakeData];
   sheet.getDataRange = () => {
     return {
@@ -103,10 +111,17 @@ const initFakeSheet = (fakeData) => {
         sheet.fakeData[row - 1][column - 1] = value;
       },
       setValues: (values) => {
-        while(sheet.fakeData.length < row) {
+        while(sheet.fakeData.length < row - 1) {
           sheet.fakeData.push([]);
         }
-        sheet.fakeData[row - 1] = values[0];
+        let i = row - 1;
+        values.forEach(value => {
+          if (i < fakeData.length)
+            sheet.fakeData[i] = value;
+          else
+            sheet.fakeData.push(value);
+          i++;
+        })
       },
       setDataValidation: () => {},
       getLastRow: () => {
