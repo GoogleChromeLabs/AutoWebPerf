@@ -3,16 +3,26 @@
     "webPageTestApiKey": "TEST_APIKEY",
     "psiApiKey": "TEST_APIKEY",
     "gcpKeyFilePath": "tmp/gcp-service-account.json",
-    "gcpProjectId": "TEST_PROJECTID"
+    "gcpProjectId": "google.com:auto-web-perf"
   },
-  "tests": [{
+  "tests": [
+    {
+      "url": "web.dev",
+      "label":"Web.dev no Protocol",
+      "chromeuxreport": {
+        "origin": "web.dev"
+      }
+    },
+    {
       "url": "https://web.dev",
+      "label":"Web.dev Correct",
       "chromeuxreport": {
         "origin": "https://web.dev"
       }
     },
     {
       "url": "https://www.google.com",
+      "label":"Google Correct",
       "chromeuxreport": {
         "origin": "https://www.google.com"
       }

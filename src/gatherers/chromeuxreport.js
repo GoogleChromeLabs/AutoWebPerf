@@ -59,10 +59,7 @@ class ChromeUXReportGatherer extends Gatherer {
       tests.forEach(test => {
         // Standardize origins to the format of https://example.com.
         let url = test.chromeuxreport.origin || test.url;
-        let origin = (test.url.match(
-            /^https?\:\/\/([^\/?#]+)(?:[\/?#]|$)/i) || [])[1];
-        origin = 'https://' + (test.chromeuxreport.origin || origin);
-        test.chromeuxreport.origin = origin;
+        let origin = test.chromeuxreport.origin;
 
         // Collect all origins.
         originsArray.push(origin);
