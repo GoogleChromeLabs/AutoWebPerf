@@ -82,10 +82,13 @@ class WebPageTestGatherer extends Gatherer {
       'FirstPaint': 'data.median.firstView.render',
       'FirstContentfulPaint': 'data.median.firstView.firstContentfulPaint',
       'FirstMeaningfulPaint': 'data.median.firstView.firstMeaningfulPaint',
+      'LargestContentfulPaint': 'data.median.firstView["chromeUserTiming.LargestContentfulPaint"]',
+      'CumulativeLayoutShift': 'data.median.firstView["chromeUserTiming.CumulativeLayoutShift"]',
+      'TotalBlockingTime': 'data.median.firstView.TotalBlockingTime',
       'VisualComplete': 'data.median.firstView.visualComplete',
       'SpeedIndex': 'data.median.firstView.SpeedIndex',
       'LoadEvent': 'data.median.firstView.loadTime',
-      'TimeToInteractive': 'data.median.firstView.TTIMeasurementEnd',
+      'TTIMeasurementEnd': 'data.median.firstView.TTIMeasurementEnd',
       'DOMContentLoaded': 'data.median.firstView.domContentLoadedEventStart',
 
       // WebPageTest Resource Count metrics
