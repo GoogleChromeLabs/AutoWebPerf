@@ -53,7 +53,7 @@ Examples:
   ./awp retrieve --tests=examples/tests.json --results=output/results.json
 
   # CrUX Test runByBatch
-  ./awp run --tests=examples/tests-crux.json --results=output/results.json --runByBatch
+  ./awp run --tests=examples/tests-cruxbigquery.json --results=output/results.json --runByBatch
   `;
   console.log(usage);
 }
