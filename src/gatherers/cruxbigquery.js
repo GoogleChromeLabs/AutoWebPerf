@@ -22,7 +22,7 @@ const Gatherer = require('./gatherer');
 const {Metrics} = require('../common/metrics');
 const {BigQueryHandler} = require('../helpers/gcp-handler');
 
-class ChromeUXReportGatherer extends Gatherer {
+class CrUXBigQueryGatherer extends Gatherer {
   constructor(config, envVars, apiHelper, options) {
     super();
     assert(config, 'Parameter config is missing.');
@@ -42,11 +42,11 @@ class ChromeUXReportGatherer extends Gatherer {
   }
 
   run(test, options) {
-    throw new Error('Please use runByBatch mode for ChromeUXReportGatherer');
+    throw new Error('Please use runByBatch mode for CrUXBigQueryGatherer');
   }
 
   retrieve(result, options) {
-    throw new Error('Please use runByBatch mode for ChromeUXReportGatherer');
+    throw new Error('Please use runByBatch mode for CrUXBigQueryGatherer');
   }
 
 	async runBatchAsync(tests, options) {
@@ -58,8 +58,8 @@ class ChromeUXReportGatherer extends Gatherer {
     if (tests.length) {
       tests.forEach(test => {
         // Standardize origins to the format of https://example.com.
-        let url = test.chromeuxreport.origin || test.url;
-        let origin = test.chromeuxreport.origin;
+        let url = test.cruxbigquery.origin || test.url;
+        let origin = test.cruxbigquery.origin;
 
         // Collect all origins.
         originsArray.push(origin);
@@ -83,10 +83,10 @@ class ChromeUXReportGatherer extends Gatherer {
       tests.forEach(test => {
         results.push({
           status: Status.RETRIEVED,
-          origin: test.chromeuxreport.origin,
+          origin: test.cruxbigquery.origin,
           metrics : []
         });
-        originsOrder[test.chromeuxreport.origin] = originsIndex;
+        originsOrder[test.cruxbigquery.origin] = originsIndex;
         originsIndex++;
       });
 
@@ -103,7 +103,7 @@ class ChromeUXReportGatherer extends Gatherer {
 	}
 
 	retrieveBatch(results, options) {
-    throw new Error('retrieveBatch is not supported in ChromeUXReportGatherer');
+    throw new Error('retrieveBatch is not supported in CrUXBigQueryGatherer');
 	}
 
 	/**
@@ -152,11 +152,11 @@ class ChromeUXReportGatherer extends Gatherer {
     }
 
     return tests.map(test => {
-      let chromeuxreport = test.chromeuxreport || {};
+      let cruxbigquery = test.cruxbigquery || {};
       return {
         status: Status.RETRIEVED,
-        origin: chromeuxreport.origin,
-  			metrics: fakeMetrics[chromeuxreport.origin] || fakeMetrics['web.dev'],
+        origin: cruxbigquery.origin,
+  			metrics: fakeMetrics[cruxbigquery.origin] || fakeMetrics['web.dev'],
       }
     });
   }
@@ -225,4 +225,4 @@ class ChromeUXReportGatherer extends Gatherer {
 
 }
 
-module.exports = ChromeUXReportGatherer;
+module.exports = CrUXBigQueryGatherer;

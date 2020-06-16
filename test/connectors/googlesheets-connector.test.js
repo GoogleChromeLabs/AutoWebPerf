@@ -417,7 +417,7 @@ describe('GoogleSheetsConnector Results tab', () => {
     let resultsData = [
       ['', '', '', '', '', '', ''],
       ['selected', 'id', 'type', 'status', 'url',
-          'chromeuxreport.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
+          'cruxbigquery.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
       ['', 'ID', 'Type', 'Status', 'URL', 'CrUX SpeedIndex', 'PSI SpeedIndex'],
     ];
     fakeSheets['Results-1'] = initFakeSheet(resultsData);
@@ -428,7 +428,7 @@ describe('GoogleSheetsConnector Results tab', () => {
       type: 'recurring',
       url: 'web.dev',
       status: Status.RETRIEVED,
-      chromeuxreport: {
+      cruxbigquery: {
         metrics: [{
           SpeedIndex: 500,
         }, {
@@ -446,11 +446,11 @@ describe('GoogleSheetsConnector Results tab', () => {
       }
     }];
 
-    // Append results and spread chromeuxreport.metrics into multiple rows if it's
+    // Append results and spread cruxbigquery.metrics into multiple rows if it's
     // an array.
     connector.appendResultList(results, {
       googlesheets: {
-        spreadArrayProperty: 'chromeuxreport.metrics',
+        spreadArrayProperty: 'cruxbigquery.metrics',
       },
     });
 
@@ -462,7 +462,7 @@ describe('GoogleSheetsConnector Results tab', () => {
     });
     expect(duplicateResults.length).toEqual(3);
 
-    let metricList = actualResults.map(result => result.chromeuxreport.metrics);
+    let metricList = actualResults.map(result => result.cruxbigquery.metrics);
     expect(metricList[0].SpeedIndex).toEqual(500);
     expect(metricList[1].SpeedIndex).toEqual(600);
     expect(metricList[2].SpeedIndex).toEqual(700);
@@ -479,7 +479,7 @@ describe('GoogleSheetsConnector Results tab', () => {
       'the target sheet', async () => {
     let resultsData = [
       ['', '', '', '', '', ''],
-      ['selected', 'id', 'type', 'status', 'url', 'chromeuxreport.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
+      ['selected', 'id', 'type', 'status', 'url', 'cruxbigquery.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
       ['', 'ID', 'Type', 'Status', 'URL', 'CrUX SpeedIndex', 'PSI SpeedIndex'],
     ];
     fakeSheets['Results-1'] = initFakeSheet(resultsData);
@@ -490,7 +490,7 @@ describe('GoogleSheetsConnector Results tab', () => {
       type: 'recurring',
       url: 'web.dev',
       status: Status.RETRIEVED,
-      chromeuxreport: {
+      cruxbigquery: {
         metrics: [{
           SpeedIndex: 500,
         }, {
@@ -503,11 +503,11 @@ describe('GoogleSheetsConnector Results tab', () => {
       },
     }];
 
-    // Append results and spread chromeuxreport.metrics into multiple rows if it's
+    // Append results and spread cruxbigquery.metrics into multiple rows if it's
     // an array.
     connector.appendResultList(results, {
       googlesheets: {
-        spreadArrayProperty: 'chromeuxreport.metrics',
+        spreadArrayProperty: 'cruxbigquery.metrics',
       },
     });
 
@@ -542,11 +542,11 @@ describe('GoogleSheetsConnector Results tab', () => {
       },
     }];
 
-    // Append results and spread chromeuxreport.metrics into multiple rows if it's
+    // Append results and spread cruxbigquery.metrics into multiple rows if it's
     // an array.
     connector.appendResultList(results, {
       googlesheets: {
-        spreadArrayProperty: 'chromeuxreport.metrics',
+        spreadArrayProperty: 'cruxbigquery.metrics',
       },
     });
 
@@ -686,7 +686,7 @@ describe('GoogleSheetsConnector additional functions', () => {
     let resultsData, lastRowIndex;
     resultsData = [
       ['', '', '', '', '', ''],
-      ['selected', 'id', 'type', 'status', 'url', 'chromeuxreport.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
+      ['selected', 'id', 'type', 'status', 'url', 'cruxbigquery.metrics.SpeedIndex', 'psi.metrics.SpeedIndex'],
       ['Selected', 'ID', 'Type', 'Status', 'URL', 'CrUX SpeedIndex', 'PSI SpeedIndex'],
       ['', '', '', '', '', ''],
       ['', '', '', '', '', ''],
@@ -698,7 +698,7 @@ describe('GoogleSheetsConnector additional functions', () => {
 
     resultsData = [
       ['', '', '', '', '', ''],
-      ['selected', 'id', 'type', 'status', 'url', 'chromeuxreport.metrics.SpeedIndex'],
+      ['selected', 'id', 'type', 'status', 'url', 'cruxbigquery.metrics.SpeedIndex'],
       ['Selected', 'ID', 'Type', 'Status', 'URL', 'CrUX SpeedIndex'],
       ['true', 'id-1234', 'test', 'Retrieved', 'web.dev', '1234'],
       ['true', 'id-5678', 'test', 'Retrieved', 'web.dev', '1234'],

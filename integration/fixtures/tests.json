@@ -37,7 +37,7 @@
           "strategy": "mobile"
         }
       },
-      "chromeuxreport": {},
+      "cruxbigquery": {},
       "budgets": {
         "dataSource": "webpagetest",
         "budget": {

@@ -193,8 +193,8 @@ class AutoWebPerf {
           GathererClass = require('./gatherers/psi');
           break;
 
-        case 'chromeuxreport':
-          GathererClass = require('./gatherers/chromeuxreport');
+        case 'cruxbigquery':
+          GathererClass = require('./gatherers/cruxbigquery');
           break;
 
         case 'fake':

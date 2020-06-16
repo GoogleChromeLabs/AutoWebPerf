@@ -56,7 +56,7 @@ describe('AWP bundle for GoogleSheets', () => {
     awp = new AutoWebPerf({
       connector: 'GoogleSheets',
       helper: 'GoogleSheets',
-      dataSources: ['webpagetest', 'psi', 'chromeuxreport'],
+      dataSources: ['webpagetest', 'psi', 'cruxbigquery'],
       extensions: [
         'budgets',
         'googlesheets',
@@ -261,15 +261,15 @@ describe('AWP bundle for GoogleSheets', () => {
       async () => {
     let testsData = [
       ['', '', '', '', ''],
-      ['selected', 'chromeuxreport.origin', 'url'],
+      ['selected', 'cruxbigquery.origin', 'url'],
       ['', 'Origin', 'URL'],
       [true, 'example.com', 'https://example.com'],
       [true, 'web.dev', 'https://web.dev'],
     ];
     let resultsData = [
       ['', '', '', ''],
-      ['chromeuxreport.metrics.Date', 'chromeuxreport.metrics.Origin',
-          'chromeuxreport.metrics.Device', 'chromeuxreport.metrics.FirstContentfulPaint.p75'],
+      ['cruxbigquery.metrics.Date', 'cruxbigquery.metrics.Origin',
+          'cruxbigquery.metrics.Device', 'cruxbigquery.metrics.FirstContentfulPaint.p75'],
       ['Date', 'Origin', 'Device', 'FCP p75'],
     ];
     fakeSheets['Tests-1'] = initFakeSheet(testsData);
@@ -278,11 +278,11 @@ describe('AWP bundle for GoogleSheets', () => {
     // Running tests and writing to Results-1 tab.
     await awp.run({
       filters: ['selected'],
-      runByBatch: true, // Mandatory for ChromeUXReport gatherer.
+      runByBatch: true, // Mandatory for Cruxbigquery gatherer.
       googlesheets: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
-        spreadArrayProperty: 'chromeuxreport.metrics',
+        spreadArrayProperty: 'cruxbigquery.metrics',
       },
     });
 
@@ -318,7 +318,7 @@ describe('AWP bundle for GoogleSheets', () => {
     // Running tests and writing to Results-1 tab.
     await awp.run({
       filters: ['selected'],
-      runByBatch: true, // Mandatory for ChromeUXReport gatherer.
+      runByBatch: true, // Mandatory for CrUXBigQuery gatherer.
       googlesheets: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',

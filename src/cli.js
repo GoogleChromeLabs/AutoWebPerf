@@ -80,7 +80,7 @@ async function begin() {
   let awp = new AutoWebPerf({
     connector: 'JSON',
     helper: 'Node',
-    dataSources: dataSources || ['webpagetest', 'psi', 'chromeuxreport'],
+    dataSources: dataSources || ['webpagetest', 'psi', 'cruxbigquery'],
     extensions: extensions,
     json: { // Config for JSON connector.
       testsJsonPath: argv['tests'],

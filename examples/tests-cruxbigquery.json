@@ -9,21 +9,21 @@
     {
       "url": "web.dev",
       "label":"Web.dev no Protocol",
-      "chromeuxreport": {
+      "cruxbigquery": {
         "origin": "web.dev"
       }
     },
     {
       "url": "https://web.dev",
       "label":"Web.dev Correct",
-      "chromeuxreport": {
+      "cruxbigquery": {
         "origin": "https://web.dev"
       }
     },
     {
       "url": "https://www.google.com",
       "label":"Google Correct",
-      "chromeuxreport": {
+      "cruxbigquery": {
         "origin": "https://www.google.com"
       }
     }
