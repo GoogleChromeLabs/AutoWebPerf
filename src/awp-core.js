@@ -226,27 +226,31 @@ class AutoWebPerf {
   async run(options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
+    let extResponse, errors = [];
 
     let tests = this.connector.getTestList(options);
     this.logDebug(`AutoWebPerf::run with ${tests.length} tests`);
 
     // Before all runs.
-    this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
+    extResponse = this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
+    errors = errors.concat(extResponse.errors);
 
     // Run tests.
     let newResults = await this.runTests(tests, options);
 
     // After all runs.
-    this.runExtensions(extensions, 'afterAllRuns', {
+    extResponse = this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
     }, options);
+    errors = errors.concat(extResponse.errors);
 
     this.logDebug(`AutoWebPerf::run completed with ${tests.length} tests`);
 
     return {
       tests: tests,
       results: newResults,
+      errors: errors,
     };
   }
 
@@ -269,6 +273,7 @@ class AutoWebPerf {
     options.recurring = true;
 
     let extensions = options.extensions || Object.keys(this.extensions);
+    let extResponse, overallErrors = [];
     let testsToUpdate = [], resultsToUpdate = [];
     let newResults = [];
     let nowtime = Date.now();
@@ -282,7 +287,8 @@ class AutoWebPerf {
     });
 
     // Before all runs.
-    this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
+    extResponse = this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
+    overallErrors = overallErrors.concat(extResponse.errors);
 
     if (options.activateOnly) {
       this.logDebug(`AutoWebPerf::recurring with ${tests.length} tests, ` +
@@ -331,10 +337,11 @@ class AutoWebPerf {
     }
 
     // Before all runs.
-    this.runExtensions(extensions, 'afterAllRuns', {
+    extResponse = this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
     }, options);
+    overallErrors = overallErrors.concat(extResponse.errors);
 
     // Update Tests.
     this.connector.updateTestList(tests, options);
@@ -345,6 +352,7 @@ class AutoWebPerf {
     return {
       tests: tests,
       results: newResults,
+      errors: overallErrors,
     };
   }
 
@@ -363,11 +371,12 @@ class AutoWebPerf {
   async retrieve(options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
-    let resultsToUpdate = [];
+    let resultsToUpdate = [], overallErrors = [], extResponse;
 
     let results = this.connector.getResultList(options);
-    this.runExtensions(extensions, 'beforeAllRetrieves', [] /* tests */,
+    extResponse = this.runExtensions(extensions, 'beforeAllRetrieves', [] /* tests */,
         results, options);
+    overallErrors = overallErrors.concat(extResponse.errors);
 
     // Default filter for penging results only.
     if (!options.filters) {
@@ -385,13 +394,16 @@ class AutoWebPerf {
       this.log(`Retrieve: id=${result.id}`);
       this.logDebug('AutoWebPerf::retrieve, result=\n', result);
 
-      this.runExtensions(extensions, 'beforeRetrieve', {result: result},
-          options);
+      // Before retriving the result.
+      extResponse = this.runExtensions(extensions, 'beforeRetrieve',
+          {result: result}, options);
+      result.errors = (result.errors || []).concat(extResponse.errors);
 
       let statuses = [];
       let newResult = result;
       newResult.modifiedTimestamp = Date.now();
 
+      // Interate through all gatherers.
       this.dataSources.forEach(dataSource => {
         if (!result[dataSource]) return;
         if (result[dataSource].status === Status.RETRIEVED) return;
@@ -407,8 +419,9 @@ class AutoWebPerf {
       });
 
       // After retrieving the result.
-      this.runExtensions(extensions, 'afterRetrieve', {result: newResult},
-          options);
+      extResponse = this.runExtensions(extensions, 'afterRetrieve',
+          {result: newResult}, options);
+      newResult.errors = newResult.errors.concat(extResponse.errors);
 
       // Update overall status.
       newResult.status =  this.getOverallStatus(statuses);
@@ -431,14 +444,20 @@ class AutoWebPerf {
       }
     });
 
+    // Update back to the result list.
     this.connector.updateResultList(resultsToUpdate, options);
-    this.runExtensions(extensions, 'afterAllRetrieves', {results: results},
-        options);
+
+    // After retriving all results.
+    // FIXME: run the extensions before updating the list back to the connector.
+    extResponse = this.runExtensions(extensions, 'afterAllRetrieves',
+        {results: results}, options);
+    overallErrors = overallErrors.concat(extResponse.errors);
 
     this.logDebug(`AutoWebPerf::retrieved ${results.length} results.`);
 
     return {
       results: results,
+      errors: overallErrors,
     };
   }
 
@@ -460,10 +479,12 @@ class AutoWebPerf {
     let extensions = options.extensions || Object.keys(this.extensions);
     let overrideResults = options.overrideResults;
     let resultsToUpdate = [], allNewResults = [];
+    let extResponse;
 
     // Before each run.
     tests.forEach(test => {
-      this.runExtensions(extensions, 'beforeRun', {test: test});
+      extResponse = this.runExtensions(extensions, 'beforeRun', {test: test});
+      test.errors = extResponse.errors;
     });
 
     if (options.runByBatch) {
@@ -501,10 +522,11 @@ class AutoWebPerf {
         result.errors = this.getOverallErrors(result);
 
         // After each run in batch.
-        this.runExtensions(extensions, 'afterRun', {
+        extResponse = this.runExtensions(extensions, 'afterRun', {
           test: pair.test,
           result: result,
         });
+        result.errors = result.errors.concat(extResponse.errors);
 
         resultsToUpdate.push(pair.result);
         allNewResults.push(pair.result);
@@ -536,10 +558,11 @@ class AutoWebPerf {
         newResult.errors = this.getOverallErrors(newResult);
 
         // After each run
-        this.runExtensions(extensions, 'afterRun', {
+        extResponse = this.runExtensions(extensions, 'afterRun', {
           test: test,
           result: newResult,
         });
+        newResult.errors = newResult.errors.concat(extResponse.errors);
 
         // Collect tests and results for batch update if applicable.
         resultsToUpdate.push(newResult);
@@ -577,11 +600,21 @@ class AutoWebPerf {
    * - debug {boolean}: Whether to show debug messages in terminal.
    */
   runExtensions(extensions, functionName, context, options) {
+    let errors = [];
+
     extensions.forEach(extName => {
-      if (!this.extensions[extName]) return;
-      let extension = this.extensions[extName];
-      if (extension[functionName]) extension[functionName](context, options);
+      try {
+        if (!this.extensions[extName]) return;
+        let extension = this.extensions[extName];
+        if (extension[functionName]) extension[functionName](context, options);
+      } catch (e) {
+        errors.push(e.message);
+      }
     });
+
+    return {
+      errors: errors
+    };
   }
 
   /**
@@ -666,7 +699,7 @@ class AutoWebPerf {
       url: test.url,
       createdTimestamp: nowtime,
       modifiedTimestamp: nowtime,
-      errors: [],
+      errors: test.errors || [],
     };
   }
 

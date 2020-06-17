@@ -209,13 +209,13 @@ describe('AutoWebPerf with fake modules', () => {
 
   it('runs through a list of tests and gets initial results.', async () => {
     awp.connector.tests = generateFakeTests(10);
-    awp.run();
+    await awp.run();
 
     cleanFakeResults(awp.connector.results);
     let expectedResults = generateFakeResults(10);
     expect(awp.getResults()).toEqual(expectedResults);
 
-    awp.run();
+    await awp.run();
 
     cleanFakeResults(awp.connector.results);
     expectedResults = expectedResults.concat(generateFakeResults(10, {
@@ -233,14 +233,14 @@ describe('AutoWebPerf with fake modules', () => {
     test.recurring = {
       frequency: 'daily',
     }
-    awp.recurring({activateOnly: true});
+    await awp.recurring({activateOnly: true});
     expect(test.recurring.nextTrigger).not.toBe(null);
     expect(test.recurring.nextTriggerTimestamp).toBeGreaterThan(nowtime);
     expect(awp.getResults().length).toEqual(0);
 
     // Run recurring.
     test.recurring.nextTriggerTimestamp = nowtime;
-    awp.recurring();
+    await awp.recurring();
     cleanFakeResults(awp.connector.results);
 
     let expectedResults = generateFakeResults(1);
@@ -250,8 +250,8 @@ describe('AutoWebPerf with fake modules', () => {
 
   it('retrieves all non-complete results.', async () => {
     awp.connector.tests = generateFakeTests(10);
-    awp.run();
-    awp.retrieve();
+    await awp.run();
+    await awp.retrieve();
 
     cleanFakeResults(awp.connector.results);
     let expectedResults = generateFakeResults(10, {status: Status.RETRIEVED});
@@ -268,11 +268,11 @@ describe('AutoWebPerf with fake modules', () => {
     awp.batchUpdateBuffer = 10;
 
     expectedResults = generateFakeResults(95);
-    awp.run();
+    await awp.run();
     cleanFakeResults(awp.connector.results);
     expect(awp.getResults()).toEqual(expectedResults);
 
-    awp.retrieve();
+    await awp.retrieve();
     cleanFakeResults(awp.connector.results);
     expectedResults = generateFakeResults(95, {status: Status.RETRIEVED});
     expect(awp.getResults()).toEqual(expectedResults);
@@ -285,11 +285,11 @@ describe('AutoWebPerf with fake modules', () => {
     awp.batchUpdateBuffer = 5;
 
     expectedResults = generateFakeResults(22);
-    awp.run();
+    await awp.run();
     cleanFakeResults(awp.connector.results);
     expect(awp.getResults()).toEqual(expectedResults);
 
-    awp.retrieve();
+    await awp.retrieve();
     cleanFakeResults(awp.connector.results);
     expectedResults = generateFakeResults(22, {status: Status.RETRIEVED});
     expect(awp.getResults()).toEqual(expectedResults);
@@ -305,11 +305,11 @@ describe('AutoWebPerf with fake modules', () => {
       }
     });
 
-    awp.recurring({activateOnly: true});
+    await awp.recurring({activateOnly: true});
     awp.connector.tests.forEach(test => {
       test.recurring .nextTriggerTimestamp = nowtime;
     });
-    awp.recurring();
+    await awp.recurring();
     cleanFakeResults(awp.connector.results);
 
     let expectedResults = generateFakeResults(22);
@@ -331,7 +331,7 @@ describe('AutoWebPerf with fake modules', () => {
       recurring: {frequency: 'daily'},
     });
 
-    awp.recurring({activateOnly: true});
+    await awp.recurring({activateOnly: true});
     expect(awp.extensions.fake.beforeAllRuns.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.afterAllRuns.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.beforeRun.mock.calls.length).toBe(10);
@@ -368,8 +368,8 @@ describe('AutoWebPerf with fake modules', () => {
 
   it('retrieves a list of results and executes extensions.', async () => {
     awp.connector.tests = generateFakeTests(10);
-    awp.run();
-    awp.retrieve();
+    await awp.run();
+    await awp.retrieve();
     expect(awp.extensions.fake.beforeAllRetrieves.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.afterAllRetrieves.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.beforeRetrieve.mock.calls.length).toBe(10);
@@ -432,7 +432,7 @@ describe('AutoWebPerf with fake modules', () => {
       fake2: fakeGatherer2,
       fake3: fakeGatherer3,
     }
-    awp.run();
+    await awp.run();
 
     result = awp.getResults()[0];
     expect(result.status).toEqual(Status.SUBMITTED);
@@ -450,7 +450,7 @@ describe('AutoWebPerf with fake modules', () => {
       fake2: fakeGatherer2,
       fake3: fakeGatherer3,
     }
-    awp.run();
+    await awp.run();
 
     result = awp.getResults()[1];
     expect(result.status).toEqual(Status.SUBMITTED);
@@ -468,7 +468,7 @@ describe('AutoWebPerf with fake modules', () => {
       fake2: fakeGatherer2,
       fake3: fakeGatherer3,
     }
-    awp.run();
+    await awp.run();
 
     result = awp.getResults()[2];
     expect(result.status).toEqual(Status.RETRIEVED);
@@ -486,7 +486,7 @@ describe('AutoWebPerf with fake modules', () => {
       fake2: fakeGatherer2,
       fake3: fakeGatherer3,
     }
-    awp.run();
+    await awp.run();
 
     result = awp.getResults()[3];
     expect(result.status).toEqual(Status.ERROR);

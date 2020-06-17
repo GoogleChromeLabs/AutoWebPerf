@@ -458,10 +458,6 @@ class GoogleSheetsConnector extends Connector {
     triggerId = GoogleSheetsHelper.createTimeBasedTrigger(
         'submitRecurringTests', 10 /* minutes */);
     this.setSystemVar(SystemVars.RECURRING_TRIGGER_ID, triggerId);
-
-    // Create onEdit trigger.
-    triggerId = GoogleSheetsHelper.createOnEditTrigger('onEditFunc');
-    this.setSystemVar(SystemVars.ONEDIT_TRIGGER_ID, triggerId);
   }
 
   /**

@@ -161,7 +161,6 @@ describe('AWP bundle for GoogleSheets', () => {
     // Ensure it creates triggers for 'submitRecurringTests' and 'onEditFunc'.
     let systemData = fakeSheets['System'].fakeData;
     expect(systemData[2][2]).toEqual('timeBased-submitRecurringTests');
-    expect(systemData[3][2]).toEqual('forSpreadsheet-onEditFunc');
 
     // Ensure it updates the last init timestamp.
     expect(systemData[4][2]).not.toBe('');
@@ -191,7 +190,7 @@ describe('AWP bundle for GoogleSheets', () => {
     expect(resultsData.length).toEqual(3);
 
     // Running tests and writing to Results-1 tab.
-    awp.run({
+    await awp.run({
       filters: ['selected'],
       googlesheets: {
         testsTab: 'Tests-1',
@@ -260,11 +259,11 @@ describe('AWP bundle for GoogleSheets', () => {
   it('submits selected tests and writes results with spreadArrayProperty',
       async () => {
     let testsData = [
-      ['', '', '', '', ''],
-      ['selected', 'cruxbigquery.origin', 'url'],
-      ['', 'Origin', 'URL'],
-      [true, 'example.com', 'https://example.com'],
-      [true, 'web.dev', 'https://web.dev'],
+      ['', ''],
+      ['selected', 'cruxbigquery.origin'],
+      ['', 'Origin'],
+      [true, 'https://example.com'],
+      [true, 'https://web.dev'],
     ];
     let resultsData = [
       ['', '', '', ''],
@@ -432,7 +431,7 @@ describe('AWP bundle for GoogleSheets', () => {
     expect(resultsData[4][4]).toEqual('web.dev');
   });
 
-  it('retrieve and updates results for selected results', () => {
+  it('retrieve and updates results for selected results', async () => {
     let resultsData = [
       ['', '', '', '', '', ''],
       ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metadata.id', 'webpagetest.metrics.SpeedIndex'],
@@ -446,7 +445,7 @@ describe('AWP bundle for GoogleSheets', () => {
       return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
     };
 
-    awp.retrieve({
+    await awp.retrieve({
       filters: ['selected'],
       googlesheets: {
         testsTab: 'Tests-1',
@@ -460,7 +459,7 @@ describe('AWP bundle for GoogleSheets', () => {
     expect(resultsData[3][3]).toEqual('Retrieved');
   });
 
-  it('retrieve all pending results and deletes Retrieve trigger', () => {
+  it('retrieve all pending results and deletes Retrieve trigger', async () => {
     let resultsData = [
       ['', '', '', '', '', ''],
       ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metadata.id', 'webpagetest.metrics.SpeedIndex'],
@@ -474,8 +473,7 @@ describe('AWP bundle for GoogleSheets', () => {
       ['Name', 'key', 'value'],
       ['Retrieve Trigger ID', 'RETRIEVE_TRIGGER_ID', 'trigger-1'],
       ['Submit Recurring Trigger ID', 'RECURRING_TRIGGER_ID', 'trigger-2'],
-      ['onEdit trigger ID', 'ONEDIT_TRIGGER_ID', 'trigger-3'],
-      ['User\'s TimeZone', 'LAST_INIT_TIMESTAMP', 'trigger-4'],
+      ['User\'s TimeZone', 'LAST_INIT_TIMESTAMP', 'GMT'],
     ];
     fakeSheets['System'] = initFakeSheet(systemData);
 
@@ -483,7 +481,7 @@ describe('AWP bundle for GoogleSheets', () => {
       return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
     };
 
-    awp.retrieve({
+    await awp.retrieve({
       filters: ['status!==""', 'status!=="Retrieved"', 'status!=="Error"'],
       googlesheets: {
         testsTab: 'Tests-1',
@@ -493,6 +491,7 @@ describe('AWP bundle for GoogleSheets', () => {
 
     resultsData = fakeSheets['Results-1'].fakeData;
     expect(resultsData.length).toEqual(5);
+    expect(resultsData[4][3]).toEqual('Retrieved');
     expect(resultsData[4][3]).toEqual('Retrieved');
 
     systemData = fakeSheets['System'].fakeData;
