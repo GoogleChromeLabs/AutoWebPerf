@@ -78,21 +78,12 @@ class CrUXAPIGatherer extends Gatherer {
       apiJsonOutput = JSON.parse(res);
     }
 
-    let metadata = {}, metrics = new Metrics(), errors = [];
+    let metrics = new Metrics(), errors = [];
 
     if(apiJsonOutput) {
       if(apiJsonOutput.record.metrics) {
         this.preprocessData(apiJsonOutput);
       }
-
-      Object.keys(this.metadataMap).forEach(key => {
-        try {
-          eval(`metadata.${key} = apiJsonOutput.${this.metadataMap[key]}`);
-        } catch (e) {
-          errors.push(`Unable to assign apiJsonOutput.${this.metadataMap[key]} to ` +
-              `metadata: ${e.message}`);
-        }
-      });
 
       let value;
       Object.keys(this.metricsMap).forEach(key => {
@@ -107,10 +98,13 @@ class CrUXAPIGatherer extends Gatherer {
               `metrics: ${e.message}`);
         }
       });
+ 
+      if(apiJsonOutput.record.key.formFactor)
+        metrics.set('formFactor', apiJsonOutput.record.key.formFactor);
+
       return {
         status: Status.RETRIEVED,
-        statusText: 'Success',
-        metadata: metadata,
+        statusText: ' Success',
         metrics: metrics.toObject() || {},
         errors: errors,
       }
@@ -133,7 +127,7 @@ class CrUXAPIGatherer extends Gatherer {
 
   preprocessData(json) {
     let processedCrUXMetrics = {};
-    let metrics = json.record .metrics;
+    let metrics = json.record.metrics;
     let metricsToProcess = {
       lcp: metrics.largest_contentful_paint,
       fid: metrics.cumulative_layout_shift,
