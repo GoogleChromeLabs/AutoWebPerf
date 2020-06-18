@@ -779,10 +779,16 @@ class AutoWebPerf {
    * @param {object} result Result object.
    */
   getOverallErrors(result) {
+    let errors = [];
+
     // Collect errors from all gatherers.
-    let errors = this.dataSources.map(dataSource => {
-      return result[dataSource] && result[dataSource].status === Status.ERROR ?
-          result[dataSource].statusText : null;
+    this.dataSources.forEach(dataSource => {
+      if (!result[dataSource]) return;
+
+      errors = errors.concat(result[dataSource].errors);
+      if (result[dataSource] && result[dataSource].status === Status.ERROR) {
+        errors.push(result[dataSource].statusText);
+      }
     });
     return errors.filter(e => e);
   }

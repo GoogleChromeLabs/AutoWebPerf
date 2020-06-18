@@ -50,13 +50,13 @@ class PSIGatherer extends Gatherer {
       'crux.CumulativeLayoutShift': 'processedLoadingExperience.cls',
       'lighthouse.FirstContentfulPaint': 'lighthouseResult.audits.metrics.details.items[0].firstContentfulPaint',
       'lighthouse.FirstMeaningfulPaint': 'lighthouseResult.audits.metrics.details.items[0].firstMeaningfulPaint',
-      'lighthouse.LargestContentfulPaint': 'lighthouseResult.audits.largest-contentful-paint.numericValue',
+      'lighthouse.LargestContentfulPaint': 'lighthouseResult.audits["largest-contentful-paint"].numericValue',
       'lighthouse.SpeedIndex': 'lighthouseResult.audits.metrics.details.items[0].speedIndex',
       'lighthouse.TimeToInteractive': 'lighthouseResult.audits.metrics.details.items[0].interactive',
       'lighthouse.FirstCPUIdle': 'lighthouseResult.audits.metrics.details.items[0].firstCPUIdle',
       'lighthouse.FirstInputDelay': 'lighthouseResult.audits.metrics.details.items[0].estimatedInputLatency',
       'lighthouse.TotalBlockingTime': 'lighthouseResult.audits.metrics.details.items[0].totalBlockingTime',
-      'lighthouse.TotalSize': 'lighthouse.audits.total-byte-weight',
+      'lighthouse.TotalSize': 'lighthouse.audits["total-byte-weight"]',
       'lighthouse.HTML': 'processedRessourceSummaryItems.HTMLSize',
       'lighthouse.Javascript': 'processedRessourceSummaryItems.JavascriptSize',
       'lighthouse.CSS': 'processedRessourceSummaryItems.CSSSize',
@@ -114,7 +114,7 @@ class PSIGatherer extends Gatherer {
           urlParams.push(key + '=' + p);
         })
       } else {
-          urlParams.push(key + '=' + params[key]);
+        urlParams.push(key + '=' + params[key]);
       }
     });
 
@@ -124,23 +124,25 @@ class PSIGatherer extends Gatherer {
 
     let json = {};
     if (this.apiKey === 'TEST_APIKEY') {
-    // "psiApiKey": "***REMOVED***"
+      // For testing purpose.
       json = this.fakeRunResponse();
-
     } else {
       let res = this.apiHelper.fetch(url);
       json = JSON.parse(res);
     }
-    let metadata = {}, metrics = new Metrics(), errors = [];
 
-    if(json) {
-      if(json.loadingExperience) {
-        this.preprocessData(json,'crux');
+    let metadata = {},
+      metrics = new Metrics(),
+      errors = [];
+
+    if (json) {
+      if (json.loadingExperience) {
+        this.preprocessData(json, 'crux');
       }
 
       if (json.lighthouseResult) {
-        if(json.lighthouseResult.audits['resource-summary']) {
-          this.preprocessData(json,'lighthouseResourceSummary');
+        if (json.lighthouseResult.audits['resource-summary']) {
+          this.preprocessData(json, 'lighthouseResourceSummary');
         }
         // summing up the render blocking resources
         let blockingResourceSize = 0;
@@ -158,7 +160,7 @@ class PSIGatherer extends Gatherer {
           eval(`metadata.${key} = json.${this.metadataMap[key]}`);
         } catch (e) {
           errors.push(`Unable to assign json.${this.metadataMap[key]} to ` +
-              `metadata: ${e.message}`);
+            `metadata: ${e.message}`);
         }
       });
 
@@ -204,7 +206,7 @@ class PSIGatherer extends Gatherer {
   }
 
   preprocessData(json, dataSource) {
-    if(dataSource === 'crux') {
+    if (dataSource === 'crux') {
       let processedLoadingExperience = {};
       let expMetrics = json.loadingExperience.metrics;
       let expMetricsToProcess = {
@@ -231,32 +233,32 @@ class PSIGatherer extends Gatherer {
       json.processedLoadingExperience = processedLoadingExperience;
     }
 
-    if(dataSource === 'lighthouseResourceSummary') {
+    if (dataSource === 'lighthouseResourceSummary') {
       let processedRessourceSummaryItems = {};
       let ressourceSummaryItems = json.lighthouseResult.audits['resource-summary'].details.items;
       ressourceSummaryItems.forEach((element) => {
-        switch(element.label) {
+        switch (element.label) {
           case 'Document':
             processedRessourceSummaryItems.HTMLSize = element.transferSize;
-          break;
+            break;
           case 'Script':
             processedRessourceSummaryItems.JavascriptSize = element.transferSize;
-          break;
+            break;
           case 'Stylesheet':
             processedRessourceSummaryItems.CSSSize = element.transferSize;
-          break;
+            break;
           case 'Font':
             processedRessourceSummaryItems.FontsSize = element.transferSize;
-          break;
+            break;
           case 'Image':
             processedRessourceSummaryItems.ImagesSize = element.transferSize;
-          break;
+            break;
           case 'Media':
             processedRessourceSummaryItems.MediasSize = element.transferSize;
-          break;
+            break;
           case 'Third-party':
             processedRessourceSummaryItems.ThirdPartySize = element.transferSize;
-          break;
+            break;
         }
       });
       json.processedRessourceSummaryItems = processedRessourceSummaryItems;
@@ -273,8 +275,7 @@ class PSIGatherer extends Gatherer {
         "metrics": {
           "LARGEST_CONTENTFUL_PAINT_MS": {
             "percentile": 3610,
-            "distributions": [
-              {
+            "distributions": [{
                 "min": 2500,
                 "max": 4000,
                 "proportion": 0.24342440183268282
@@ -293,8 +294,7 @@ class PSIGatherer extends Gatherer {
           },
           "FIRST_INPUT_DELAY_MS": {
             "percentile": 4,
-            "distributions": [
-              {
+            "distributions": [{
                 "min": 0,
                 "max": 100,
                 "proportion": 0.98019876242265125
@@ -313,8 +313,7 @@ class PSIGatherer extends Gatherer {
           },
           "FIRST_CONTENTFUL_PAINT_MS": {
             "percentile": 2179,
-            "distributions": [
-              {
+            "distributions": [{
                 "min": 0,
                 "max": 1000,
                 "proportion": 0.35589527513684815
@@ -333,8 +332,7 @@ class PSIGatherer extends Gatherer {
           },
           "CUMULATIVE_LAYOUT_SHIFT_SCORE": {
             "percentile": 14,
-            "distributions": [
-              {
+            "distributions": [{
                 "min": 0,
                 "max": 10,
                 "proportion": 0.61887353615465646
@@ -360,8 +358,7 @@ class PSIGatherer extends Gatherer {
         "metrics": {
           "LARGEST_CONTENTFUL_PAINT_MS": {
             "percentile": 3399,
-            "distributions": [
-              {
+            "distributions": [{
                 "min": 0,
                 "max": 2500,
                 "proportion": 0.62361416946913917
@@ -380,8 +377,7 @@ class PSIGatherer extends Gatherer {
           },
           "FIRST_INPUT_DELAY_MS": {
             "percentile": 4,
-            "distributions": [
-              {
+            "distributions": [{
                 "min": 0,
                 "max": 100,
                 "proportion": 0.95333314340438846
@@ -400,8 +396,7 @@ class PSIGatherer extends Gatherer {
           },
           "FIRST_CONTENTFUL_PAINT_MS": {
             "percentile": 1917,
-            "distributions": [
-              {
+            "distributions": [{
                 "min": 0,
                 "max": 1000,
                 "proportion": 0.41785749010306855
@@ -420,8 +415,7 @@ class PSIGatherer extends Gatherer {
           },
           "CUMULATIVE_LAYOUT_SHIFT_SCORE": {
             "percentile": 25,
-            "distributions": [
-              {
+            "distributions": [{
                 "min": 0,
                 "max": 10,
                 "proportion": 0.62522653605331679
@@ -472,11 +466,9 @@ class PSIGatherer extends Gatherer {
             "displayValue": "0.081",
             "details": {
               "type": "debugdata",
-              "items": [
-                {
-                  "finalLayoutShiftTraceEventFound": true
-                }
-              ]
+              "items": [{
+                "finalLayoutShiftTraceEventFound": true
+              }]
             },
             "numericValue": 0.08149930187082273
           },
@@ -492,8 +484,7 @@ class PSIGatherer extends Gatherer {
                 "wastedMs": 0,
                 "wastedBytes": 500039
               },
-              "items": [
-                {
+              "items": [{
                   "blockingTime": 0,
                   "entity": {
                     "url": "https://developers.google.com/speed/libraries/",
@@ -525,8 +516,7 @@ class PSIGatherer extends Gatherer {
                 }
               ],
               "type": "table",
-              "headings": [
-                {
+              "headings": [{
                   "text": "Third-Party",
                   "itemType": "link",
                   "key": "entity"
@@ -724,8 +714,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "numeric",
             "displayValue": "Potential savings of 8 KB",
             "details": {
-              "headings": [
-                {
+              "headings": [{
                   "key": "url",
                   "valueType": "thumbnail"
                 },
@@ -748,15 +737,13 @@ class PSIGatherer extends Gatherer {
               "overallSavingsMs": 0,
               "overallSavingsBytes": 8652,
               "type": "opportunity",
-              "items": [
-                {
-                  "fromProtocol": true,
-                  "wastedBytes": 8652,
-                  "totalBytes": 21038,
-                  "isCrossOrigin": false,
-                  "url": "https://developers.google.com/site-assets/images/home/community-graphic.png"
-                }
-              ]
+              "items": [{
+                "fromProtocol": true,
+                "wastedBytes": 8652,
+                "totalBytes": 21038,
+                "isCrossOrigin": false,
+                "url": "https://developers.google.com/site-assets/images/home/community-graphic.png"
+              }]
             },
             "warnings": [],
             "numericValue": 0
@@ -768,8 +755,7 @@ class PSIGatherer extends Gatherer {
             "score": null,
             "scoreDisplayMode": "informative",
             "details": {
-              "items": [
-                {
+              "items": [{
                   "duration": 9.328,
                   "startTime": 1207.908
                 },
@@ -878,8 +864,7 @@ class PSIGatherer extends Gatherer {
                   "startTime": 2510.728
                 }
               ],
-              "headings": [
-                {
+              "headings": [{
                   "text": "Start Time",
                   "itemType": "ms",
                   "key": "startTime",
@@ -949,25 +934,21 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "informative",
             "displayValue": "1 element found",
             "details": {
-              "items": [
-                {
-                  "node": {
-                    "nodeLabel": "img",
-                    "snippet": "\u003cimg alt=\"\" src=\"https://developer.android.com/images/home/android-11-preview-hero.svg\" srcset=\"\" sizes=\"(max-width: 600px) 100vw, (max-width: 840px) 50vw, 708px\"\u003e",
-                    "path": "1,HTML,1,BODY,1,SECTION,3,SECTION,0,MAIN,1,DEVSITE-CONTENT,0,ARTICLE,0,ARTICLE,3,DIV,0,SECTION,0,DIV,0,DIV,0,DIV,0,FIGURE,0,IMG",
-                    "type": "node",
-                    "selector": "div.devsite-landing-row-item \u003e div.devsite-landing-row-item-media \u003e figure.devsite-landing-row-item-image \u003e img"
-                  }
+              "items": [{
+                "node": {
+                  "nodeLabel": "img",
+                  "snippet": "\u003cimg alt=\"\" src=\"https://developer.android.com/images/home/android-11-preview-hero.svg\" srcset=\"\" sizes=\"(max-width: 600px) 100vw, (max-width: 840px) 50vw, 708px\"\u003e",
+                  "path": "1,HTML,1,BODY,1,SECTION,3,SECTION,0,MAIN,1,DEVSITE-CONTENT,0,ARTICLE,0,ARTICLE,3,DIV,0,SECTION,0,DIV,0,DIV,0,DIV,0,FIGURE,0,IMG",
+                  "type": "node",
+                  "selector": "div.devsite-landing-row-item \u003e div.devsite-landing-row-item-media \u003e figure.devsite-landing-row-item-image \u003e img"
                 }
-              ],
+              }],
               "type": "table",
-              "headings": [
-                {
-                  "itemType": "node",
-                  "key": "node",
-                  "text": "Element"
-                }
-              ]
+              "headings": [{
+                "itemType": "node",
+                "key": "node",
+                "text": "Element"
+              }]
             }
           },
           "largest-contentful-paint": {
@@ -1069,8 +1050,7 @@ class PSIGatherer extends Gatherer {
             "details": {
               "type": "opportunity",
               "overallSavingsBytes": 43875,
-              "items": [
-                {
+              "items": [{
                   "url": "https://developer.android.com/images/brand/Android_Robot_480.png",
                   "wastedBytes": 14507,
                   "totalBytes": 15192,
@@ -1132,8 +1112,7 @@ class PSIGatherer extends Gatherer {
                 }
               ],
               "overallSavingsMs": 30,
-              "headings": [
-                {
+              "headings": [{
                   "key": "url",
                   "valueType": "thumbnail"
                 },
@@ -1164,27 +1143,25 @@ class PSIGatherer extends Gatherer {
             "score": null,
             "scoreDisplayMode": "informative",
             "details": {
-              "items": [
-                {
-                  "numTasksOver500ms": 0,
-                  "numTasksOver25ms": 10,
-                  "mainDocumentTransferSize": 12866,
-                  "maxRtt": 0.00024205168908984572,
-                  "numRequests": 52,
-                  "throughput": 45273102665.650856,
-                  "numStylesheets": 5,
-                  "numScripts": 8,
-                  "numTasksOver10ms": 14,
-                  "totalByteWeight": 583850,
-                  "numFonts": 6,
-                  "numTasksOver50ms": 5,
-                  "totalTaskTime": 924.61299999999471,
-                  "numTasks": 1026,
-                  "maxServerLatency": null,
-                  "rtt": 0.00024205168908984572,
-                  "numTasksOver100ms": 1
-                }
-              ],
+              "items": [{
+                "numTasksOver500ms": 0,
+                "numTasksOver25ms": 10,
+                "mainDocumentTransferSize": 12866,
+                "maxRtt": 0.00024205168908984572,
+                "numRequests": 52,
+                "throughput": 45273102665.650856,
+                "numStylesheets": 5,
+                "numScripts": 8,
+                "numTasksOver10ms": 14,
+                "totalByteWeight": 583850,
+                "numFonts": 6,
+                "numTasksOver50ms": 5,
+                "totalTaskTime": 924.61299999999471,
+                "numTasks": 1026,
+                "maxServerLatency": null,
+                "rtt": 0.00024205168908984572,
+                "numTasksOver100ms": 1
+              }],
               "type": "debugdata"
             }
           },
@@ -1211,8 +1188,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "numeric",
             "displayValue": "Total size was 570 KB",
             "details": {
-              "headings": [
-                {
+              "headings": [{
                   "text": "URL",
                   "itemType": "url",
                   "key": "url"
@@ -1223,8 +1199,7 @@ class PSIGatherer extends Gatherer {
                   "itemType": "bytes"
                 }
               ],
-              "items": [
-                {
+              "items": [{
                   "totalBytes": 111749,
                   "url": "https://www.gstatic.com/devrel-devsite/prod/v050cadc3f3cf927d4089880349cc4dea1a9dab3bc6036e7a65cc361fddd65555/developers/js/devsite_app.js"
                 },
@@ -1289,8 +1264,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "numeric",
             "displayValue": "0.9 s",
             "details": {
-              "headings": [
-                {
+              "headings": [{
                   "text": "Category",
                   "key": "groupLabel",
                   "itemType": "text"
@@ -1303,8 +1277,7 @@ class PSIGatherer extends Gatherer {
                 }
               ],
               "type": "table",
-              "items": [
-                {
+              "items": [{
                   "duration": 350.103,
                   "group": "styleLayout",
                   "groupLabel": "Style & Layout"
@@ -1350,8 +1323,7 @@ class PSIGatherer extends Gatherer {
             "score": 0,
             "scoreDisplayMode": "binary",
             "details": {
-              "items": [
-                {
+              "items": [{
                   "url": "https://fonts.gstatic.com/s/googlesans/v16/4UabrENHsxJlGDuGo1OIlLU94YtzCwZsPF4o.woff2",
                   "wastedMs": 125.87200000416487
                 },
@@ -1376,8 +1348,7 @@ class PSIGatherer extends Gatherer {
                   "wastedMs": 94.329999992623925
                 }
               ],
-              "headings": [
-                {
+              "headings": [{
                   "key": "url",
                   "text": "URL",
                   "itemType": "url"
@@ -1400,8 +1371,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "informative",
             "displayValue": "9 user timings",
             "details": {
-              "items": [
-                {
+              "items": [{
                   "duration": 95.396,
                   "startTime": 1790.504,
                   "timingType": "Measure",
@@ -1451,8 +1421,7 @@ class PSIGatherer extends Gatherer {
                 }
               ],
               "type": "table",
-              "headings": [
-                {
+              "headings": [{
                   "itemType": "text",
                   "text": "Name",
                   "key": "name"
@@ -1497,8 +1466,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "numeric",
             "displayValue": "2 resources found",
             "details": {
-              "items": [
-                {
+              "items": [{
                   "url": "https://www.google-analytics.com/plugins/ua/linkid.js",
                   "debugData": {
                     "public": true,
@@ -1524,8 +1492,7 @@ class PSIGatherer extends Gatherer {
                 }
               ],
               "type": "table",
-              "headings": [
-                {
+              "headings": [{
                   "itemType": "url",
                   "key": "url",
                   "text": "URL"
@@ -1571,8 +1538,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "informative",
             "details": {
               "type": "debugdata",
-              "items": [
-                {
+              "items": [{
                   "observedFirstVisualChangeTs": 641017040982,
                   "largestContentfulPaint": 1450,
                   "observedFirstContentfulPaintTs": 641017061947,
@@ -1656,8 +1622,7 @@ class PSIGatherer extends Gatherer {
             "score": null,
             "scoreDisplayMode": "informative",
             "details": {
-              "items": [
-                {
+              "items": [{
                   "timing": 300,
                   "data": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRQBAwQEBQQFCQUFCRQNCw0UFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFP/AABEIAFMAeAMBEQACEQEDEQH/xAGiAAABBQEBAQEBAQAAAAAAAAAAAQIDBAUGBwgJCgsQAAIBAwMCBAMFBQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh4uPk5ebn6Onq8fLz9PX29/j5+gEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoLEQACAQIEBAMEBwUEBAABAncAAQIDEQQFITEGEkFRB2FxEyIygQgUQpGhscEJIzNS8BVictEKFiQ04SXxFxgZGiYnKCkqNTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqCg4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2dri4+Tl5ufo6ery8/T19vf4+fr/2gAMAwEAAhEDEQA/AP1ToAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgAoAKACgD//Z",
                   "timestamp": 641015912982
@@ -1720,8 +1685,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "numeric",
             "displayValue": "Potential savings of 40 ms",
             "details": {
-              "headings": [
-                {
+              "headings": [{
                   "key": "url",
                   "label": "URL",
                   "valueType": "url"
@@ -1739,8 +1703,7 @@ class PSIGatherer extends Gatherer {
               ],
               "overallSavingsMs": 40,
               "type": "opportunity",
-              "items": [
-                {
+              "items": [{
                   "totalBytes": 2633,
                   "wastedMs": 230,
                   "url": "https://fonts.googleapis.com/css?family=Google+Sans:400,500|Roboto:400,400italic,500,500italic,700,700italic|Roboto+Mono:400,500,700|Material+Icons"
@@ -1779,8 +1742,7 @@ class PSIGatherer extends Gatherer {
               "summary": {
                 "wastedMs": 195.1999999999999
               },
-              "items": [
-                {
+              "items": [{
                   "total": 401.44000000000005,
                   "url": "https://developers.google.com/",
                   "scripting": 5.4079999999999959,
@@ -1799,8 +1761,7 @@ class PSIGatherer extends Gatherer {
                   "scripting": 20.080999999999992
                 }
               ],
-              "headings": [
-                {
+              "headings": [{
                   "itemType": "url",
                   "key": "url",
                   "text": "URL"
@@ -1835,8 +1796,7 @@ class PSIGatherer extends Gatherer {
             "score": null,
             "scoreDisplayMode": "informative",
             "details": {
-              "items": [
-                {
+              "items": [{
                   "finished": true,
                   "resourceSize": 113728,
                   "endTime": 1174.9019999988377,
@@ -2408,8 +2368,7 @@ class PSIGatherer extends Gatherer {
                   "statusCode": 200
                 }
               ],
-              "headings": [
-                {
+              "headings": [{
                   "text": "URL",
                   "itemType": "url",
                   "key": "url"
@@ -2468,8 +2427,7 @@ class PSIGatherer extends Gatherer {
             "displayValue": "Potential savings of 148 KB",
             "details": {
               "type": "opportunity",
-              "headings": [
-                {
+              "headings": [{
                   "valueType": "url",
                   "subRows": {
                     "valueType": "code",
@@ -2497,8 +2455,7 @@ class PSIGatherer extends Gatherer {
               ],
               "overallSavingsMs": 160,
               "overallSavingsBytes": 151421,
-              "items": [
-                {
+              "items": [{
                   "wastedPercent": 68.984055149715019,
                   "wastedBytes": 77089,
                   "url": "https://www.gstatic.com/devrel-devsite/prod/v050cadc3f3cf927d4089880349cc4dea1a9dab3bc6036e7a65cc361fddd65555/developers/js/devsite_app.js",
@@ -2552,8 +2509,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "informative",
             "displayValue": "51 requests • 570 KB",
             "details": {
-              "items": [
-                {
+              "items": [{
                   "transferSize": 583850,
                   "resourceType": "total",
                   "requestCount": 51,
@@ -2608,8 +2564,7 @@ class PSIGatherer extends Gatherer {
                   "requestCount": 41
                 }
               ],
-              "headings": [
-                {
+              "headings": [{
                   "key": "label",
                   "itemType": "text",
                   "text": "Resource Type"
@@ -2636,8 +2591,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "numeric",
             "displayValue": "825 elements",
             "details": {
-              "headings": [
-                {
+              "headings": [{
                   "key": "statistic",
                   "text": "Statistic",
                   "itemType": "text"
@@ -2653,8 +2607,7 @@ class PSIGatherer extends Gatherer {
                   "key": "value"
                 }
               ],
-              "items": [
-                {
+              "items": [{
                   "statistic": "Total DOM Elements",
                   "value": "825"
                 },
@@ -2701,8 +2654,7 @@ class PSIGatherer extends Gatherer {
             "scoreDisplayMode": "numeric",
             "displayValue": "Potential savings of 50 KB",
             "details": {
-              "headings": [
-                {
+              "headings": [{
                   "label": "URL",
                   "key": "url",
                   "valueType": "url"
@@ -2720,14 +2672,12 @@ class PSIGatherer extends Gatherer {
               ],
               "overallSavingsMs": 40,
               "type": "opportunity",
-              "items": [
-                {
-                  "wastedPercent": 93.507782262052814,
-                  "url": "https://www.gstatic.com/devrel-devsite/prod/v050cadc3f3cf927d4089880349cc4dea1a9dab3bc6036e7a65cc361fddd65555/developers/css/app.css",
-                  "wastedBytes": 50695,
-                  "totalBytes": 54215
-                }
-              ],
+              "items": [{
+                "wastedPercent": 93.507782262052814,
+                "url": "https://www.gstatic.com/devrel-devsite/prod/v050cadc3f3cf927d4089880349cc4dea1a9dab3bc6036e7a65cc361fddd65555/developers/css/app.css",
+                "wastedBytes": 50695,
+                "totalBytes": 54215
+              }],
               "overallSavingsBytes": 50695
             },
             "numericValue": 40
@@ -2738,8 +2688,7 @@ class PSIGatherer extends Gatherer {
             "id": "performance",
             "title": "Performance",
             "score": 0.93,
-            "auditRefs": [
-              {
+            "auditRefs": [{
                 "id": "first-contentful-paint",
                 "weight": 15,
                 "group": "metrics"
