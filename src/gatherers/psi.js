@@ -50,11 +50,13 @@ class PSIGatherer extends Gatherer {
       'crux.CumulativeLayoutShift': 'processedLoadingExperience.cls',
       'lighthouse.FirstContentfulPaint': 'lighthouseResult.audits.metrics.details.items[0].firstContentfulPaint',
       'lighthouse.FirstMeaningfulPaint': 'lighthouseResult.audits.metrics.details.items[0].firstMeaningfulPaint',
+      'lighthouse.LargestContentfulPaint': 'lighthouseResult.audits.largest-contentful-paint.numericValue',
       'lighthouse.SpeedIndex': 'lighthouseResult.audits.metrics.details.items[0].speedIndex',
       'lighthouse.TimeToInteractive': 'lighthouseResult.audits.metrics.details.items[0].interactive',
       'lighthouse.FirstCPUIdle': 'lighthouseResult.audits.metrics.details.items[0].firstCPUIdle',
       'lighthouse.FirstInputDelay': 'lighthouseResult.audits.metrics.details.items[0].estimatedInputLatency',
       'lighthouse.TotalBlockingTime': 'lighthouseResult.audits.metrics.details.items[0].totalBlockingTime',
+      'lighthouse.TotalSize': 'lighthouse.audits.total-byte-weight',
       'lighthouse.HTML': 'processedRessourceSummaryItems.HTMLSize',
       'lighthouse.Javascript': 'processedRessourceSummaryItems.JavascriptSize',
       'lighthouse.CSS': 'processedRessourceSummaryItems.CSSSize',
@@ -78,6 +80,7 @@ class PSIGatherer extends Gatherer {
 
     let bytesToKb = (x) => Math.round(x / 1000);
     this.metricsConversion = {
+      'lighthouse.TotalSize': bytesToKb,
       'lighthouse.HTML': bytesToKb,
       'lighthouse.Javascript': bytesToKb,
       'lighthouse.CSS': bytesToKb,
