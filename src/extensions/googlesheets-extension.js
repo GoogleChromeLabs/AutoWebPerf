@@ -124,12 +124,12 @@ class GoogleSheetsExtension extends Extension {
       // Format createdDate
       if (result.createdTimestamp) {
         result.createdDate = GoogleSheetsHelper.getFormattedDate(
-            new Date(result.createdTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:MM');
+            new Date(result.createdTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:mm:ss');
       }
       // Format modifiedDate
       if (result.modifiedTimestamp) {
         result.modifiedDate = GoogleSheetsHelper.getFormattedDate(
-            new Date(result.modifiedTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:MM');
+            new Date(result.modifiedTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:mm:ss');
       }
 
       // Send action to Google Analytics
@@ -189,7 +189,7 @@ class GoogleSheetsExtension extends Extension {
     if (result.modifiedTimestamp) {
       result.modifiedDate = GoogleSheetsHelper.getFormattedDate(
           new Date(result.modifiedTimestamp), this.userTimeZone,
-          'MM/dd/YYYY HH:MM');
+          'MM/dd/YYYY HH:mm:ss');
     }
 
     // Send retrieved action to Google Analytics.

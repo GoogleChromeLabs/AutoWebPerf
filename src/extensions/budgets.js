@@ -30,6 +30,8 @@ class BudgetsExtension extends Extension {
     this.budgetMetricMap = {
       'FirstContentfulPaint': ['milliseconds', 'seconds', 'overRatio'],
       'FirstMeaningfulPaint': ['milliseconds', 'seconds', 'overRatio'],
+      'LargestContentfulPaint': ['milliseconds', 'seconds', 'overRatio'],
+      'TotalBlockingTime': ['milliseconds', 'seconds', 'overRatio'],
       'SpeedIndex': ['milliseconds', 'seconds', 'overRatio'],
       'TimeToInteractive': ['milliseconds', 'seconds', 'overRatio'],
       'Javascript': ['KB', 'overRatio'],
@@ -37,6 +39,9 @@ class BudgetsExtension extends Extension {
       'Fonts': ['KB', 'overRatio'],
       'Images': ['KB', 'overRatio'],
       'Videos': ['KB', 'overRatio'],
+      'ThirdParty': ['KB', 'overRatio'],
+      'Performance': ['numberic', 'overRatio'],
+      'CumulativeLayoutShift': ['numberic', 'overRatio'],
     };
   }
 
@@ -85,6 +90,11 @@ class BudgetsExtension extends Extension {
 
         targets.forEach(target => {
           switch (target) {
+            case 'numberic':
+              setObject(resultMetric, `budget.numberic`, budget);
+              setObject(resultMetric, `metric.numberic`, metricValue);
+              break;
+
             case 'milliseconds':
               setObject(resultMetric, `budget.milliseconds`, budget);
               setObject(resultMetric, `metric.milliseconds`, metricValue);
