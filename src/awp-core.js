@@ -197,6 +197,10 @@ class AutoWebPerf {
           GathererClass = require('./gatherers/cruxbigquery');
           break;
 
+        case 'cruxapi':
+          GathererClass = require('./gatherers/cruxapi');
+          break;
+
         case 'fake':
           // Do nothing, for testing purpose.
           break;

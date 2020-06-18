@@ -52,8 +52,12 @@ Examples:
   # Retrieve pending results
   ./awp retrieve --tests=examples/tests.json --results=output/results.json
 
-  # CrUX Test runByBatch
+  # CrUX BigQuery Test runByBatch
   ./awp run --tests=examples/tests-cruxbigquery.json --results=output/results.json --runByBatch
+
+  # CrUX API runByBatch
+  ./awp run --tests=examples/tests-cruxapi.json --results=output/results.json
+
   `;
   console.log(usage);
 }
@@ -80,7 +84,7 @@ async function begin() {
   let awp = new AutoWebPerf({
     connector: 'JSON',
     helper: 'Node',
-    dataSources: dataSources || ['webpagetest', 'psi', 'cruxbigquery'],
+    dataSources: dataSources || ['webpagetest', 'psi', 'cruxbigquery', 'cruxapi'],
     extensions: extensions,
     json: { // Config for JSON connector.
       testsJsonPath: argv['tests'],

@@ -1,0 +1,31 @@
+{
+  "envVars": {
+    "webPageTestApiKey": "TEST_APIKEY",
+    "psiApiKey": "TEST_APIKEY",
+    "cruxApiKey": "AIzaSyCGW5PmVoCHs7TSRajfHZDR5Fh2AWI3cLY",
+    "gcpKeyFilePath": "tmp/gcp-service-account.json",
+    "gcpProjectId": "google.com:auto-web-perf"
+  },
+  "tests": [
+    {
+      "label":"Chloe Shoes",
+      "cruxapi": {
+        "url": "https://www.chloe.com/us/chloe/shop-online/women/shoes",
+        "formFactor": "PHONE"
+      }
+    },
+    {
+      "label":"Chloe Origin Phone",
+      "cruxapi": {
+        "origin": "https://www.chloe.com",
+        "formFactor": "PHONE"
+      }
+    },
+    {
+      "label":"Chloe Origin",
+      "cruxapi": {
+        "origin": "https://www.chloe.com"
+      }
+    }
+  ]
+}
