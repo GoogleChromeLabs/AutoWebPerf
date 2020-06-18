@@ -8,23 +8,30 @@
   },
   "tests": [
     {
-      "label":"Chloe Shoes",
+      "label":"Web Vitals",
       "cruxapi": {
-        "url": "https://www.chloe.com/us/chloe/shop-online/women/shoes",
+        "url": "https://web.dev/vitals/",
         "formFactor": "PHONE"
       }
     },
     {
-      "label":"Chloe Origin Phone",
+      "label":"Web.dev Origin phone",
       "cruxapi": {
-        "origin": "https://www.chloe.com",
+        "origin": "https://web.dev",
         "formFactor": "PHONE"
       }
     },
     {
-      "label":"Chloe Origin",
+      "label":"Web.dev Origin",
       "cruxapi": {
-        "origin": "https://www.chloe.com"
+        "origin": "https://web.dev"
+      }
+    },
+    {
+      "label":"Web.dev wrong Origin",
+      "cruxapi": {
+        "origin": "https://wew.dev",
+        "formFactor": "PHONE"
       }
     }
   ]

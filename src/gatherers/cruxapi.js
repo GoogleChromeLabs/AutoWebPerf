@@ -53,7 +53,11 @@ class CrUXAPIGatherer extends Gatherer {
 
     if (options.debug) console.log(test);
 
-    let apiJsonOutput = {};
+    let apiJsonOutput = {},
+      statusText = "",
+      status = "",
+      metrics = new Metrics(),
+      errors = [];
 
     if (this.apiKey === 'TEST_APIKEY') {
       apiJsonOutput = this.fakeRunResponse();
@@ -74,17 +78,11 @@ class CrUXAPIGatherer extends Gatherer {
       apiOptions.headers['Content-Type'] = 'application/json';
 
       let res = this.apiHelper.fetch(url, apiOptions);
-
       apiJsonOutput = JSON.parse(res);
     }
 
-    let metrics = new Metrics(), errors = [];
-
-    if(apiJsonOutput) {
-      if(apiJsonOutput.record.metrics) {
-        this.preprocessData(apiJsonOutput);
-      }
-
+    if(apiJsonOutput && apiJsonOutput.record.metrics) {
+      this.preprocessData(apiJsonOutput);
       let value;
       Object.keys(this.metricsMap).forEach(key => {
         // Using eval for the assigning to support non-string and non-numeric
@@ -102,18 +100,19 @@ class CrUXAPIGatherer extends Gatherer {
       if(apiJsonOutput.record.key.formFactor)
         metrics.set('formFactor', apiJsonOutput.record.key.formFactor);
 
-      return {
-        status: Status.RETRIEVED,
-        statusText: ' Success',
-        metrics: metrics.toObject() || {},
-        errors: errors,
-      }
+      status = Status.RETRIEVED;
+      statusText = 'Success';
+
     } else {
-      return {
-        status: Status.ERROR,
-        statusText: 'No result found in CrUX API response.',
-        errors: errors,
-      }
+      status = Status.ERROR;
+      statusText = 'No result found in CrUX API response';
+    }
+
+    return {
+      status: status,
+      statusText: statusText,
+      metrics: metrics.toObject() || {},
+      errors: errors,
     }
   }
 
