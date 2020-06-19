@@ -124,7 +124,7 @@ class GoogleSheetsConnector extends Connector {
       'psi.metrics.lighthouse.FirstContentfulPaint': [4000, 2000],
       'psi.metrics.lighthouse.FirstMeaningfulPaint': [4000, 2000],
       'psi.metrics.lighthouse.LargestContentfulPaint': [4000,2500],
-      'psi.metrics.lighthouse.CumulativeLayoutShift': [0.25,0.1],
+      'psi.metrics.lighthouse.CumulativeLayoutShift': [25,10],
       'psi.metrics.lighthouse.TimeToInteractive': [7300, 5200],
       'psi.metrics.lighthouse.TotalBlockingTime': [600,300],
       'psi.metrics.crux.FirstContentfulPaint.percentile': [3000, 1000],
