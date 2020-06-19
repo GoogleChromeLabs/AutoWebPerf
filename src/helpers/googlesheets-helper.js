@@ -43,8 +43,7 @@ class GoogleSheetsApiHandler extends ApiHandler {
     } catch(e){
       Logger.log('There was an error while fetching ' + url, e);
       return  {
-        statusCode: e.code,
-        body: e.message
+        statusCode: e.code
       }
     }
   }  
@@ -69,8 +68,7 @@ class GoogleSheetsApiHandler extends ApiHandler {
     } catch(e){
       Logger.log('There was an error while fetching ' + url, e);
       return  {
-        statusCode: e.code,
-        body: e.message
+        statusCode: e.code
       }
     }
   }
