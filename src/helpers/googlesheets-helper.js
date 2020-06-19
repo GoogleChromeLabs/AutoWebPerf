@@ -50,10 +50,17 @@ class GoogleSheetsApiHandler extends ApiHandler {
   post(url, postOptions) {
     try{
       let fetchOptions = {
-            'method' : 'post',
-            'payload' : postOptions.body || postOptions.json,
-            'contentType': 'application/json'
+            'method' : 'post'
           };
+      
+      if(postOptions.json) {
+        fetchOptions.payload = JSON.stringify(postOptions.json);
+        fetchOptions.contentType = 'application/json';
+      } else
+        fetchOptions.payload = postOptions.body;
+
+      console.log('postOptions', postOptions);
+
       let response = UrlFetchApp.fetch(url, fetchOptions);
       return  {
         statusCode: response.getResponseCode(),

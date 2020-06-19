@@ -306,6 +306,15 @@ class WebPageTestGatherer extends Gatherer {
         }
         break;
 
+      case 500:
+        status = Status.ERROR;
+        // Deal with the occasional error with "Test not found". These type of
+        // tests can be resolved by simply retrying.
+        if (json.statusText === 'Unavailable Service') {
+          status = Status.SUBMITTED;
+        }
+        break;
+
       default:
         status = Status.ERROR;
         break;
