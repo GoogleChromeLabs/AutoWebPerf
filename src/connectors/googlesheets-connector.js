@@ -127,6 +127,14 @@ class GoogleSheetsConnector extends Connector {
       'psi.metrics.lighthouse.CumulativeLayoutShift': [0.25,0.1],
       'psi.metrics.lighthouse.TimeToInteractive': [7300, 5200],
       'psi.metrics.lighthouse.TotalBlockingTime': [600,300],
+      'psi.metrics.crux.FirstContentfulPaint.percentile': [3000, 1000],
+      'psi.metrics.crux.LargestContentfulPaint.percentile': [4000,2500],
+      'psi.metrics.crux.FirstInputDelay.percentile': [300,100],
+      'psi.metrics.crux.CumulativeLayoutShift.percentile': [0.25,0.1],
+      'cruxapi.metrics.FirstContentfulPaint.p75': [3000, 1000],
+      'cruxapi.metrics.LargestContentfulPaint.p75': [4000,2500],
+      'cruxapi.metrics.CumulativeLayoutShift.p75': [0.25,0.1],
+      'cruxapi.metrics.FirstInputDelay.p75': [300,100]
     };
 
     this.healthCheck();
