@@ -68,13 +68,11 @@ class CrUXAPIGatherer extends Gatherer {
         json : {} 
       };
 
-      if(test.cruxapi.url) {
-        apiOptions.json.url = test.cruxapi.url;
-        metrics['url'] = test.cruxapi.url;
-      } else if(test.cruxapi.origin) {
-        apiOptions.json.origin = test.cruxapi.origin;
-        metrics['origin'] = test.cruxapi.origin;
-      }
+      if(test.url)
+        apiOptions.json.url = test.url;
+      else if(test.origin)
+        apiOptions.json.origin = test.origin;
+
       if(test.cruxapi.formFactor)
         apiOptions.json.formFactor = test.cruxapi.formFactor;
 
