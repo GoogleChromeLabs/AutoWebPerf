@@ -8,21 +8,18 @@
   "tests": [
     {
       "label":"Web.dev no Protocol",
-      "cruxbigquery": {
-        "origin": "web.dev"
-      }
+      "origin": "web.dev",
+      "cruxbigquery": {}
     },
     {
       "label":"Web.dev Correct",
-      "cruxbigquery": {
-        "origin": "https://web.dev"
-      }
+      "origin": "https://web.dev",
+      "cruxbigquery": {}
     },
     {
       "label":"Google Correct",
-      "cruxbigquery": {
-        "origin": "https://www.google.com"
-      }
+      "origin": "https://www.google.com",
+      "cruxbigquery": {}
     }
   ]
 }

@@ -58,8 +58,7 @@ class CrUXBigQueryGatherer extends Gatherer {
     if (tests.length) {
       tests.forEach(test => {
         // Standardize origins to the format of https://example.com.
-        let url = test.cruxbigquery.origin || test.url;
-        let origin = test.cruxbigquery.origin;
+        let origin = test.origin;
 
         // Collect all origins.
         originsArray.push(origin);
@@ -83,10 +82,10 @@ class CrUXBigQueryGatherer extends Gatherer {
       tests.forEach(test => {
         results.push({
           status: Status.RETRIEVED,
-          origin: test.cruxbigquery.origin,
+          origin: test.origin,
           metrics : []
         });
-        originsOrder[test.cruxbigquery.origin] = originsIndex;
+        originsOrder[test.origin] = originsIndex;
         originsIndex++;
       });
 
