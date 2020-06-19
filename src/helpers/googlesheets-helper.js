@@ -48,14 +48,22 @@ class GoogleSheetsApiHandler extends ApiHandler {
   }  
 
   post(url, postOptions) {
-    let fetchOptions = {
-          'method' : 'post',
-          'payload' : JSON.stringify(postOptions.body || postOptions.json),
-        };
-    let response = UrlFetchApp.fetch(url, fetchOptions);
-    return  {
-      statusCode: response.getResponseCode(),
-      body: response.getContentText()
+    try{
+      let fetchOptions = {
+            'method' : 'post',
+            'payload' : postOptions.body || postOptions.json,
+            'contentType': 'application/json'
+          };
+      let response = UrlFetchApp.fetch(url, fetchOptions);
+      return  {
+        statusCode: response.getResponseCode(),
+        body: response.getContentText()
+      }
+    } catch(e){
+      Logger.log('There was an error while fetching ' + url, e);
+      Browser.msgBox('There was an error fetching a URL. Please run the '+
+                     'commands "Authorize tool" and "Initialise tool" from the ' +
+                     'AutoWebPerf menu.');
     }
   }
 }
