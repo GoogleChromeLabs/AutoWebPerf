@@ -19,7 +19,7 @@ const ApiHandler = require('./api-handler');
 class GoogleSheetsApiHandler extends ApiHandler {
   fetch(url) {
     try{
-      var response = UrlFetchApp.fetch(url).getContentText();
+      var response = UrlFetchApp.fetch(url);
       return {
         statusCode: response.getResponseCode(),
         body: response.getContentText(),
@@ -34,7 +34,7 @@ class GoogleSheetsApiHandler extends ApiHandler {
 
   get(url) {
     try{
-      var response = UrlFetchApp.fetch(url).getContentText();
+      var response = UrlFetchApp.fetch(url);
       return {
         statusCode: response.getResponseCode(),
         body: response.getContentText(),
