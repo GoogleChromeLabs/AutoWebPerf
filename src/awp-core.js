@@ -525,6 +525,10 @@ class AutoWebPerf {
         // Collect errors from all gatherers.
         result.errors = this.getOverallErrors(result);
 
+        if (options.debug) {
+          console.log(result.errors);
+        }
+
         // After each run in batch.
         extResponse = this.runExtensions(extensions, 'afterRun', {
           test: pair.test,
@@ -612,7 +616,10 @@ class AutoWebPerf {
         let extension = this.extensions[extName];
         if (extension[functionName]) extension[functionName](context, options);
       } catch (e) {
-        errors.push(e.message);
+        if (this.debug) {
+          console.error(e.stack);
+        }
+        errors.push(e);
       }
     });
 

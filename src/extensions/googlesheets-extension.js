@@ -243,7 +243,7 @@ class GoogleSheetsExtension extends Extension {
    * @param {object} result Processed Result object.
    */
   trackAction(trackingType, sheetId, result) {
-    let testedUrl = result.url || result.cruxbigquery.origin || 'No given URL';
+    let testedUrl = result.url || result.origin || 'No given URL';
     let url;
 
     // Record legacy GA event.
@@ -261,7 +261,7 @@ class GoogleSheetsExtension extends Extension {
     url = this.gaPageViewURL(this.awpVersion, sheetId, testedUrl, customValues);
 
     let response = this.apiHandler.fetch(url);
-    
+
     if (this.debug) console.log('trackAction: ', url);
 
     if (this.debug && response.statusCode==200) {

@@ -34,6 +34,7 @@ class BudgetsExtension extends Extension {
       'TotalBlockingTime': ['milliseconds', 'seconds', 'overRatio'],
       'SpeedIndex': ['milliseconds', 'seconds', 'overRatio'],
       'TimeToInteractive': ['milliseconds', 'seconds', 'overRatio'],
+      'FirstInputDelay': ['milliseconds', 'seconds', 'overRatio'],
       'Javascript': ['KB', 'overRatio'],
       'CSS': ['KB', 'overRatio'],
       'Fonts': ['KB', 'overRatio'],
@@ -109,7 +110,7 @@ class BudgetsExtension extends Extension {
 
             case 'overRatio':
               resultMetric[target] = metricValue ?
-                  this.round((metricValue - budget) / budget, 2) : null;
+                  this.round((metricValue - budget) / budget, 4) : null;
               break;
 
             case 'KB':
