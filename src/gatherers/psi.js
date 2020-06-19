@@ -129,7 +129,7 @@ class PSIGatherer extends Gatherer {
     } else {
       let response = this.apiHelper.fetch(url);
       if(response.statusCode == 200)
-        json = JSON.parse(this.apiHelper.getBody(response.body));
+        json = JSON.parse(response.body);
     }
 
     let metadata = {},

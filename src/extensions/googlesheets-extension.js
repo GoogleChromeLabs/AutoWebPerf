@@ -264,8 +264,8 @@ class GoogleSheetsExtension extends Extension {
     
     if (this.debug) console.log('trackAction: ', url);
 
-    if (response && this.debug) {
-      console.log('trackAction response: ', this.apiHelper.getBody(response));
+    if (this.debug && response.statusCode==200) {
+      console.log('trackAction response: ', response.body);
     }
   }
 
