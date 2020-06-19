@@ -26,9 +26,10 @@ class GoogleSheetsApiHandler extends ApiHandler {
       };
     } catch(e){
       Logger.log('There was an error while fetching ' + url, e);
-      Browser.msgBox('There was an error fetching a URL. Please run the '+
-                     'commands "Authorize tool" and "Initialise tool" from the ' +
-                     'AutoWebPerf menu.');
+      return  {
+        statusCode: e.code,
+        body: e.message
+      }
     }
   }
 
@@ -41,9 +42,10 @@ class GoogleSheetsApiHandler extends ApiHandler {
       };
     } catch(e){
       Logger.log('There was an error while fetching ' + url, e);
-      Browser.msgBox('There was an error fetching a URL. Please run the '+
-                     'commands "Authorize tool" and "Initialise tool" from the ' +
-                     'AutoWebPerf menu.');
+      return  {
+        statusCode: e.code,
+        body: e.message
+      }
     }
   }  
 
@@ -59,8 +61,6 @@ class GoogleSheetsApiHandler extends ApiHandler {
       } else
         fetchOptions.payload = postOptions.body;
 
-      console.log('postOptions', postOptions);
-
       let response = UrlFetchApp.fetch(url, fetchOptions);
       return  {
         statusCode: response.getResponseCode(),
@@ -68,9 +68,10 @@ class GoogleSheetsApiHandler extends ApiHandler {
       }
     } catch(e){
       Logger.log('There was an error while fetching ' + url, e);
-      Browser.msgBox('There was an error fetching a URL. Please run the '+
-                     'commands "Authorize tool" and "Initialise tool" from the ' +
-                     'AutoWebPerf menu.');
+      return  {
+        statusCode: e.code,
+        body: e.message
+      }
     }
   }
 }

@@ -79,9 +79,11 @@ class CrUXAPIGatherer extends Gatherer {
       let response = this.apiHelper.post(url, apiOptions);
       if(response.statusCode == 200)
         apiJsonOutput = JSON.parse(response.body);
+      else
+        errors.push(response.body);
     }
 
-    if(apiJsonOutput && apiJsonOutput.record.metrics) {
+    if(apiJsonOutput && apiJsonOutput.record && apiJsonOutput.record.metrics) {
       this.preprocessData(apiJsonOutput);
       let value;
       Object.keys(this.metricsMap).forEach(key => {
