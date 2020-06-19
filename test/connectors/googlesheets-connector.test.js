@@ -588,20 +588,23 @@ describe('GoogleSheetsConnector Locations tab', () => {
 
   it('updates locations to LocationsTab', async () => {
     connector.apiHelper.fetch = () => {
-      return JSON.stringify({
-        'data': {
-          'location-1': {
-            labelShort: 'Location 1',
-            PendingTests: {Total: 10},
-            Browsers: 'chrome',
-          },
-          'location-2': {
-            labelShort: 'Location 2',
-            PendingTests: {Total: 20},
-            Browsers: 'firefox',
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          'data': {
+            'location-1': {
+              labelShort: 'Location 1',
+              PendingTests: {Total: 10},
+              Browsers: 'chrome',
+            },
+            'location-2': {
+              labelShort: 'Location 2',
+              PendingTests: {Total: 20},
+              Browsers: 'firefox',
+            }
           }
-        }
-      });
+        })
+      }
     };
 
     connector.initLocations();

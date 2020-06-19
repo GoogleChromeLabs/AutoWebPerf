@@ -471,42 +471,44 @@ class GoogleSheetsConnector extends Connector {
     let sheet = this.getSheet('locationsTab');
 
     // Get new locations from remote API.
-    let res = this.apiHelper.fetch(this.locationApiEndpoint);
-    let json = JSON.parse(res);
+    let response = this.apiHelper.fetch(this.locationApiEndpoint);
+    if(response.statusCode == 200) {
+      let json = JSON.parse(response.body);
 
-    let newLocations = [];
-    let pendingByLocation = {}
-    Object.keys(json.data).forEach(key => {
-      let data = json.data[key];
-      let newLocation = {
-        id: key,
-        name: `${data.labelShort} (${key})`,
-        pendingTests: data.PendingTests.Total,
-        browsers: data.Browsers,
-      };
-      newLocation.key = key;
-      pendingByLocation[newLocation.name] = newLocation.pendingTests;
-      newLocations.push(newLocation);
-    });
+      let newLocations = [];
+      let pendingByLocation = {}
+      Object.keys(json.data).forEach(key => {
+        let data = json.data[key];
+        let newLocation = {
+          id: key,
+          name: `${data.labelShort} (${key})`,
+          pendingTests: data.PendingTests.Total,
+          browsers: data.Browsers,
+        };
+        newLocation.key = key;
+        pendingByLocation[newLocation.name] = newLocation.pendingTests;
+        newLocations.push(newLocation);
+      });
 
-    // Add empty rows if the original location list was longer than the new one.
-    for (let i=newLocations.length; i<locations.length; i++) {
-      newLocations.push({});
+      // Add empty rows if the original location list was longer than the new one.
+      for (let i=newLocations.length; i<locations.length; i++) {
+        newLocations.push({});
+      }
+      this.updateList('locationsTab', newLocations);
+
+      // Overrides pending tests to property 'webpagetest.pendingTests'.
+      let propertyKey = 'webpagetest.pendingTests';
+      let tests = this.getTestList({
+        filters: ['url', 'webpagetest.settings.location'],
+      });
+      tests.forEach(test => {
+        if (!test.url || !test.webpagetest || !test.webpagetest.settings ||
+            !test.webpagetest.settings.location) return;
+        test.webpagetest.pendingTests =
+            pendingByLocation[test.webpagetest.settings.location];
+      });
+      this.updateTestList(tests);
     }
-    this.updateList('locationsTab', newLocations);
-
-    // Overrides pending tests to property 'webpagetest.pendingTests'.
-    let propertyKey = 'webpagetest.pendingTests';
-    let tests = this.getTestList({
-      filters: ['url', 'webpagetest.settings.location'],
-    });
-    tests.forEach(test => {
-      if (!test.url || !test.webpagetest || !test.webpagetest.settings ||
-          !test.webpagetest.settings.location) return;
-      test.webpagetest.pendingTests =
-          pendingByLocation[test.webpagetest.settings.location];
-    });
-    this.updateTestList(tests);
   }
 
   /**

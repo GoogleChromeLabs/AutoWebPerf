@@ -23,7 +23,9 @@ const setObject = require('../../src/utils/set-object');
 const fs = require('fs');
 
 let fakeApiHandler = {
-  fetch: () => {}
+  fetch: () => {},
+  getBody: () => {},
+  getResponseCode: () => {}
 };
 let psiGatherer;
 let psiConfig = {};

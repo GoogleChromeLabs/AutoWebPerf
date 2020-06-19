@@ -127,8 +127,9 @@ class PSIGatherer extends Gatherer {
       // For testing purpose.
       json = this.fakeRunResponse();
     } else {
-      let res = this.apiHelper.fetch(url);
-      json = JSON.parse(res);
+      let response = this.apiHelper.fetch(url);
+      if(response.statusCode == 200)
+        json = JSON.parse(this.apiHelper.getBody(response.body));
     }
 
     let metadata = {},

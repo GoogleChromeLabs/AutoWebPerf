@@ -65,20 +65,25 @@ class CrUXAPIGatherer extends Gatherer {
     } else {
     
       var apiOptions = {
-        json : {}, 
+        body : {}, 
         headers : {}
       };
 
-      if(test.cruxapi.url)
-        apiOptions.json.url = test.cruxapi.url;
-      else if(test.cruxapi.origin)
-        apiOptions.json.origin = test.cruxapi.origin;
+      if(test.cruxapi.url) {
+        apiOptions.body.url = test.cruxapi.url;
+        metrics['url'] = test.cruxapi.url;
+      } else if(test.cruxapi.origin)
+        apiOptions.body.origin = test.cruxapi.origin;
+        metrics['origin'] = test.cruxapi.origin;
       if(test.cruxapi.formFactor)
-        apiOptions.json .formFactor = test.cruxapi.formFactor;
+        apiOptions.body.formFactor = test.cruxapi.formFactor;
       apiOptions.headers['Content-Type'] = 'application/json';
 
-      let res = this.apiHelper.fetch(url, apiOptions);
-      apiJsonOutput = JSON.parse(res);
+      apiOptions.body = JSON.stringify(apiOptions.body);
+
+      let response = this.apiHelper.post(url, apiOptions);
+      if(response.statusCode == 200)
+        apiJsonOutput = JSON.parse(response.body);
     }
 
     if(apiJsonOutput && apiJsonOutput.record.metrics) {

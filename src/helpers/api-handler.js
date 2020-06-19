@@ -16,6 +16,8 @@
 
 class ApiHandler {
   fetch(url) {}
+  get(url) {}
+  post(url, options) {}
 }
 
 module.exports = ApiHandler;

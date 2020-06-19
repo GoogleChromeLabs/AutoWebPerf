@@ -249,6 +249,7 @@ class GoogleSheetsExtension extends Extension {
     // Record legacy GA event.
     if (this.isSendTrackEvent) {
       url = this.gaEventURL(sheetId, trackingType, testedUrl);
+
       this.apiHandler.fetch(url);
 
       if (this.debug) console.log(url);
@@ -258,11 +259,13 @@ class GoogleSheetsExtension extends Extension {
     let customValues = this.getCustomValues(trackingType, result) || {};
 
     url = this.gaPageViewURL(this.awpVersion, sheetId, testedUrl, customValues);
+
     let response = this.apiHandler.fetch(url);
+    
     if (this.debug) console.log('trackAction: ', url);
 
     if (response && this.debug) {
-      console.log('trackAction response: ', response);
+      console.log('trackAction response: ', this.apiHelper.getBody(response));
     }
   }
 

@@ -18,11 +18,28 @@ const request = require('sync-request');
 const ApiHandler = require('./api-handler');
 
 class NodeApiHandler extends ApiHandler {
-  fetch(url, options) {
-  	if(options)
-    	return request('POST', url, options).getBody().toString();
-    else
-		return request('GET', url).getBody().toString();
+  fetch(url) {
+    var response = request('GET', url);
+		return {
+      statusCode: response.statusCode,
+      body: response.getBody().toString(),
+    }
+  }
+
+  get(url) {
+    var response = request('GET', url);
+    return {
+      statusCode: response.statusCode,
+      body: response.getBody().toString(),
+    }
+  }
+
+  post(url, postOptions) {
+    var response = request('POST', url, postOptions);
+    return {
+      statusCode: response.statusCode,
+      body: response.getBody().toString(),
+    }
   }
 }
 

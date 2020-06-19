@@ -141,20 +141,23 @@ describe('AWP bundle for GoogleSheets', () => {
 
   it('initializes AWP for GoogleSheets via connector init()', () => {
     awp.connector.apiHelper.fetch = () => {
-      return JSON.stringify({
-        'data': {
-          'location-1': {
-            labelShort: 'Location 1',
-            PendingTests: {Total: 10},
-            Browsers: 'chrome',
-          },
-          'location-2': {
-            labelShort: 'Location 2',
-            PendingTests: {Total: 20},
-            Browsers: 'firefox',
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          'data': {
+            'location-1': {
+              labelShort: 'Location 1',
+              PendingTests: {Total: 10},
+              Browsers: 'chrome',
+            },
+            'location-2': {
+              labelShort: 'Location 2',
+              PendingTests: {Total: 20},
+              Browsers: 'firefox',
+            }
           }
-        }
-      });
+        })
+      }
     };
     awp.connector.init();
 
@@ -442,7 +445,10 @@ describe('AWP bundle for GoogleSheets', () => {
     fakeSheets['Results-1'] = initFakeSheet(resultsData);
 
     awp.connector.apiHelper.fetch = () => {
-      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
+      return {
+        statusCode: 200,
+        body: fs.readFileSync('./test/fakedata/wpt-retrieve-response.json')
+      }
     };
 
     await awp.retrieve({
@@ -478,7 +484,10 @@ describe('AWP bundle for GoogleSheets', () => {
     fakeSheets['System'] = initFakeSheet(systemData);
 
     awp.connector.apiHelper.fetch = () => {
-      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
+      return {
+        statusCode: 200,
+        body: fs.readFileSync('./test/fakedata/wpt-retrieve-response.json')
+      }
     };
 
     await awp.retrieve({

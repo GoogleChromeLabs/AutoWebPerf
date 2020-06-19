@@ -22,7 +22,9 @@ const WPTGatherer = require('../../src/gatherers/webpagetest');
 const fs = require('fs');
 
 let fakeApiHandler = {
-  fetch: () => {}
+  fetch: () => {},
+  get: () => {},
+  post: () => {} 
 };
 
 let wptGatherer;
@@ -136,7 +138,10 @@ describe('WPTGatherer unit test', () => {
     };
     // When statusCode is 100
     fakeApiHandler.fetch = () => {
-      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
+      return {
+        statusCode: 200,
+        body: fs.readFileSync('./test/fakedata/wpt-retrieve-response.json')
+      }
     };
     let response = wptGatherer.retrieve(result, {} /* options */);
     expect(response.status).toEqual(Status.RETRIEVED);
@@ -161,17 +166,20 @@ describe('WPTGatherer unit test', () => {
     };
     // When statusCode is 100
     fakeApiHandler.fetch = () => {
-      return JSON.stringify({
-        statusCode: 100,
-        statusText: 'Pending',
-        data: {
-          median: {
-            firstView: {
-              SpeedIndex: 5000,
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          statusCode: 100,
+          statusText: 'Pending',
+          data: {
+            median: {
+              firstView: {
+                SpeedIndex: 5000,
+              }
             }
           }
-        }
-      });
+        })
+      }
     };
     response = wptGatherer.retrieve(result, {} /* options */);
     expect(response.status).toEqual(Status.SUBMITTED);
@@ -180,11 +188,14 @@ describe('WPTGatherer unit test', () => {
 
     // When statusCode is 400
     fakeApiHandler.fetch = () => {
-      return JSON.stringify({
-        statusCode: 400,
-        statusText: 'Some error',
-        data: {}
-      });
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          statusCode: 400,
+          statusText: 'Some error',
+          data: {}
+        })
+      }
     };
     response = wptGatherer.retrieve(result, {} /* options */);
     expect(response.status).toEqual(Status.ERROR);
@@ -193,11 +204,14 @@ describe('WPTGatherer unit test', () => {
 
     // When statusCode is 400 with statusText as "Test not found".
     fakeApiHandler.fetch = () => {
-      return JSON.stringify({
-        statusCode: 400,
-        statusText: 'Test not found',
-        data: {}
-      });
+      return  {
+        statusCode: 200,
+        body: JSON.stringify({
+          statusCode: 400,
+          statusText: 'Test not found',
+          data: {}
+        })
+      }
     };
     response = wptGatherer.retrieve(result, {} /* options */);
     expect(response.status).toEqual(Status.SUBMITTED);
@@ -219,7 +233,10 @@ describe('WPTGatherer unit test', () => {
       },
     };
     fakeApiHandler.fetch = () => {
-      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
+      return {
+        statusCode: 200,
+        body: fs.readFileSync('./test/fakedata/wpt-retrieve-response.json')
+      }
     };
     let response = wptGatherer.retrieve(result, {} /* options */);
     expect(response.metrics).not.toBe([]);
@@ -251,7 +268,10 @@ describe('WPTGatherer unit test', () => {
       },
     };
     fakeApiHandler.fetch = () => {
-      return fs.readFileSync('./test/fakedata/wpt-retrieve-response.json');
+      return {
+        statusCode: 200,
+        body: fs.readFileSync('./test/fakedata/wpt-retrieve-response.json')
+      }
     };
     wptGatherer.metricsMap = {
       'lighthouse.SpeedIndex': 'data.median.firstView.SpeedIndex',

@@ -19,13 +19,43 @@ const ApiHandler = require('./api-handler');
 class GoogleSheetsApiHandler extends ApiHandler {
   fetch(url) {
     try{
-      return UrlFetchApp.fetch(url).getContentText();
-
+      var response = UrlFetchApp.fetch(url).getContentText();
+      return {
+        statusCode: response.statusCode,
+        body: response.getContentText(),
+      };
     } catch(e){
       Logger.log('There was an error while fetching ' + url, e);
       Browser.msgBox('There was an error fetching a URL. Please run the '+
                      'commands "Authorize tool" and "Initialise tool" from the ' +
                      'AutoWebPerf menu.');
+    }
+  }
+
+  get(url) {
+    try{
+      var response = UrlFetchApp.fetch(url).getContentText();
+      return {
+        statusCode: response.getResponseCode(),
+        body: response.getContentText(),
+      };
+    } catch(e){
+      Logger.log('There was an error while fetching ' + url, e);
+      Browser.msgBox('There was an error fetching a URL. Please run the '+
+                     'commands "Authorize tool" and "Initialise tool" from the ' +
+                     'AutoWebPerf menu.');
+    }
+  }  
+
+  post(url, postOptions) {
+    let fetchOptions = {
+          'method' : 'post',
+          'payload' : JSON.stringify(postOptions.body || postOptions.json),
+        };
+    let reponse = UrlFetchApp.fetch(url, fetchOptions);
+    return  {
+      statusCode: response.getResponseCode(),
+      body: response.getContentText()
     }
   }
 }

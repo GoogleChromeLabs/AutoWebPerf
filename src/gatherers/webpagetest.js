@@ -163,8 +163,10 @@ class WebPageTestGatherer extends Gatherer {
     if (this.apiKey === 'TEST_APIKEY') {
       json = this.fakeRunResponse();
     } else {
-      let res = this.apiHelper.fetch(url);
-      json = JSON.parse(res);
+      let response = this.apiHelper.fetch(url);
+
+      if(response.statusCode == 200)
+        json = JSON.parse(response.body);
       if (this.debug) console.log('WPTGatherer::run API response: \n', json);
     }
 
@@ -246,8 +248,11 @@ class WebPageTestGatherer extends Gatherer {
     let url = this.resultApiEndpoint + '?' + urlParams.join('&');
     if (this.debug) console.log('WPTGatherer::retrieve\n', url);
 
-    let res = this.apiHelper.fetch(url);
-    let json = JSON.parse(res);
+    let response = this.apiHelper.fetch(url);
+    let json = {};
+    if(response.statusCode == 200)
+        json = JSON.parse(response.body);
+
     if (this.debug) console.log(
         'WPTGatherer::retrieve json.statusCode=\n', json.statusCode);
     if (this.debug) console.log('WPTGatherer::retrieve\n', json);
