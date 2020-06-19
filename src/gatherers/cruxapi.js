@@ -72,9 +72,10 @@ class CrUXAPIGatherer extends Gatherer {
       if(test.cruxapi.url) {
         apiOptions.body.url = test.cruxapi.url;
         metrics['url'] = test.cruxapi.url;
-      } else if(test.cruxapi.origin)
+      } else if(test.cruxapi.origin) {
         apiOptions.body.origin = test.cruxapi.origin;
         metrics['origin'] = test.cruxapi.origin;
+      }
       if(test.cruxapi.formFactor)
         apiOptions.body.formFactor = test.cruxapi.formFactor;
       apiOptions.headers['Content-Type'] = 'application/json';

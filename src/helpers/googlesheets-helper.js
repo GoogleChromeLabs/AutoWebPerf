@@ -52,7 +52,7 @@ class GoogleSheetsApiHandler extends ApiHandler {
           'method' : 'post',
           'payload' : JSON.stringify(postOptions.body || postOptions.json),
         };
-    let reponse = UrlFetchApp.fetch(url, fetchOptions);
+    let response = UrlFetchApp.fetch(url, fetchOptions);
     return  {
       statusCode: response.getResponseCode(),
       body: response.getContentText()
