@@ -703,11 +703,12 @@ class AutoWebPerf {
     let nowtime = Date.now();
 
     return {
-      id: nowtime + '-' + test.url,
+      id: nowtime + '-' + test.url || test.origin,
       type: options.recurring ? TestType.RECURRING : TestType.SINGLE,
       status: Status.SUBMITTED,
       label: test.label,
       url: test.url,
+      origin: test.origin,
       createdTimestamp: nowtime,
       modifiedTimestamp: nowtime,
       errors: test.errors || [],
