@@ -129,9 +129,9 @@ class CrUXAPIGatherer extends Gatherer {
     let metrics = json.record.metrics;
     let metricsToProcess = {
       lcp: metrics.largest_contentful_paint,
-      fid: metrics.cumulative_layout_shift,
-      fcp: metrics.first_input_delay,
-      cls: metrics.first_contentful_paint
+      cls: metrics.cumulative_layout_shift,
+      fid: metrics.first_input_delay,
+      fcp: metrics.first_contentful_paint
     };
 
     for (let metric in metricsToProcess) {
