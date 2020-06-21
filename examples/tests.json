@@ -1,9 +1,10 @@
 {
   "envVars": {
     "webPageTestApiKey": "TEST_APIKEY",
+    "webPageTestApiEndpoint": "https://webpagetest.org",
     "psiApiKey": "TEST_APIKEY",
     "gcpKeyFilePath": "tmp/gcp-service-account.json",
-    "gcpProjectId": ""
+    "gcpProjectId": "",
   },
   "tests": [
     {

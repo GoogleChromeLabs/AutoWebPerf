@@ -22,6 +22,10 @@ const Status = require('../common/status');
 const {Metrics} = require('../common/metrics');
 const Gatherer = require('./gatherer');
 
+const PUBLIC_ENDPOINT = 'https://webpagetest.org';
+const PUBLIC_RUN_ENDPOINT = 'https://webpagetest.org/runtest.php';
+const PUBLIC_RESULT_ENDPOINT = 'https://webpagetest.org/jsonResult.php';
+
 class WebPageTestGatherer extends Gatherer {
   constructor(config, envVars, apiHelper, options) {
     super();
@@ -29,14 +33,24 @@ class WebPageTestGatherer extends Gatherer {
     assert(apiHelper, 'Parameter apiHelper is missing.');
 
     envVars = envVars || {};
+    let customApiEndpoint = envVars.webPageTestApiEndpoint;
 
-    this.runApiEndpoint = 'https://webpagetest.org/runtest.php';
-    this.resultApiEndpoint = 'https://webpagetest.org/jsonResult.php';
+    // Get endpoints for run and result actions. Override these endpoints when
+    // custom endpoints are defined.
+    this.runApiEndpoint = (customApiEndpoint || PUBLIC_ENDPOINT) +
+        '/runtest.php';
+    this.resultApiEndpoint = (customApiEndpoint || PUBLIC_ENDPOINT) +
+        '/jsonResult.php';
+    this.runApiEndpoint = config.runApiEndpoint || this.runApiEndpoint;
+    this.resultApiEndpoint = config.resultApiEndpiont || this.resultApiEndpoint;
+
+    console.log(this.runApiEndpoint, this.resultApiEndpoint);
+
+    // Get mandatory API key from environmental variables.
     this.apiKey = envVars['webPageTestApiKey'];
-    this.apiHelper = apiHelper;
-
     assert(this.apiKey, 'Unable to locate "webPageTestApiKey" in envVars');
 
+    this.apiHelper = apiHelper;
     options = options || {};
     this.debug = options.debug;
 
