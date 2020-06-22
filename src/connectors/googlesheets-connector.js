@@ -135,7 +135,7 @@ class GoogleSheetsConnector extends Connector {
       'cruxbigquery.metrics.p75_ttfb': [1500,500],
       'cruxbigquery.metrics.p75_fp': [2500, 1500],
       'cruxbigquery.metrics.p75_fcp': [2500, 1500],
-      'cruxbigquery.metrics.p75_lcp': [4000,2500]
+      'cruxbigquery.metrics.p75_lcp': [4000,2500],
       'cruxbigquery.metrics.p75_fid': [300,100],
       'cruxbigquery.metrics.p75_cls': [0.25,0.1],
       'cruxbigquery.metrics.p75_dcl': [3500, 1500],
