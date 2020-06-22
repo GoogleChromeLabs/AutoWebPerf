@@ -73,7 +73,7 @@ class CrUXAPIGatherer extends Gatherer {
       else if(test.origin)
         apiOptions.json.origin = test.origin;
 
-      if(test.cruxapi.formFactor)
+      if(test.cruxapi.formFactor && test.cruxapi.formFactor!='ALL')
         apiOptions.json.formFactor = test.cruxapi.formFactor;
 
       let response = this.apiHelper.post(url, apiOptions);
@@ -97,8 +97,8 @@ class CrUXAPIGatherer extends Gatherer {
         }
       });
  
-      if(apiJsonOutput.record.key.formFactor)
-        metrics.set('formFactor', apiJsonOutput.record.key.formFactor);
+      if(test.cruxapi.formFactor)
+        metrics.set('formFactor', test.cruxapi.formFactor);
 
       status = Status.RETRIEVED;
       statusText = 'Success';

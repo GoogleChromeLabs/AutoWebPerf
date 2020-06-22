@@ -10,7 +10,9 @@
     {
       "label":"Web Vitals",
       "url": "https://web.dev/vitals/",
-      "cruxapi": {}
+      "cruxapi": {
+        "formFactor": "ALL"
+      }
     },
     {
       "label":"Web.dev Origin phone",
