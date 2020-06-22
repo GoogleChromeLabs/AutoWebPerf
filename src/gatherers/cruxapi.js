@@ -97,9 +97,6 @@ class CrUXAPIGatherer extends Gatherer {
         }
       });
  
-      if(test.cruxapi.formFactor)
-        metrics.set('formFactor', test.cruxapi.formFactor);
-
       status = Status.RETRIEVED;
       statusText = 'Success';
 
@@ -107,6 +104,9 @@ class CrUXAPIGatherer extends Gatherer {
       status = Status.ERROR;
       statusText = 'No result found in CrUX API response';
     }
+
+    if(test.cruxapi.formFactor)
+        metrics.set('formFactor', test.cruxapi.formFactor);
 
     return {
       status: status,
