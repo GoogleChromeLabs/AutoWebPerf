@@ -152,7 +152,7 @@ class WebPageTestGatherer extends Gatherer {
       'fvonly': settings.repeatView ? 0 : 1,
       'timeline': settings.hasTimeline || false,
       'block': settings.block || '',
-      'script': settings.script || '',
+      'script': encodeURIComponent(settings.script) || '',
       'location': location || '',
       'mobile': settings.device ? 1 : 0,
       'mobileDevice': settings.device || '',
