@@ -244,7 +244,18 @@ class GoogleSheetsExtension extends Extension {
    */
   trackAction(trackingType, sheetId, result) {
     let testedUrl = result.url || result.origin || 'No given URL';
+    let referral = this.awpVersion ? `${this.awpVersion} - ` : '';
     let url;
+
+    // FIXME: Load the list of data sources from awpConfig instead of hardcoded.
+    let dataSources = ['webpagetest', 'psi', 'cruxbigquery', 'cruxapi'];
+    let activeDataSources = [];
+    dataSources.forEach(dataSource => {
+      if (result[dataSource]) {
+        activeDataSources.push(dataSource);
+      }
+    });
+    referral += activeDataSources.join(',');
 
     // Record legacy GA event.
     if (this.isSendTrackEvent) {
@@ -258,12 +269,11 @@ class GoogleSheetsExtension extends Extension {
     // Record tests with perf budget with Pageview notation.
     let customValues = this.getCustomValues(trackingType, result) || {};
 
-    url = this.gaPageViewURL(this.awpVersion, sheetId, testedUrl, customValues);
+    url = this.gaPageViewURL(referral, sheetId, testedUrl, customValues);
 
     let response = this.apiHandler.fetch(url);
 
     if (this.debug) console.log('trackAction: ', url);
-
     if (this.debug && response.statusCode==200) {
       console.log('trackAction response: ', response.body);
     }

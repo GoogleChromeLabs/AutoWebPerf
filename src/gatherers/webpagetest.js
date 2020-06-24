@@ -33,10 +33,13 @@ class WebPageTestGatherer extends Gatherer {
     assert(apiHelper, 'Parameter apiHelper is missing.');
 
     envVars = envVars || {};
-    let customApiEndpoint = envVars.webPageTestApiEndpoint;
+    options = options || {};
+    this.apiHelper = apiHelper;
+    this.debug = options.debug;
 
     // Get endpoints for run and result actions. Override these endpoints when
     // custom endpoints are defined.
+    let customApiEndpoint = envVars.webPageTestApiEndpoint;
     this.runApiEndpoint = (customApiEndpoint || PUBLIC_ENDPOINT) +
         '/runtest.php';
     this.resultApiEndpoint = (customApiEndpoint || PUBLIC_ENDPOINT) +
@@ -44,15 +47,15 @@ class WebPageTestGatherer extends Gatherer {
     this.runApiEndpoint = config.runApiEndpoint || this.runApiEndpoint;
     this.resultApiEndpoint = config.resultApiEndpiont || this.resultApiEndpoint;
 
-    console.log(this.runApiEndpoint, this.resultApiEndpoint);
+    if (this.debug && customApiEndpoint) {
+      console.log(`Using custom WebPageTest API Endpoint: ` +
+          `${customApiEndpoint}`);
+    }
 
     // Get mandatory API key from environmental variables.
     this.apiKey = envVars['webPageTestApiKey'];
     assert(this.apiKey, 'Unable to locate "webPageTestApiKey" in envVars');
 
-    this.apiHelper = apiHelper;
-    options = options || {};
-    this.debug = options.debug;
 
     // TODO: Metadata keys should be standardized.
     this.metadataMap = {

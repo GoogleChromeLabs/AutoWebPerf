@@ -2,10 +2,10 @@
 
 'use strict';
 
-const prototyper = require('./src/cli.js');
+const awp = require('./src/cli.js');
 
 Promise.all([
-  prototyper.begin()
+  awp.begin()
 ]).then(process.exit)
 .catch(reason => {
   console.log(reason);
