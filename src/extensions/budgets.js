@@ -25,6 +25,7 @@ class BudgetsExtension extends Extension {
   constructor(config, envVars) {
     super();
     config = config || {};
+    this.debug = config.debug || false;
     this.envVars = envVars;
 
     this.budgetMetricMap = {
@@ -49,7 +50,7 @@ class BudgetsExtension extends Extension {
   afterRun(context) {
     assert(context.test, 'test is missing.');
 
-    if (context.result) {
+    if (context.result && context.result.status === Status.RETRIEVED) {
       this.processResult(context.result, context.test.budgets);
     }
   }
@@ -130,6 +131,8 @@ class BudgetsExtension extends Extension {
         });
 
       } catch (e) {
+        if (this.debug) console.error(e);
+
         let message = `[Budgets] Unable to get metric value for ${metric} ` +
             `with path: ${metricPath}`;
         result.errors = (result.errors || []).concat(message);

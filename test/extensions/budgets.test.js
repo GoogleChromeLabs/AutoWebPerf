@@ -17,6 +17,7 @@
 'use strict';
 
 const BudgetsExtension = require('../../src/extensions/budgets');
+const Status = require('../../src/common/status');
 let extension;
 
 describe('Budgets unit test', () => {
@@ -39,6 +40,7 @@ describe('Budgets unit test', () => {
     };
     let result = {
       url: 'google.com',
+      status: Status.RETRIEVED,
       webpagetest: {
         metrics: {
           FirstContentfulPaint: 1500,
@@ -55,6 +57,7 @@ describe('Budgets unit test', () => {
 
     expect(result).toEqual({
       url: 'google.com',
+      status: Status.RETRIEVED,
       webpagetest: {
         metrics: {
           FirstContentfulPaint: 1500,
