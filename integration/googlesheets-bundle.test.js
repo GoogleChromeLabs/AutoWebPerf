@@ -19,7 +19,7 @@
 const fs = require('fs');
 const AutoWebPerf = require('../build/googlesheets-bundle');
 const {initFakeSheet, fakeSheetData, SpreadsheetApp, Session, Utilities,
-    ScriptApp, Logger, Browser} = require('../test/connectors/googlesheets-test-utils');
+    ScriptApp, Logger, Browser, UrlFetchApp} = require('../test/connectors/googlesheets-test-utils');
 const {Frequency, FrequencyInMinutes} = require('../src/common/frequency');
 
 let awp = null;
@@ -40,6 +40,7 @@ global.Utilities = Utilities;
 global.ScriptApp = ScriptApp;
 global.Logger = Logger;
 global.Browser = Browser;
+global.UrlFetchApp = UrlFetchApp;
 
 describe('AWP bundle for GoogleSheets', () => {
   beforeEach(() => {

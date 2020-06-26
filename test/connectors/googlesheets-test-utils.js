@@ -223,6 +223,13 @@ const Browser =  {
   msgBox: jest.fn(),
 };
 
+const UrlFetchApp = {
+  fetch: () => ({
+    getResponseCode: jest.fn(),
+    getContentText: jest.fn(),
+  }),
+}
+
 module.exports = {
   initFakeSheet,
   fakeSheetData,
@@ -232,4 +239,5 @@ module.exports = {
   ScriptApp,
   Logger,
   Browser,
+  UrlFetchApp,
 };

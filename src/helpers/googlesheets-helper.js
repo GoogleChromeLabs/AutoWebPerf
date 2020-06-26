@@ -18,42 +18,34 @@ const ApiHandler = require('./api-handler');
 
 class GoogleSheetsApiHandler extends ApiHandler {
   fetch(url) {
-    try{
+    return this.get(url);
+  }
+
+  get(url) {
+    try {
       var response = UrlFetchApp.fetch(url);
       return {
         statusCode: response.getResponseCode(),
         body: response.getContentText(),
       };
-    } catch(e){
-      Logger.log('There was an error while fetching ' + url, e);
+
+    } catch(e) {
+      console.error('There was an error while fetching ' + url);
+      console.log(e);
+
       return  {
-        statusCode: e.code,
-        body: e.message
+        statusCode: e.code || 500,
+        statusText: e.message,
       }
     }
   }
 
-  get(url) {
-    try{
-      var response = UrlFetchApp.fetch(url);
-      return {
-        statusCode: response.getResponseCode(),
-        body: response.getContentText(),
-      };
-    } catch(e){
-      Logger.log('There was an error while fetching ' + url, e);
-      return  {
-        statusCode: e.code
-      }
-    }
-  }  
-
   post(url, postOptions) {
-    try{
+    try {
       let fetchOptions = {
-            'method' : 'post'
-          };
-      
+        'method' : 'post'
+      };
+
       if(postOptions.json) {
         fetchOptions.payload = JSON.stringify(postOptions.json);
         fetchOptions.contentType = 'application/json';
@@ -65,10 +57,13 @@ class GoogleSheetsApiHandler extends ApiHandler {
         statusCode: response.getResponseCode(),
         body: response.getContentText()
       }
-    } catch(e){
-      Logger.log('There was an error while fetching ' + url, e);
+    } catch(e) {
+      console.error('There was an error while fetching ' + url);
+      console.log(e);
+
       return  {
-        statusCode: e.code
+        statusCode: e.code || 500,
+        statusText: e.message,
       }
     }
   }

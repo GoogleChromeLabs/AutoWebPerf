@@ -137,7 +137,7 @@ class WebPageTestGatherer extends Gatherer {
 
   run(test, options) {
     assert(test, 'Parameter test is missing.');
-    assert(test.label, 'test.label is not defined.');
+    assert(test.url, 'Parameter test.url is missing.');
     options = options || {};
 
     let settings = test.webpagetest.settings;
@@ -145,7 +145,7 @@ class WebPageTestGatherer extends Gatherer {
 
     let location = `${settings.locationId}.${settings.connection}`;
     let params = {
-      'label': encodeURIComponent(test.label),
+      'label': encodeURIComponent(test.label || test.url),
       'url': encodeURIComponent(test.url),
       'k': this.apiKey,
       'f': 'json',
@@ -155,7 +155,7 @@ class WebPageTestGatherer extends Gatherer {
       'fvonly': settings.repeatView ? 0 : 1,
       'timeline': settings.hasTimeline || false,
       'block': settings.block || '',
-      'script': encodeURIComponent(settings.script) || '',
+      'script': settings.script ? encodeURIComponent(settings.script) : '',
       'location': location || '',
       'mobile': settings.device ? 1 : 0,
       'mobileDevice': settings.device || '',
@@ -176,74 +176,92 @@ class WebPageTestGatherer extends Gatherer {
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
     if (this.debug) console.log('WPTGatherer::run\n', url);
 
-    let json = {};
+    let response, body = {}, statusText;
     if (this.apiKey === 'TEST_APIKEY') {
-      json = this.fakeRunResponse();
-    } else {
-      let response = this.apiHelper.fetch(url);
+      response = this.fakeRunResponse();
+      body = response.body;
+      statusText = body.statusText;
 
-      if(response.statusCode == 200)
-        json = JSON.parse(response.body);
-      if (this.debug) console.log('WPTGatherer::run API response: \n', json);
+    } else {
+      response = this.apiHelper.fetch(url);
+      statusText = response.statusText;
+
+      if (this.debug) {
+        console.log('WPTGatherer::run API response: \n', response);
+      }
+      if (response.statusCode === 200) {
+        body = JSON.parse(response.body || {});
+        statusText = body.statusText;
+      }
     }
 
-    let status, metadata = {}, errors = [], statusText = json.statusText;
+    let status, metadata = {}, errors = [];
 
-    switch(json.statusCode) {
-      case 100:
-      case 101:
-        status = Status.SUBMITTED;
-        break;
+    try {
+      switch(response.statusCode) {
+        case 100:
+        case 101:
+          status = Status.SUBMITTED;
+          break;
 
-      case 200:
-        // Parse json resopnse and writes to metadata accordingly.
-        let message;
-        Object.keys(this.metadataMap).forEach(key => {
-          try {
-            let object = metadata;
-            key.split('.').forEach(property => {
-              object[property] = object[property] || {}
-              object = object[property]
-            });
-            eval(`metadata.${key} = json.${this.metadataMap[key]}`);
+        case 200:
+          // Parse body resopnse and writes to metadata accordingly.
+          let message;
+          Object.keys(this.metadataMap).forEach(key => {
+            try {
+              let object = metadata;
+              key.split('.').forEach(property => {
+                object[property] = object[property] || {}
+                object = object[property]
+              });
+              eval(`metadata.${key} = body.${this.metadataMap[key]}`);
 
-          } catch (error) {
-            metadata[key] = null;
-            message = `Unable to assign ${key} to metadata: metadata.${key}` +
-                ` = json.${this.metadataMap[key]}`;
-            if (this.debug) message += e.message;
-            errors.push(message);
+            } catch (error) {
+              metadata[key] = null;
+              message = `Unable to assign ${key} to metadata: metadata.${key}` +
+                  ` = body.${this.metadataMap[key]}`;
+              if (this.debug) console.error(message);
+              errors.push(message);
+            }
+          });
+
+          if (metadata.testId) {
+            status = Status.SUBMITTED;
+            setObject(test, 'webpagetest.metadata.lastTestId', metadata.testId);
+          } else {
+            // Throw error if there's no testId.
+            status = Status.ERROR;
+            statusText = 'No testId found';
           }
-        });
 
-        if (metadata.testId) {
-          status = Status.SUBMITTED;
-          setObject(test, 'webpagetest.metadata.lastTestId', metadata.testId);
-        } else {
-          // Throw error if there's no testId.
+          if (errors.length > 0) {
+            status = Status.ERROR;
+            statusText = errors.join('\n');
+          }
+
+          break;
+
+        default:
+        case 400:
           status = Status.ERROR;
-          statusText = 'No testId found';
-        }
+          // Deal with the occasional error with "Test not found". These type of
+          // tests can be resolved by simply retrying.
+          if (statusText === 'Test not found') {
+            status = Status.SUBMITTED;
+            statusText = `Test not found. If this happends consistently, try ` +
+                `${result.webpagetest.metadata.userUrl} to bring Test back to ` +
+                `active.`;
+          }
+          errors.push(statusText);
+          break;
+      }
 
-        if (errors.length > 0) {
-          status = Status.ERROR;
-          statusText = errors.join('\n');
-        }
+    } catch (e) {
+      if (this.debug) console.error(e);
 
-        break;
-
-      case 400:
-        status = Status.ERROR;
-        // Deal with the occasional error with "Test not found". These type of
-        // tests can be resolved by simply retrying.
-        if (json.statusText === 'Test not found') {
-          status = Status.SUBMITTED;
-        }
-        break;
-
-      default:
-        status = Status.ERROR;
-        break;
+      status = Status.ERROR;
+      statusText = e.message;
+      errors.push(e.message);
     }
 
     return {
@@ -266,20 +284,20 @@ class WebPageTestGatherer extends Gatherer {
     if (this.debug) console.log('WPTGatherer::retrieve\n', url);
 
     let response = this.apiHelper.fetch(url);
-    let json = {};
+    let body = {};
     if(response.statusCode == 200)
-        json = JSON.parse(response.body);
+        body = JSON.parse(response.body);
 
     if (this.debug) console.log(
-        'WPTGatherer::retrieve json.statusCode=\n', json.statusCode);
-    if (this.debug) console.log('WPTGatherer::retrieve\n', json);
+        'WPTGatherer::retrieve body.statusCode=\n', body.statusCode);
+    if (this.debug) console.log('WPTGatherer::retrieve\n', body);
 
     let status, metadata = {},
         metrics = new Metrics(), lighthouseMetrics = new Metrics();
-    let statusText = json.statusText;
+    let statusText = body.statusText;
     let value, message;
 
-    switch(json.statusCode) {
+    switch(body.statusCode) {
       case 100:
       case 101:
         status = Status.SUBMITTED;
@@ -291,7 +309,7 @@ class WebPageTestGatherer extends Gatherer {
           // Using eval for the assigning to support non-string and non-numeric
           // value, like Date object.
           try {
-            eval(`value = json.${this.metricsMap[key]};`);
+            eval(`value = body.${this.metricsMap[key]};`);
             if (this.metricsConversion[key]) {
               value = this.metricsConversion[key](value);
             }
@@ -301,7 +319,7 @@ class WebPageTestGatherer extends Gatherer {
           } catch (e) {
 
             metrics.setAny(key, null);
-            message = `Unable to assign json.${this.metricsMap[key]} to ${key}`;
+            message = `Unable to assign body.${this.metricsMap[key]} to ${key}`;
             if (this.debug) message += ': ' + e.message;
             errors.push(message);
           }
@@ -318,7 +336,7 @@ class WebPageTestGatherer extends Gatherer {
         status = Status.ERROR;
         // Deal with the occasional error with "Test not found". These type of
         // tests can be resolved by simply retrying.
-        if (json.statusText === 'Test not found') {
+        if (body.statusText === 'Test not found') {
           status = Status.SUBMITTED;
         }
         break;
@@ -327,7 +345,7 @@ class WebPageTestGatherer extends Gatherer {
         status = Status.ERROR;
         // Deal with the occasional error with "Test not found". These type of
         // tests can be resolved by simply retrying.
-        if (json.statusText === 'Unavailable Service') {
+        if (body.statusText === 'Unavailable Service') {
           status = Status.SUBMITTED;
         }
         break;
@@ -350,15 +368,18 @@ class WebPageTestGatherer extends Gatherer {
   fakeRunResponse() {
     return {
       statusCode: 200,
-      statusText: 'Ok',
-      data: {
-        testId: '200601_X6_efeb625266aacabaece9ffe9d4bcd207',
-        jsonUrl: 'https://webpagetest.org/jsonResult.php?test=200601_X6_efeb625266aacabaece9ffe9d4bcd207',
-        xmlUrl: 'https://webpagetest.org/xmlResult/200601_X6_efeb625266aacabaece9ffe9d4bcd207/',
-        userUrl: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/',
-        summaryCSV: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/page_data.csv',
-        detailCSV: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/requests.csv'
-      }
+      body: {
+        statusCode: 200,
+        statusText: 'Ok',
+        data: {
+          testId: '200601_X6_efeb625266aacabaece9ffe9d4bcd207',
+          jsonUrl: 'https://webpagetest.org/jsonResult.php?test=200601_X6_efeb625266aacabaece9ffe9d4bcd207',
+          xmlUrl: 'https://webpagetest.org/xmlResult/200601_X6_efeb625266aacabaece9ffe9d4bcd207/',
+          userUrl: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/',
+          summaryCSV: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/page_data.csv',
+          detailCSV: 'https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/requests.csv'
+        }
+      },
     };
   }
 }

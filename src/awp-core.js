@@ -793,10 +793,13 @@ class AutoWebPerf {
     this.dataSources.forEach(dataSource => {
       if (!result[dataSource]) return;
 
-      errors = errors.concat(result[dataSource].errors);
-      if (result[dataSource] && result[dataSource].status === Status.ERROR) {
+      if (result[dataSource].status === Status.ERROR) {
         errors.push(result[dataSource].statusText);
       }
+      // Add data source prefix to all error messages.
+      (result[dataSource].errors || []).forEach(error => {
+        errors.push(`[${dataSource}] ` + error)
+      });
     });
     return errors.filter(e => e);
   }

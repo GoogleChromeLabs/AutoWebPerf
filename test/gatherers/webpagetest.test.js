@@ -24,24 +24,33 @@ const fs = require('fs');
 let fakeApiHandler = {
   fetch: () => {},
   get: () => {},
-  post: () => {} 
+  post: () => {}
 };
 
 let wptGatherer;
 let wptConfig = {};
-let envVars = {
-  webPageTestApiKey: 'TEST_APIKEY',
+let envVars = {};
+let fakeResponseData = {
+  testId: 'testId',
+  jsonUrl: 'jsonUrl',
+  xmlUrl: 'xmlUrl',
+  userUrl: 'userUrl',
+  summaryCSV: 'summaryCSV',
+  detailCSV: 'detailCSV',
 };
 
 describe('WPTGatherer unit test', () => {
   beforeEach(() => {
+    envVars = {
+      webPageTestApiKey: 'TEST_APIKEY',
+    };
     wptGatherer = new WPTGatherer(wptConfig, envVars, fakeApiHandler,
         {} /* options */);
   });
 
   it('submits test and get initial response with test ID', async () => {
     let test = {
-      selected: true,
+      selected: 'selected',
       url: 'google.com',
       label: 'Google',
       webpagetest: {
@@ -78,10 +87,14 @@ describe('WPTGatherer unit test', () => {
     wptGatherer.fakeRunResponse = () => {
       return {
         statusCode: 100,
-        statusText: 'Pending',
+        body: {
+          statusText: 'Pending',
+          data: fakeResponseData,
+        }
       };
     };
     response = wptGatherer.run(test, {} /* options */);
+
     expect(response.status).toEqual(Status.SUBMITTED);
     expect(response.statusText).toEqual('Pending');
     expect(response.errors).toEqual([]);
@@ -90,7 +103,10 @@ describe('WPTGatherer unit test', () => {
     wptGatherer.fakeRunResponse = () => {
       return {
         statusCode: 101,
-        statusText: 'Pending',
+        body: {
+          statusText: 'Pending',
+          data: fakeResponseData,
+        }
       };
     };
     response = wptGatherer.run(test, {} /* options */);
@@ -102,25 +118,61 @@ describe('WPTGatherer unit test', () => {
     wptGatherer.fakeRunResponse = () => {
       return {
         statusCode: 400,
-        statusText: 'Some error',
+        body: {
+          statusText: 'Some error',
+          data: fakeResponseData,
+        },
       };
     };
     response = wptGatherer.run(test, {} /* options */);
     expect(response.status).toEqual(Status.ERROR);
     expect(response.statusText).toEqual('Some error');
-    expect(response.errors).toEqual([]);
+    expect(response.errors).toEqual(['Some error']);
 
     // When statusCode is something else.
     wptGatherer.fakeRunResponse = () => {
       return {
         statusCode: 1234,
-        statusText: 'Some error',
+        body: {
+          statusText: 'Some error',
+          data: fakeResponseData,
+        }
       };
     };
     response = wptGatherer.run(test, {} /* options */);
     expect(response.status).toEqual(Status.ERROR);
     expect(response.statusText).toEqual('Some error');
-    expect(response.errors).toEqual([]);
+    expect(response.errors).toEqual(['Some error']);
+  });
+
+  it('submits test and handles API handler errors', async () => {
+    envVars = {
+      webPageTestApiKey: 'SOME_API_KEY',
+    };
+    fakeApiHandler.fetch = () => {
+      return  {
+        statusCode: 500,
+        statusText: 'API fetch error',
+      };
+    }
+    wptGatherer = new WPTGatherer(wptConfig, envVars, fakeApiHandler,
+        {} /* options */);
+
+    let test = {
+      selected: 'selected',
+      url: 'google.com',
+      label: 'Google',
+      webpagetest: {
+        settings: {
+          connection: '4G',
+        }
+      },
+    };
+
+    let response = wptGatherer.run(test, {} /* options */);
+    expect(response.status).toEqual(Status.ERROR);
+    expect(response.statusText).toEqual('API fetch error');
+    expect(response.errors).toEqual(['API fetch error']);
   });
 
   it('retrieves result and get full response', async () => {
