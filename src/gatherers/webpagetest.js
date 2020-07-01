@@ -140,7 +140,8 @@ class WebPageTestGatherer extends Gatherer {
     assert(test.url, 'Parameter test.url is missing.');
     options = options || {};
 
-    let settings = test.webpagetest.settings;
+    let gathererData = test.webpagetest || {};
+    let settings = gathererData.settings;
     assert(settings, 'webpagetest.settings is not defined.');
 
     let location = `${settings.locationId}.${settings.connection}`;
@@ -179,26 +180,34 @@ class WebPageTestGatherer extends Gatherer {
     let response, body = {}, statusText;
     if (this.apiKey === 'TEST_APIKEY') {
       response = this.fakeRunResponse();
-      body = response.body;
+      body = response.body || {};
       statusText = body.statusText;
 
     } else {
       response = this.apiHelper.fetch(url);
-      statusText = response.statusText;
 
       if (this.debug) {
         console.log('WPTGatherer::run API response: \n', response);
       }
-      if (response.statusCode === 200) {
-        body = JSON.parse(response.body || {});
-        statusText = body.statusText;
+
+      if (response.statusCode >= 400) {
+        return {
+          status: Status.ERROR,
+          statusText: response.statusText,
+          settings: gathererData.settings,
+          metadata: gathererData.metadata,
+          errors: [response.statusText],
+        };
       }
+
+      body = JSON.parse(response.body || '{}');
+      statusText = body.statusText;
     }
 
     let status, metadata = {}, errors = [];
 
     try {
-      switch(response.statusCode) {
+      switch(body.statusCode) {
         case 100:
         case 101:
           status = Status.SUBMITTED;
@@ -236,7 +245,6 @@ class WebPageTestGatherer extends Gatherer {
 
           if (errors.length > 0) {
             status = Status.ERROR;
-            statusText = errors.join('\n');
           }
 
           break;
@@ -247,7 +255,6 @@ class WebPageTestGatherer extends Gatherer {
           // Deal with the occasional error with "Test not found". These type of
           // tests can be resolved by simply retrying.
           if (statusText === 'Test not found') {
-            status = Status.SUBMITTED;
             statusText = `Test not found. If this happends consistently, try ` +
                 `${result.webpagetest.metadata.userUrl} to bring Test back to ` +
                 `active.`;
@@ -261,7 +268,6 @@ class WebPageTestGatherer extends Gatherer {
 
       status = Status.ERROR;
       statusText = e.message;
-      errors.push(e.message);
     }
 
     return {
@@ -276,7 +282,7 @@ class WebPageTestGatherer extends Gatherer {
   retrieve(result, options) {
     options = options || {};
     let errors = [];
-    let gathererData = result.webpagetest;
+    let gathererData = result.webpagetest || {};
     let urlParams = [
       'test=' + gathererData.metadata.testId,
     ];
@@ -284,9 +290,19 @@ class WebPageTestGatherer extends Gatherer {
     if (this.debug) console.log('WPTGatherer::retrieve\n', url);
 
     let response = this.apiHelper.fetch(url);
-    let body = {};
-    if(response.statusCode == 200)
-        body = JSON.parse(response.body);
+
+    if (response.statusCode >= 400) {
+      return {
+        status: Status.ERROR,
+        statusText: response.statusText,
+        settings: gathererData.settings,
+        metadata: gathererData.metadata,
+        metrics: {},
+        errors: [response.statusText],
+      };
+    }
+
+    let body = JSON.parse(response.body);
 
     if (this.debug) console.log(
         'WPTGatherer::retrieve body.statusCode=\n', body.statusCode);
@@ -336,18 +352,22 @@ class WebPageTestGatherer extends Gatherer {
         status = Status.ERROR;
         // Deal with the occasional error with "Test not found". These type of
         // tests can be resolved by simply retrying.
-        if (body.statusText === 'Test not found') {
-          status = Status.SUBMITTED;
+        if (statusText === 'Test not found') {
+          statusText = `Test not found. If this happends consistently, try ` +
+              `${result.webpagetest.metadata.userUrl} to bring Test back to ` +
+              `active.`;
         }
+        errors.push(statusText);
         break;
 
       case 500:
         status = Status.ERROR;
         // Deal with the occasional error with "Test not found". These type of
         // tests can be resolved by simply retrying.
-        if (body.statusText === 'Unavailable Service') {
+        if (statusText === 'Unavailable Service') {
           status = Status.SUBMITTED;
         }
+        errors.push(statusText);
         break;
 
       default:

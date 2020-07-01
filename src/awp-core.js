@@ -397,11 +397,12 @@ class AutoWebPerf {
     results.forEach(result => {
       this.log(`Retrieve: id=${result.id}`);
       this.logDebug('AutoWebPerf::retrieve, result=\n', result);
+      result.errors = result.errors || [];
 
       // Before retriving the result.
       extResponse = this.runExtensions(extensions, 'beforeRetrieve',
           {result: result}, options);
-      result.errors = (result.errors || []).concat(extResponse.errors);
+      result.errors = result.errors.concat(extResponse.errors);
 
       let statuses = [];
       let newResult = result;
@@ -413,14 +414,16 @@ class AutoWebPerf {
         if (result[dataSource].status === Status.RETRIEVED) return;
 
         let gatherer = this.getGatherer(dataSource);
-        let response = gatherer.retrieve(
-            result, {debug: true});
+        let response = gatherer.retrieve(result, {debug: true});
 
         statuses.push(response.status);
         newResult[dataSource] = response;
 
         this.log(`Retrieve: ${dataSource} result: status=${response.status}`);
       });
+
+      // Collect errors from all gatherers.
+      newResult.errors = result.errors.concat(this.getOverallErrors(newResult));
 
       // After retrieving the result.
       extResponse = this.runExtensions(extensions, 'afterRetrieve',
@@ -652,9 +655,10 @@ class AutoWebPerf {
     } catch (error) {
       return {
         status: Status.ERROR,
-        statusText: error.stack,
+        statusText: error.message,
         metadata: {},
         metrics: {},
+        errors: [error],
       }
     }
   }
@@ -793,12 +797,13 @@ class AutoWebPerf {
     this.dataSources.forEach(dataSource => {
       if (!result[dataSource]) return;
 
-      if (result[dataSource].status === Status.ERROR) {
-        errors.push(result[dataSource].statusText);
-      }
       // Add data source prefix to all error messages.
       (result[dataSource].errors || []).forEach(error => {
-        errors.push(`[${dataSource}] ` + error)
+        try {
+          errors.push(`[${dataSource}] ` + (error.message || error));
+        } catch (e) {
+          errors.push(`[${dataSource}] ` + error);
+        }
       });
     });
     return errors.filter(e => e);

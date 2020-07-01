@@ -105,8 +105,8 @@ class PSIGatherer extends Gatherer {
       'url': encodeURIComponent(test.url),
       'key': this.apiKey,
       'category': ['performance', 'pwa'],
-      'locale': settings.locale,
-      'strategy': settings.strategy,
+      'locale': settings.locale || 'en-us',
+      'strategy': settings.strategy || 'mobile',
     }
     let urlParams = [];
     Object.keys(params).forEach(key => {
@@ -123,14 +123,33 @@ class PSIGatherer extends Gatherer {
 
     if (options.debug) console.log(url);
 
-    let json = {};
+    let json = {}, response;
     if (this.apiKey === 'TEST_APIKEY') {
       // For testing purpose.
       json = this.fakeRunResponse();
+
     } else {
-      let response = this.apiHelper.fetch(url);
-      if(response.statusCode == 200)
-        json = JSON.parse(response.body);
+      try {
+        response = this.apiHelper.fetch(url);
+      } catch (e) {
+        return {
+          status: Status.ERROR,
+          statusText: e.message,
+          settings: settings,
+          errors: [e.message],
+        };
+      }
+
+      if(response.statusCode >= 400) {
+        return {
+          status: Status.ERROR,
+          statusText: response.statusText,
+          settings: settings,
+          errors: [response.statusText],
+        };
+      }
+
+      json = JSON.parse(response.body);
     }
 
     let metadata = {},

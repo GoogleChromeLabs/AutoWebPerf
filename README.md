@@ -116,11 +116,101 @@ trigger time to its original Test object in the `tests.json`.
 ./awp run --tests=examples/tests.json --results=output/results.json --extensions=budgets
 ```
 
+## Tests and Results
+
+### Define the Tests
+
+The list of tests is simply an array of Tests objects, like the sample Tests
+below. Or check out `src/examples/tests.js` for a detailed example of Tests
+list.
+
+```
+[{
+  "label": "Test-1",
+  "url": "example1.com",
+  "webpagetest": {
+    ...
+  }
+}, {
+  "label": "Test-2",
+  "url": "example2.com",
+  "psi": {
+    ...
+  }
+}]
+```
+
+Each `Test` object defines which audits to run by defining `gatherers` property.
+For example, the first `Test` has a `webpagetest` property which defines the
+configuration of running a WebPageTest audit. The second `Test` has a `psi`
+property that defines how to run PageSpeedInsight audit.
+
+### Generate the Results
+
+After running tests, a list of `Results` is generated like below. Each `Result`
+contains its corresponding metrics to the predefined `gatherers` such as
+WebPageTest and PageSpeedInsight. See the example below.
+
+```
+[{
+  "label": "Test-1",
+  "url": "example1.com",
+  "webpagetest": {
+    "metrics": {
+      FirstContentfulPaint: 900,
+      ...
+    }
+  }  
+}, {
+  "label": "Test-2",
+  "url": "example2.com",
+  "psi": {
+    "metrics": {
+      FirstContentfulPaint: 900,
+      ...
+    }
+  }  
+}]
+```
+
+### Environmental Variables
+
+TBD
+
+## Gatherers
+
+AWP supports the following audit gatherers. Please check out the corresponding
+documentations for details.
+
+#### WebPageTest
+
+The WebPageTest gatherer runs Tests through either the public WebPageTest
+endpoints or a custom private WebPageTest instance.
+
+See [docs/webpagetest.md](docs/webpagetest.md) for more details for the usage
+of WebPageTest gatherer.
+
+#### PageSpeed Insights
+
+The PageSpeed Insights gatherer runs Tests through the public
+[PageSpeed Insights API](https://developers.google.com/speed/docs/insights/v5/get-started).
+
+See [docs/psi.md](docs/psi.md) for more details for the usage of PSI gatherer.
+
+#### Chrome UX Report API (CrUX API)
+
+TBD
+
+#### Chrome UX Report History (CrUX via BigQuery)
+
+TBD
+
 ## Design
 
 AWP is designed with modules, including modules for running audits
-with WebPageTest, PSI, or other tools, and modules for reading/writing
-data from data platforms such as JSON, GoogleSheets or Cloud services.
+with WebPageTest, PageSpeedInsight, or other tools, and modules for
+reading/writing data from data platforms such as JSON, GoogleSheets or
+a Cloud service.
 
 In a high-level view, there are three types of modules:
 - **Gatherer** - A Gatherer runs audits and generates metrics.

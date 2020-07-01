@@ -498,12 +498,12 @@ describe('AutoWebPerf with fake modules', () => {
       url: 'example.com',
       fake: {
         status: Status.ERROR,
-        statusText: 'Fake error',
+        errors: [new Error('Fake error')],
       },
     };
     errors = awp.getOverallErrors(result);
     expect(errors.length).toBe(1);
-    expect(errors[0]).toEqual('Fake error');
+    expect(errors[0]).toEqual('[fake] Fake error');
 
     result = {
       url: 'example.com',

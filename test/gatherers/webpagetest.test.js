@@ -70,6 +70,12 @@ describe('WPTGatherer unit test', () => {
   });
 
   it('submits test and handles status codes', async () => {
+    envVars = {
+      webPageTestApiKey: 'SOME_API_KEY',
+    };
+    wptGatherer = new WPTGatherer(wptConfig, envVars, fakeApiHandler,
+        {} /* options */);
+
     let test = {
       selected: true,
       url: 'google.com',
@@ -83,45 +89,11 @@ describe('WPTGatherer unit test', () => {
 
     let response;
 
-    // When statusCode is 100
-    wptGatherer.fakeRunResponse = () => {
-      return {
-        statusCode: 100,
-        body: {
-          statusText: 'Pending',
-          data: fakeResponseData,
-        }
-      };
-    };
-    response = wptGatherer.run(test, {} /* options */);
-
-    expect(response.status).toEqual(Status.SUBMITTED);
-    expect(response.statusText).toEqual('Pending');
-    expect(response.errors).toEqual([]);
-
-    // When statusCode is 101
-    wptGatherer.fakeRunResponse = () => {
-      return {
-        statusCode: 101,
-        body: {
-          statusText: 'Pending',
-          data: fakeResponseData,
-        }
-      };
-    };
-    response = wptGatherer.run(test, {} /* options */);
-    expect(response.status).toEqual(Status.SUBMITTED);
-    expect(response.statusText).toEqual('Pending');
-    expect(response.errors).toEqual([]);
-
-    // When statusCode is 400
-    wptGatherer.fakeRunResponse = () => {
+    // When API response's statusCode is 400
+    fakeApiHandler.fetch = () => {
       return {
         statusCode: 400,
-        body: {
-          statusText: 'Some error',
-          data: fakeResponseData,
-        },
+        statusText: 'Some error',
       };
     };
     response = wptGatherer.run(test, {} /* options */);
@@ -129,14 +101,64 @@ describe('WPTGatherer unit test', () => {
     expect(response.statusText).toEqual('Some error');
     expect(response.errors).toEqual(['Some error']);
 
-    // When statusCode is something else.
-    wptGatherer.fakeRunResponse = () => {
+    // When body.statusCode is 100
+    fakeApiHandler.fetch = () => {
       return {
-        statusCode: 1234,
-        body: {
+        statusCode: 200,
+        body: JSON.stringify({
+          statusCode: 100,
+          statusText: 'Pending',
+          data: fakeResponseData,
+        })
+      };
+    };
+    response = wptGatherer.run(test, {} /* options */);
+
+    expect(response.status).toEqual(Status.SUBMITTED);
+    expect(response.statusText).toEqual('Pending');
+    expect(response.errors).toEqual([]);
+
+    // When body.statusCode is 101
+    fakeApiHandler.fetch = () => {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          statusCode: 101,
+          statusText: 'Pending',
+          data: fakeResponseData,
+        })
+      };
+    };
+    response = wptGatherer.run(test, {} /* options */);
+    expect(response.status).toEqual(Status.SUBMITTED);
+    expect(response.statusText).toEqual('Pending');
+    expect(response.errors).toEqual([]);
+
+    // When body.statusCode is 400
+    fakeApiHandler.fetch = () => {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          statusCode: 400,
           statusText: 'Some error',
           data: fakeResponseData,
-        }
+        }),
+      };
+    };
+    response = wptGatherer.run(test, {} /* options */);
+    expect(response.status).toEqual(Status.ERROR);
+    expect(response.statusText).toEqual('Some error');
+    expect(response.errors).toEqual(['Some error']);
+
+    // When body.statusCode is something else.
+    fakeApiHandler.fetch = () => {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({
+          statusCode: 1234,
+          statusText: 'Some error',
+          data: fakeResponseData,
+        })
       };
     };
     response = wptGatherer.run(test, {} /* options */);
@@ -188,7 +210,8 @@ describe('WPTGatherer unit test', () => {
         },
       },
     };
-    // When statusCode is 100
+
+    // When body.statusCode is 200
     fakeApiHandler.fetch = () => {
       return {
         statusCode: 200,
@@ -213,10 +236,11 @@ describe('WPTGatherer unit test', () => {
       webpagetest: {
         metadata: {
           testId: 'id-1234',
+          userUrl: 'https://fake.url'
         },
       },
     };
-    // When statusCode is 100
+    // When body.statusCode is 100
     fakeApiHandler.fetch = () => {
       return {
         statusCode: 200,
@@ -238,7 +262,7 @@ describe('WPTGatherer unit test', () => {
     expect(response.statusText).toEqual('Pending');
     expect(response.metrics).toEqual({});
 
-    // When statusCode is 400
+    // When body.statusCode is 400
     fakeApiHandler.fetch = () => {
       return {
         statusCode: 200,
@@ -254,7 +278,7 @@ describe('WPTGatherer unit test', () => {
     expect(response.statusText).toEqual('Some error');
     expect(response.metrics).toEqual({});
 
-    // When statusCode is 400 with statusText as "Test not found".
+    // When body.statusCode is 400 with statusText as "Test not found".
     fakeApiHandler.fetch = () => {
       return  {
         statusCode: 200,
@@ -266,8 +290,10 @@ describe('WPTGatherer unit test', () => {
       }
     };
     response = wptGatherer.retrieve(result, {} /* options */);
-    expect(response.status).toEqual(Status.SUBMITTED);
-    expect(response.statusText).toEqual('Test not found');
+    expect(response.status).toEqual(Status.ERROR);
+    expect(response.statusText).toEqual(
+        'Test not found. If this happends consistently, try https://fake.url ' +
+        'to bring Test back to active.');
     expect(response.metrics).toEqual({});
   });
 

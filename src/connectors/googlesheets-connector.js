@@ -54,7 +54,6 @@ class GoogleSheetsConnector extends Connector {
     this.activeSpreadsheet = SpreadsheetApp.getActive();
     this.defaultTestsTab = config.defaultTestsTab;
     this.defaultResultsTab = config.defaultResultsTab;
-    this.isRequestApiKey = config.isRequestApiKey;
 
     // Caching for preventing querying the same data repeatedly.
     this.propertyLookupCache = {};
@@ -172,11 +171,6 @@ class GoogleSheetsConnector extends Connector {
 
     // Init user timezone.
     this.initUserTimeZone();
-
-    // Request for WebPageTest API Key.
-    if (this.isRequestApiKey) {
-      this.requestApiKey();
-    }
 
     // Record the last timestamp of init.
     this.setSystemVar(SystemVars.LAST_INIT_TIMESTAMP, Date.now());
@@ -699,13 +693,12 @@ class GoogleSheetsConnector extends Connector {
    * requestApiKey - Request for WebPageTest API key.
    * @param  {string} message Message for the UI prompt.
    */
-  requestApiKey(message) {
+  requestApiKey(message, errorMessage) {
     let apiKey = this.getEnvVar('webPageTestApiKey');
     message = message || 'Enter your WebPageTest API Key';
     let requestCount = 0;
     while (!apiKey && requestCount < 3) {
-      let input = Browser.inputBox(
-          message + ' (register at https://www.webpagetest.org/getkey.php)');
+      let input = Browser.inputBox(message);
       // The input will be 'cancel' if the user uses the close button on top
       if (input !== 'cancel') {
         apiKey = input;
@@ -717,9 +710,9 @@ class GoogleSheetsConnector extends Connector {
     if (apiKey) {
       this.setEnvVar('webPageTestApiKey', apiKey);
     } else {
-      Browser.msgBox('A WebPageTest API Key is required for this tool to' +
-                     ' function. Please enter one on the hidden User_API_Key' +
-                     ' tab to continue using this tool.');
+      errorMessage = errorMessage || 'A WebPageTest API Key is required ' +
+          'for this tool to function.';
+      Browser.msgBox(errorMessage);
     }
   }
 

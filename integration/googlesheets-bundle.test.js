@@ -466,6 +466,38 @@ describe('AWP bundle for GoogleSheets', () => {
     expect(resultsData[3][3]).toEqual('Retrieved');
   });
 
+  it('retrieve and updates results for selected results with errors',
+      async () => {
+    let resultsData = [
+      ['', '', '', '', '', ''],
+      ['selected', 'id', 'type', 'status', 'url', 'webpagetest.metadata.id', 'errors'],
+      ['', 'ID', 'Type', 'Status', 'URL', 'WPT ID', 'WPT SpeedIndex'],
+      [true, 'id-1234', 'single', 'Submitted', 'google.com', 'id-1234', ''],
+    ];
+    fakeSheets['Results-1'] = initFakeSheet(resultsData);
+
+    awp.connector.apiHelper.fetch = () => {
+      return {
+        statusCode: 400,
+        statusText: 'Some error',
+      }
+    };
+
+    await awp.retrieve({
+      filters: ['selected'],
+      googlesheets: {
+        testsTab: 'Tests-1',
+        resultsTab: 'Results-1',
+      },
+    });
+
+    // Ensure there are no additional rows in the Results tab.
+    resultsData = fakeSheets['Results-1'].fakeData;
+    expect(resultsData.length).toEqual(4);
+    expect(resultsData[3][3]).toEqual('Error');
+    expect(resultsData[3][6]).toEqual(['[webpagetest] Some error']);
+  });
+
   it('retrieve all pending results and deletes Retrieve trigger', async () => {
     let resultsData = [
       ['', '', '', '', '', ''],
