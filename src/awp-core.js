@@ -378,6 +378,12 @@ class AutoWebPerf {
     let resultsToUpdate = [], overallErrors = [], extResponse;
 
     let results = this.connector.getResultList(options);
+
+    // Clean up previous errors.
+    results.forEach(result => {
+      result.errors = [];
+    });
+
     extResponse = this.runExtensions(extensions, 'beforeAllRetrieves', [] /* tests */,
         results, options);
     overallErrors = overallErrors.concat(extResponse.errors);

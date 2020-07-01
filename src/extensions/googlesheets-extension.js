@@ -299,7 +299,7 @@ class GoogleSheetsExtension extends Extension {
       let hasBudgets = false;
       let underBudgets = {};
       let budgets = result.budgets.budget || {};
-      let metrics = result.budgets.metrics;
+      let metrics = result.budgets.metrics || {};
 
       Object.keys(budgets).forEach(key => {
         if (budgets[key] > 0) hasBudgets = true;
