@@ -25,7 +25,59 @@ describe('Budgets unit test', () => {
     extension = new BudgetsExtension({});
   });
 
-  it('adds budget metrics to a result after run.', async () => {
+  it('adds budgets only to a result after run.', async () => {
+    let test = {
+      url: 'google.com',
+      webpagetest: {},
+      budgets: {
+        metricPath: 'webpagetest.metrics.[METRIC_NAME]',
+        budget: {
+          FirstContentfulPaint: 1000,
+          SpeedIndex: 3000,
+          CSS: 100,
+        },
+      },
+    };
+    let result = {
+      url: 'google.com',
+      status: Status.SUBMITTED,
+      webpagetest: {
+        metrics: {
+          FirstContentfulPaint: 1500,
+          SpeedIndex: 6000,
+          CSS: 200,
+        }
+      },
+    };
+
+    extension.afterRun({
+      test: test,
+      result: result
+    });
+
+    expect(result).toEqual({
+      url: 'google.com',
+      status: Status.SUBMITTED,
+      webpagetest: {
+        metrics: {
+          FirstContentfulPaint: 1500,
+          SpeedIndex: 6000,
+          CSS: 200,
+        }
+      },
+      budgets: {
+        metricPath: 'webpagetest.metrics.[METRIC_NAME]',
+        budget: {
+          FirstContentfulPaint: 1000,
+          SpeedIndex: 3000,
+          CSS: 100,
+        },
+      },
+    });
+  });
+
+  it('adds budget metrics to a result after run with retrieved.',
+      async () => {
     let test = {
       url: 'google.com',
       webpagetest: {},
@@ -112,6 +164,7 @@ describe('Budgets unit test', () => {
   it('adds budget metrics to a result after retrieve.', async () => {
     let result = {
       url: 'google.com',
+      status: Status.RETRIEVED,
       webpagetest: {
         metrics: {
           FirstContentfulPaint: 1500,
@@ -133,6 +186,7 @@ describe('Budgets unit test', () => {
 
     expect(result).toEqual({
       url: 'google.com',
+      status: Status.RETRIEVED,
       webpagetest: {
         metrics: {
           FirstContentfulPaint: 1500,
@@ -177,6 +231,7 @@ describe('Budgets unit test', () => {
     'budgets extension', async () => {
       let result = {
         url: 'google.com',
+        status: Status.RETRIEVED,
         webpagetest: {
           metrics: {
             FirstContentfulPaint: 1500,
@@ -198,6 +253,7 @@ describe('Budgets unit test', () => {
 
       expect(result).toEqual({
         url: 'google.com',
+        status: Status.RETRIEVED,
         webpagetest: {
           metrics: {
             FirstContentfulPaint: 1500,

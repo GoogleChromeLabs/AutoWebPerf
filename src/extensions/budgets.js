@@ -50,14 +50,22 @@ class BudgetsExtension extends Extension {
   afterRun(context) {
     assert(context.test, 'test is missing.');
 
+    // Adding budgets object to result.
+    if (!context.result.budgets) {
+      context.result.budgets = context.test.budgets;
+    }
+
     if (context.result && context.result.status === Status.RETRIEVED) {
-      this.processResult(context.result, context.test.budgets);
+      this.processResult(context.result, context.result.budgets);
     }
   }
 
   afterRetrieve(context) {
     assert(context.result, 'result is missing.');
-    this.processResult(context.result, context.result.budgets);
+
+    if (context.result && context.result.status === Status.RETRIEVED) {
+      this.processResult(context.result, context.result.budgets);
+    }
   }
 
   processResult(result, budgets) {
