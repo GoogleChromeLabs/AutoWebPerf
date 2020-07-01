@@ -24,7 +24,7 @@
     "dayjs": "^1.8.19",
     "fs": "0.0.1-security",
     "fs-extra": "^8.1.0",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.3",
     "path": "^0.12.7",
     "request": "^2.88.0",
     "request-promise": "^4.2.5",
