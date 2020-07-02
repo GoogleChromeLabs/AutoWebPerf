@@ -11,26 +11,28 @@
       "label":"Web Vitals",
       "url": "https://web.dev/vitals/",
       "cruxapi": {
+        "urlType" : "Page",
         "formFactor": "ALL"
       }
     },
     {
       "label":"Web.dev Origin phone",
-      "origin": "https://web.dev",
-      "url": "https://web.dev/vitals/",
+      "url": "https://web.dev",
       "cruxapi": {
+        "urlType" : "Origin",
         "formFactor": "PHONE"
       }
     },
     {
       "label":"Web.dev Origin",
-      "origin": "https://web.dev",
+      "url": "https://web.dev",
       "cruxapi": {}
     },
     {
       "label":"Web.dev wrong Origin",
-      "origin": "https://wew.dev",
+      "url": "https://wew.dev",
       "cruxapi": {
+        "urlType" : "Origin",
         "formFactor": "PHONE"
       }
     }

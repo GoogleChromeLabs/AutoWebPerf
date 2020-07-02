@@ -72,7 +72,8 @@ const MetricKeys = [
   // tools
   'crux',
   'lighthouse',
-  'formFactor'
+  'formFactor',
+  'urlType'
 ];
 
 class Metrics {

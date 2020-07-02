@@ -68,10 +68,15 @@ class CrUXAPIGatherer extends Gatherer {
         json : {} 
       };
 
-      if(test.url)
+      assert(test.url, 'Parameter URL is missing.');
+
+      if(!test.cruxapi.urlType)
+        test.cruxapi.urlType = 'Origin';
+
+      if(test.cruxapi.urlType=='Page')
         apiOptions.json.url = test.url;
-      else if(test.origin)
-        apiOptions.json.origin = test.origin;
+      else
+        apiOptions.json.origin = test.url;
 
       if(test.cruxapi.formFactor && test.cruxapi.formFactor!='ALL')
         apiOptions.json.formFactor = test.cruxapi.formFactor;
@@ -107,6 +112,8 @@ class CrUXAPIGatherer extends Gatherer {
 
     if(test.cruxapi.formFactor)
         metrics.set('formFactor', test.cruxapi.formFactor);
+
+    metrics.set('urlType', test.cruxapi.urlType);
 
     return {
       status: status,
