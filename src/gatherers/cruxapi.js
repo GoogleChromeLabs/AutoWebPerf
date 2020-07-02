@@ -53,6 +53,9 @@ class CrUXAPIGatherer extends Gatherer {
 
     if (options.debug) console.log(test);
 
+    let gathererData = test.cruxapi || {};
+    let settings = gathererData.settings;
+
     let apiJsonOutput = {},
       statusText = "",
       status = "",
@@ -68,13 +71,18 @@ class CrUXAPIGatherer extends Gatherer {
         json : {} 
       };
 
-      if(test.url)
-        apiOptions.json.url = test.url;
-      else if(test.origin)
-        apiOptions.json.origin = test.origin;
+      assert(test.url, 'Parameter URL is missing.');
 
-      if(test.cruxapi.formFactor && test.cruxapi.formFactor!='ALL')
-        apiOptions.json.formFactor = test.cruxapi.formFactor;
+      if(!settings.urlType)
+        settings.urlType = 'Origin';
+
+      if(settings.urlType=='Page')
+        apiOptions.json.url = test.url;
+      else
+        apiOptions.json.origin = test.url;
+
+      if(settings.formFactor && settings.formFactor!='ALL')
+        apiOptions.json.formFactor = settings.formFactor;
 
       let response = this.apiHelper.post(url, apiOptions);
       if(response.statusCode == 200)
@@ -105,13 +113,11 @@ class CrUXAPIGatherer extends Gatherer {
       statusText = 'No result found in CrUX API response';
     }
 
-    if(test.cruxapi.formFactor)
-        metrics.set('formFactor', test.cruxapi.formFactor);
-
     return {
       status: status,
       statusText: statusText,
       metrics: metrics.toObject() || {},
+      settings: gathererData.settings,
       errors: errors,
     }
   }
