@@ -4,7 +4,7 @@
     "webPageTestApiEndpoint": "https://webpagetest.org",
     "psiApiKey": "TEST_APIKEY",
     "gcpKeyFilePath": "tmp/gcp-service-account.json",
-    "gcpProjectId": "",
+    "gcpProjectId": ""
   },
   "tests": [
     {
@@ -38,7 +38,7 @@
         }
       },
       "budgets": {
-        "dataSource": "webpagetest",
+        "metricPath": "webpagetest.metrics.[METRIC_NAME]",
         "budget": {
           "FirstContentfulPaint": 1500,
           "FirstMeaningfulPaint": 2000,
