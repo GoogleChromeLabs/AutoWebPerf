@@ -60,7 +60,7 @@ class GoogleSheetsExtension extends Extension {
     this.userTimeZone = GoogleSheetsHelper.getUserTimeZone();
     this.clientEmail = GoogleSheetsHelper.getClientEmail();
     this.spreadsheetId = GoogleSheetsHelper.getSpreadsheetId();
-    this.awpVersion = config.awpVersion || 'awp-dev';
+    this.awpVersion = config.awpVersion || 'awp';
     this.gaAccount = config.gaAccount;
     this.locations = null;
 
@@ -244,7 +244,7 @@ class GoogleSheetsExtension extends Extension {
    */
   trackAction(trackingType, sheetId, result) {
     let testedUrl = result.url || result.origin || 'No given URL';
-    let referral = this.awpVersion ? `${this.awpVersion} - ` : '';
+    let referral = this.awpVersion || 'awp';
     let url;
 
     // FIXME: Load the list of data sources from awpConfig instead of hardcoded.
@@ -255,7 +255,9 @@ class GoogleSheetsExtension extends Extension {
         activeDataSources.push(dataSource);
       }
     });
-    referral += activeDataSources.join(',');
+    if (activeDataSources.length) {
+      referral += '/' + activeDataSources.join('/');
+    }
 
     // Record legacy GA event.
     if (this.isSendTrackEvent) {

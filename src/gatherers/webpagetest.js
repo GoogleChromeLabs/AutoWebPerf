@@ -105,7 +105,7 @@ class WebPageTestGatherer extends Gatherer {
       'VisualComplete': 'data.median.firstView.visualComplete',
       'SpeedIndex': 'data.median.firstView.SpeedIndex',
       'LoadEvent': 'data.median.firstView.loadTime',
-      'TTIMeasurementEnd': 'data.median.firstView.TTIMeasurementEnd',
+      'TimeToInteractive': 'data.median.firstView.TTIMeasurementEnd',
       'DOMContentLoaded': 'data.median.firstView.domContentLoadedEventStart',
 
       // WebPageTest Resource Count metrics
