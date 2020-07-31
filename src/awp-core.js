@@ -431,13 +431,13 @@ class AutoWebPerf {
       // Collect errors from all gatherers.
       newResult.errors = result.errors.concat(this.getOverallErrors(newResult));
 
+      // Update overall status.
+      newResult.status =  this.getOverallStatus(statuses);
+
       // After retrieving the result.
       extResponse = this.runExtensions(extensions, 'afterRetrieve',
           {result: newResult}, options);
       newResult.errors = newResult.errors.concat(extResponse.errors);
-
-      // Update overall status.
-      newResult.status =  this.getOverallStatus(statuses);
 
       this.log(`Retrieve: overall status=${newResult.status}`);
       this.logDebug('AutoWebPerf::retrieve, statuses=\n', statuses);
