@@ -2,7 +2,7 @@
 
 ## Overview
 
-For more details in the WebPageTest API, please check out
+For more details on the WebPageTest API, please check out
 [the official documentation](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis).
 
 Below is a sample `Test` with `webpagetest` property that defines the
@@ -50,10 +50,10 @@ The following CLI example explains the two-steps approach:
 
 - `settings` <Object>: The settings is an object that defines a list of parameters for
 running a WebPageTest audit. See the following parameters for details.
-- `settings.locationId` <string>: Location ID, used together for the `location`
+- `settings.locationId` <string>: Location ID, used as the `location`
 parameter in the [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
-- `settings.conection` <string>: Network connection speed, like `3G` or `4G`.
-This will be used together for the `location` parameter in [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
+- `settings.connection` <string>: Network connection speed, like `3G` or `4G`.
+This will be used as the `location` parameter in [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
 - `settings.device` <string>: Mobile device name, as the `mobileDevice` parameter in
 [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
 - `settings.runs` <number>: Number of runs per audit, the same as in `runs` parameter
