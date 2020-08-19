@@ -2,7 +2,7 @@
   "envVars": {
     "webPageTestApiKey": "TEST_APIKEY",
     "psiApiKey": "TEST_APIKEY",
-    "cruxApiKey": "AIzaSyCGW5PmVoCHs7TSRajfHZDR5Fh2AWI3cLY",
+    "cruxApiKey": "TEST_APIKEY",
     "gcpKeyFilePath": "tmp/gcp-service-account.json",
     "gcpProjectId": "google.com:auto-web-perf"
   },
