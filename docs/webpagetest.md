@@ -2,7 +2,7 @@
 
 ## Overview
 
-For more details in the WebPageTest API, please check out
+For more details on the WebPageTest API, please check out
 [the official documentation](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis).
 
 Below is a sample `Test` with `webpagetest` property that defines the
@@ -42,32 +42,32 @@ The following CLI example explains the two-steps approach:
 # Run tests
 ./awp run --tests=examples/tests.json --results=output/results.json
 
-# Run recurring tests
-./awp recurring --tests=examples/tests.json --results=output/results.json
+# Retrieve results
+./awp retrieve --tests=examples/tests.json --results=output/results.json
 ```
 
 ## Configuration details
 
 - `settings` <Object>: The settings is an object that defines a list of parameters for
 running a WebPageTest audit. See the following parameters for details.
-- `settings.locationId` <string>: Location ID, used together for the `location`
-parameter in the [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
-- `settings.conection` <string>: Network connection speed, like `3G` or `4G`.
-This will be used together for the `location` parameter in [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
+- `settings.locationId` <string>: Location ID, used as the `location`
+parameter in the [WebPageTest RESTful API](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md#parameters).
+- `settings.connection` <string>: Network connection speed, like `3G` or `4G`.
+This will be used as the `connectivity` parameter in [WebPageTest RESTful API](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md#parameters).
 - `settings.device` <string>: Mobile device name, as the `mobileDevice` parameter in
-[WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
+[WebPageTest RESTful API](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md#parameters).
 - `settings.runs` <number>: Number of runs per audit, the same as in `runs` parameter
-in the [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
+in the [WebPageTest RESTful API](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md#parameters).
 - `settings.repeatView` <boolean>: Whether to include repeat view test in the
 WebPageTest report. This will be used for `fvonly` in the
-[WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters). Please note that if `repeatView`
+[WebPageTest RESTful API](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md#parameters). Please note that if `repeatView`
 is set to true, `fvonly` will be 0, and vise versa.
 - `settings.timeline` <boolean>: Whether to include the timeline view in the
-WebPageTest report, used as `timeline` in [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
+WebPageTest report, used as `timeline` in [WebPageTest RESTful API](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md#parameters).
 - `settings.block` <string>: Whether to block specific assets from network
-requests. This will be used as `block` in [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
+requests. This will be used as `block` in [WebPageTest RESTful API](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md#parameters).
 - `settings.script` <string>: Whether to run custom steps in a WebPageTest audit.
-This will be used as `script` in [WebPageTest RESTful API](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis#TOC-Parameters).
+This will be used as `script` in [WebPageTest RESTful API](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md#parameters).
 
 
 ## Run a Test
