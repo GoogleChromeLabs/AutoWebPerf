@@ -30,7 +30,7 @@ Available Actions:
 Options (*denotes default value if not passed in):
   tests\t\tThe JSON file with the URL list for audit.
   results\t\tThe output JSON file for writing test results.
-  dataSources\t\ttComma-separated list of data sources. Default: webpagetest.
+  gatherers\t\ttComma-separated list of data sources. Default: webpagetest.
   extensions\t\tComma-separated list of extensions.
   selectedOnly\t\tOnly execute with tests or results with selected=true.
   verbose\t\tPrint out verbose logs.
@@ -41,22 +41,25 @@ Examples:
   ./awp --help
 
   # Run tests
-  ./awp run --tests=examples/tests.json --results=output/results.json
+  ./awp run --tests=examples/tests.json --results=tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY
 
   # Run recurring tests
-  ./awp recurring --tests=examples/tests.json --results=output/results.json
+  ./awp recurring --tests=examples/tests.json --results=tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY
 
   # Activate recurring tests without running actual tests.
-  ./awp recurringActivate --tests=examples/tests.json --results=output/results.json
+  ./awp recurringActivate --tests=examples/tests.json --results=tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY
 
-  # Retrieve pending results
-  ./awp retrieve --tests=examples/tests.json --results=output/results.json
-
-  # CrUX BigQuery Test runByBatch
-  ./awp run --tests=examples/tests-cruxbigquery.json --results=output/results.json --runByBatch
+  # Retrieve pending results (For WebPageTest usage)
+  ./awp retrieve --tests=examples/tests.json --results=tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY
 
   # CrUX API runByBatch
-  ./awp run --tests=examples/tests-cruxapi.json --results=output/results.json
+  ./awp run --tests=examples/tests-cruxapi.json --results=tmp/results.json --envVars=cruxApiKey=SAMPLE_APIKEY
+
+  # CrUX BigQuery Test runByBatch
+  ./awp run --tests=examples/tests-cruxbigquery.json --results=tmp/results.json --runByBatch --envVars=gcpKeyFilePath=KEY_PATH,gcpProjectId=PROJECT_ID
+
+  # Run with verbose or debug.
+  ./awp run --tests=examples/tests.json --results=tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY --verbose --debug
 
   `;
   console.log(usage);
@@ -67,11 +70,21 @@ Examples:
  */
 async function begin() {
   let action = argv['_'][0], output = argv['output'];
-  let dataSources = argv['dataSources'] ? argv['dataSources'].split(',') : null;
+  let gatherers = argv['gatherers'] ? argv['gatherers'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let runByBatch = argv['runByBatch'] ?  true : false;
+  let envVarsArray = argv['envVars'] ? argv['envVars'].split(',') : null;
+  let envVars = {};
   let debug = argv['debug'];
   let verbose = argv['verbose'];
+
+  // Parsing envVar string into key-value envVars object.
+  if (envVarsArray) {
+    envVarsArray.forEach(envVarStr => {
+      [key, value] = envVarStr.split('=');
+      envVars[key] = value;
+    });
+  }
 
   let filters = [];
   if (argv['selectedOnly']) filters.push('selected');
@@ -84,12 +97,13 @@ async function begin() {
   let awp = new AutoWebPerf({
     connector: 'JSON',
     helper: 'Node',
-    dataSources: dataSources || ['webpagetest', 'psi', 'cruxbigquery', 'cruxapi'],
+    gatherers: gatherers || ['webpagetest', 'psi', 'cruxbigquery', 'cruxapi'],
     extensions: extensions,
     json: { // Config for JSON connector.
       testsJsonPath: argv['tests'],
       resultsJsonPath: argv['results'],
     },
+    envVars: envVars,
     verbose: verbose,
     debug: debug,
   });

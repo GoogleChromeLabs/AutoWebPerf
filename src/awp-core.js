@@ -62,13 +62,15 @@ class AutoWebPerf {
     this.config = {};
 
     assert(awpConfig, 'awpConfig is missing');
-    assert(awpConfig.dataSources, 'awpConfig.dataSources is missing.');
+    assert(awpConfig.gatherers, 'awpConfig.gatherers is missing.');
     assert(awpConfig.connector, 'awpConfig.connector is missing.');
     assert(awpConfig.helper, 'awpConfig.helper is missing.');
     this.awpConfig = awpConfig;
 
-    // Example data sources: ['webpagetest', 'psi']
-    this.dataSources = awpConfig.dataSources;
+    awpConfig.envVars = awpConfig.envVars || {};
+
+    // Selected gatherer names, e.g. ['webpagetest', 'psi']
+    this.gathererNames = awpConfig.gatherers;
 
     this.log(`Use helper: ${awpConfig.helper}`);
     switch (awpConfig.helper.toLowerCase()) {
@@ -122,8 +124,15 @@ class AutoWebPerf {
     this.envVars = {};
     if (ConnectorClass) {
       this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
-      this.envVars = this.connector.getEnvVars();
+      this.envVars = this.connector.getEnvVars() || {};
     }
+
+    // Overrides environment varaibles with awpConfig.envVars.
+    this.log(`Use envVars:`);
+    Object.keys(this.awpConfig.envVars).forEach(key => {
+      this.envVars[key] = this.awpConfig.envVars[key];
+      this.log(`\t${key} = ${this.envVars[key]}`);
+    });
 
     this.log(`Use extensions: ${awpConfig.extensions}`);
 
@@ -230,31 +239,43 @@ class AutoWebPerf {
   async run(options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
-    let extResponse, errors = [];
+    let extResponse, overallErrors = [];
 
     let tests = this.connector.getTestList(options);
     this.logDebug(`AutoWebPerf::run with ${tests.length} tests`);
 
     // Before all runs.
     extResponse = this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
-    errors = errors.concat(extResponse.errors);
+    overallErrors = overallErrors.concat(extResponse.errors);
 
     // Run tests.
     let newResults = await this.runTests(tests, options);
+
+    // Collect all errors.
+    newResults.forEach(result => {
+      if (result.errors && result.errors.length > 0) {
+        overallErrors = overallErrors.concat(result.errors);
+      }
+    });
 
     // After all runs.
     extResponse = this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
     }, options);
-    errors = errors.concat(extResponse.errors);
+    overallErrors = overallErrors.concat(extResponse.errors);
 
-    this.logDebug(`AutoWebPerf::run completed with ${tests.length} tests`);
+    if (overallErrors.length > 0) {
+      console.log(`Run completed for ${tests.length} tests with errors:`);
+      console.log(overallErrors);
+    } else {
+      console.log(`Run completed for ${tests.length} tests.`);
+    }
 
     return {
       tests: tests,
       results: newResults,
-      errors: errors,
+      errors: overallErrors,
     };
   }
 
@@ -350,8 +371,7 @@ class AutoWebPerf {
     // Update Tests.
     this.connector.updateTestList(tests, options);
 
-    this.logDebug(`AutoWebPerf::recurring completed with ${tests.length} ` +
-        `tests`);
+    console.log(`Recurring completed with ${tests.length} ` + `tests`);
 
     return {
       tests: tests,
@@ -415,7 +435,7 @@ class AutoWebPerf {
       newResult.modifiedTimestamp = Date.now();
 
       // Interate through all gatherers.
-      this.dataSources.forEach(dataSource => {
+      this.gathererNames.forEach(dataSource => {
         if (!result[dataSource]) return;
         if (result[dataSource].status === Status.RETRIEVED) return;
 
@@ -466,7 +486,12 @@ class AutoWebPerf {
         {results: results}, options);
     overallErrors = overallErrors.concat(extResponse.errors);
 
-    this.logDebug(`AutoWebPerf::retrieved ${results.length} results.`);
+    if (overallErrors.length > 0) {
+      console.log(`Retrieved ${results.length} results with errors:`);
+      console.log(overallErrors);
+    } else {
+      console.log(`Retrieved ${results.length} results.`);
+    }
 
     return {
       results: results,
@@ -511,7 +536,7 @@ class AutoWebPerf {
       });
 
       // Run all gatherers.
-      for(const dataSource of this.dataSources) {
+      for(const dataSource of this.gathererNames) {
         await this.runGathererInBatch(tests, dataSource, options).then(responseList => {
           if(responseList)
             for (let i = 0; i<testResultPairs.length; i++) {
@@ -525,7 +550,7 @@ class AutoWebPerf {
         let result = pair.result;
 
         // Update the overall status.
-        let statuses = this.dataSources.map(dataSource => {
+        let statuses = this.gathererNames.map(dataSource => {
           return result[dataSource] ?
               result[dataSource].status : Status.RETRIEVED;
         });
@@ -558,7 +583,7 @@ class AutoWebPerf {
         let newResult = this.createNewResult(test, options);
 
         // Collect metrics from all data sources.
-        this.dataSources.forEach(dataSource =>  {
+        this.gathererNames.forEach(dataSource =>  {
           if (!test[dataSource]) return;
 
           let response = this.runGatherer(test, dataSource, options);
@@ -800,15 +825,15 @@ class AutoWebPerf {
     let errors = [];
 
     // Collect errors from all gatherers.
-    this.dataSources.forEach(dataSource => {
-      if (!result[dataSource]) return;
+    this.gathererNames.forEach(gathererName => {
+      if (!result[gathererName]) return;
 
       // Add data source prefix to all error messages.
-      (result[dataSource].errors || []).forEach(error => {
+      (result[gathererName].errors || []).forEach(error => {
         try {
-          errors.push(`[${dataSource}] ` + (error.message || error));
+          errors.push(`[${gathererName}] ` + (error.message || error));
         } catch (e) {
-          errors.push(`[${dataSource}] ` + error);
+          errors.push(`[${gathererName}] ` + error);
         }
       });
     });

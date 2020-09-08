@@ -57,7 +57,7 @@ describe('AWP bundle for AppScript', () => {
     awp = new AutoWebPerf({
       connector: 'AppScript',
       helper: 'AppScript',
-      dataSources: ['webpagetest', 'psi', 'cruxbigquery'],
+      gatherers: ['webpagetest', 'psi', 'cruxbigquery'],
       extensions: [
         'budgets',
         'appscript',

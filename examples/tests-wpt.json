@@ -1,11 +1,10 @@
 {
   "envVars": {
-    "webPageTestApiKey": "TEST_APIKEY",
+    "webPageTestApiKey": "SAMPLE_APIKEY",
     "webPageTestApiEndpoint": "https://webpagetest.org"
   },
   "tests": [
     {
-      "selected": true,
       "label": "Think With Google",
       "url": "https://thinkwithgoogle.com",
       "recurring": {

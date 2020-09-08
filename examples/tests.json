@@ -1,7 +1,4 @@
 {
-  "envVars": {
-    "psiApiKey": "TEST_APIKEY"
-  },
   "tests": [
     {
       "label": "web.dev",

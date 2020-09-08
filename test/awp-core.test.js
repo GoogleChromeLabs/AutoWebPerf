@@ -184,7 +184,7 @@ describe('AutoWebPerf with fake modules', () => {
     awp = new AutoWebPerf({
       connector: 'fake',
       helper: 'fake',
-      dataSources: ['fake'],
+      gatherers: ['fake'],
     });
     awp.connector = new FakeConnector();
     awp.apiHandler = fakeApiHandler;
@@ -417,7 +417,7 @@ describe('AutoWebPerf with fake modules', () => {
       psiApiKey: 'TEST_APIKEY',
       gcpProjectId: 'TEST_PROJECTID'
     };
-    awp.dataSources = ['fake1', 'fake2', 'fake3'];
+    awp.gathererNames = ['fake1', 'fake2', 'fake3'];
 
     // When all gatherers return submitted.
     awp.connector.tests = generateFakeTests(1);
