@@ -28,26 +28,24 @@ const Connector = require('./connector');
 class JSONConnector extends Connector {
   constructor(config) {
     super();
-    assert(config.testsJsonPath, 'testsJsonPath is missing in config.');
-    assert(config.resultsJsonPath, 'resultsJsonPath is missing in config.');
-
-    this.testsJsonPath = config.testsJsonPath;
-    this.resultsJsonPath = config.resultsJsonPath;
+    this.testsPath = config.testsPath;
+    this.resultsPath = config.resultsPath;
     this.testsJson = null;
     this.resultsJson = null;
   }
 
   getTestsJson() {
     if (this.testsJson) return this.testsJson;
+    assert(this.testsPath, 'testsPath is missing in config.');
 
-    let filepath = path.resolve(`${this.resultsJsonPath}`);
-    return JSON.parse(fse.readFileSync(path.resolve(`${this.testsJsonPath}`)));
+    return JSON.parse(fse.readFileSync(path.resolve(`${this.testsPath}`)));
   }
 
   getResultsJson() {
     if (this.resultsJson) return this.resultsJson;
+    assert(this.resultsPath, 'resultsPath is missing in config.');
 
-    let filepath = path.resolve(`${this.resultsJsonPath}`);
+    let filepath = path.resolve(`${this.resultsPath}`);
     if (fse.existsSync(filepath)) {
       let rawdata = fse.readFileSync(filepath);
       let content = rawdata.toString();
@@ -79,7 +77,7 @@ class JSONConnector extends Connector {
   }
 
   updateTestList(newTests) {
-    let filepath = path.resolve(`${this.testsJsonPath}`);
+    let filepath = path.resolve(`${this.testsPath}`);
     let tests = this.getTestList();
 
     let rowIndexToTests = {};
@@ -124,7 +122,7 @@ class JSONConnector extends Connector {
   appendResultList(newResults, options) {
     let results = this.getResultList();
     fse.outputFileSync(
-      path.resolve(`${this.resultsJsonPath}`),
+      path.resolve(`${this.resultsPath}`),
       JSON.stringify({
         results: results.concat(newResults),
       }, null, 2));
@@ -146,7 +144,7 @@ class JSONConnector extends Connector {
     });
 
     fse.outputFileSync(
-      path.resolve(`${this.resultsJsonPath}`),
+      path.resolve(`${this.resultsPath}`),
       JSON.stringify({
         results: results,
       }, null, 2));

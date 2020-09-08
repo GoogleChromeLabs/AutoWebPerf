@@ -3,12 +3,18 @@
     {
       "label": "web.dev",
       "url": "https://web.dev",
+      "recurring": {
+        "frequency": "Daily",
+        "nextTriggerTimestamp": 1599692305567,
+        "activatedFrequency": "Daily"
+      },
       "psi": {
         "settings": {
           "locale": "en-GB",
           "strategy": "mobile"
         }
-      }
+      },
+      "errors": []
     }
   ]
 }

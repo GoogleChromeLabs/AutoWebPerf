@@ -1,7 +1,4 @@
 {
-  "envVars": {
-    "psiApiKey": "SAMPLE_APIKEY"
-  },
   "tests": [
     {
       "label": "YT",

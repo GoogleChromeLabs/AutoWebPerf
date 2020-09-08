@@ -6,7 +6,7 @@ import banner from 'rollup-plugin-banner';
 import npmPackageJson from './package.json';
 
 export default [{
-  input: 'src/awp-core.js',
+  input: 'platforms/appscript.js',
   output: {
     file: 'build/appscript-bundle.js',
     format: 'cjs',

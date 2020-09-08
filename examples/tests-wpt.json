@@ -7,11 +7,6 @@
     {
       "label": "Think With Google",
       "url": "https://thinkwithgoogle.com",
-      "recurring": {
-        "frequency": "Daily",
-        "nextTriggerTimestamp": 1234,
-        "activatedFrequency": "Daily"
-      },
       "webpagetest": {
         "settings": {
           "locationId": "Dulles_MotoG",

@@ -103,7 +103,7 @@ class PSIGatherer extends Gatherer {
     let settings = test.psi.settings;
     let params = {
       'url': encodeURIComponent(test.url),
-      'key': this.apiKey,
+      'key': this.apiKey || '',
       'category': ['performance', 'pwa'],
       'locale': settings.locale || 'en-us',
       'strategy': settings.strategy || 'mobile',

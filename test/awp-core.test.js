@@ -516,3 +516,36 @@ describe('AutoWebPerf with fake modules', () => {
     expect(errors.length).toBe(0);
   });
 });
+
+describe('AutoWebPerf with multiple connectors', () => {
+  let awp;
+
+  beforeEach(() => {
+    awp = new AutoWebPerf({
+      connector: {
+        tests: 'fake',
+        results: 'fake'
+      },
+      helper: 'fake',
+      gatherers: ['fake'],
+    });
+    awp.apiHandler = fakeApiHandler;
+    awp.gatherers = {
+      fake: new FakeGatherer(),
+    }
+    awp.extensions = {
+      fake: new FakeExtension(),
+    };
+
+    // Mock functions
+    ['beforeRun', 'afterRun', 'beforeRetrieve', 'afterRetrieve',
+        'beforeAllRuns', 'afterAllRuns', 'beforeAllRetrieves',
+        'afterAllRetrieves'].forEach(funcName => {
+          awp.extensions.fake[funcName] = jest.fn();
+        });
+  });
+
+  it('initializes normally.', async () => {
+    expect(awp).not.toBe(null);
+  });
+});

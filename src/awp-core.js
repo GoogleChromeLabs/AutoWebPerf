@@ -62,7 +62,6 @@ class AutoWebPerf {
     this.config = {};
 
     assert(awpConfig, 'awpConfig is missing');
-    assert(awpConfig.gatherers, 'awpConfig.gatherers is missing.');
     assert(awpConfig.connector, 'awpConfig.connector is missing.');
     assert(awpConfig.helper, 'awpConfig.helper is missing.');
     this.awpConfig = awpConfig;
@@ -70,7 +69,8 @@ class AutoWebPerf {
     awpConfig.envVars = awpConfig.envVars || {};
 
     // Selected gatherer names, e.g. ['webpagetest', 'psi']
-    this.gathererNames = awpConfig.gatherers;
+    this.gathererNames = awpConfig.gatherers ||
+        ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'];
 
     this.log(`Use helper: ${awpConfig.helper}`);
     switch (awpConfig.helper.toLowerCase()) {
@@ -94,36 +94,29 @@ class AutoWebPerf {
         break;
     }
 
-    this.log(`Use connector: ${awpConfig.connector}`);
-    let ConnectorClass, connectorName = awpConfig.connector.toLowerCase();
-    let connectorConfig = awpConfig[connectorName];
+    this.log(`Use connector: ${JSON.stringify(awpConfig.connector)}`);
 
-    // The API Keys used by Gatherers are expected to be accessed through
-    // Connector, similar to environment variables. E.g. with GoogleSheets,
-    // API Keys are stored in Config tab for users to update easily.
-    switch (connectorName) {
-      case 'json':
-        ConnectorClass = require('./connectors/json-connector');
-        break;
+    // Create connector instance(s).
+    if (typeof awpConfig.connector === 'string') {
+      this.connector = this.getConnector(awpConfig.connector);
 
-      case 'appscript':
-        ConnectorClass = require('./connectors/appscript-connector');
-        break;
+    } else if (awpConfig.connector.tests && awpConfig.connector.results) {
+      this.connector = this.getConnector(awpConfig.connector.tests);
 
-      case 'fake':
-        // Do nothing. For testing purpose.
-        break;
+      // Override results-related methods.
+      let resultsConnector = this.getConnector(awpConfig.connector.results);
+      this.connector.getResultList = resultsConnector.getResultList;
+      this.connector.appendResultList = resultsConnector.appendResultList;
+      this.connector.updateResultList = resultsConnector.updateResultList;
 
-      default:
-        throw new Error(
-            `Connector ${awpConfig.connector} is not supported.`);
-        break;
+    } else {
+      throw new Error(`'awpConfig.connector' is not specified.`);
     }
 
-    // Get environment varaibles through the Connector.
+    // Note that API Keys used by Gatherers are expected to be loaded as envVars
+    // via either connector or awpConfig.
     this.envVars = {};
-    if (ConnectorClass) {
-      this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
+    if (this.connector) {
       this.envVars = this.connector.getEnvVars() || {};
     }
 
@@ -150,7 +143,7 @@ class AutoWebPerf {
 
         switch (extension) {
           case 'budgets':
-            ExtensionClass = require('./extensions/budgets');
+            ExtensionClass = require('./extensions/budgets-extension');
             break;
 
           case 'appscript':
@@ -175,6 +168,38 @@ class AutoWebPerf {
     // update the data by calling connector.updateTestList or updateResultList.
     // When batchUpdateBuffer is 0, it will write back after all iteration.
     this.batchUpdateBuffer = awpConfig.batchUpdateBuffer || 0;
+  }
+
+  /**
+   * Return the singleton connector instance with given name.
+   * @param {string} name Connector name. E.g. 'json'.
+   * @return {object} Connector instance.
+   */
+  getConnector(name) {
+    let ConnectorClass = null, connectorName = name.toLowerCase();
+    let connectorConfig = this.awpConfig[connectorName];
+
+    switch (connectorName) {
+      case 'json':
+        ConnectorClass = require('./connectors/json-connector');
+        break;
+
+      case 'appscript':
+        ConnectorClass = require('./connectors/appscript-connector');
+        break;
+
+      case 'fake':
+        // Load dummy connector for testing purpose.
+        ConnectorClass = require('./connectors/connector');
+        break;
+
+      default:
+        throw new Error(
+            `Connector "${name}" is not supported.`);
+        break;
+    }
+
+    return new ConnectorClass(connectorConfig, this.apiHandler);
   }
 
   /**
@@ -515,7 +540,6 @@ class AutoWebPerf {
   async runTests(tests, options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
-    let overrideResults = options.overrideResults;
     let resultsToUpdate = [], allNewResults = [];
     let extResponse;
 
