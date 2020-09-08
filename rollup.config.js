@@ -20,6 +20,7 @@ export default [{
         './connectors/json-connector',
         './helpers/node-helper',
         '@google-cloud/bigquery',
+        '../../test/fakedata/psi-response.json', //FIXME: use exclude.
       ],
     }),
     babel({

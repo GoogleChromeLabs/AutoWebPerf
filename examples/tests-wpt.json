@@ -1,0 +1,53 @@
+{
+  "envVars": {
+    "webPageTestApiKey": "TEST_APIKEY",
+    "webPageTestApiEndpoint": "https://webpagetest.org"
+  },
+  "tests": [
+    {
+      "selected": true,
+      "label": "Think With Google",
+      "url": "https://thinkwithgoogle.com",
+      "recurring": {
+        "frequency": "Daily",
+        "nextTriggerTimestamp": 1234,
+        "activatedFrequency": "Daily"
+      },
+      "webpagetest": {
+        "settings": {
+          "locationId": "Dulles_MotoG",
+          "device": "Pixel",
+          "connection": "4G",
+          "runs": 1,
+          "repeatView": true,
+          "timeline": true,
+          "block": null,
+          "script": null
+        },
+        "metadata": {
+          "lastTestId": "200601_X6_efeb625266aacabaece9ffe9d4bcd207"
+        }
+      },
+      "psi": {
+        "settings": {
+          "locale": "en-US",
+          "strategy": "mobile"
+        }
+      },
+      "budgets": {
+        "dataSource": "webpagetest",
+        "budget": {
+          "FirstContentfulPaint": 1500,
+          "FirstMeaningfulPaint": 2000,
+          "SpeedIndex": 3000,
+          "TimeToInteractive": 5000,
+          "Javascript": 500,
+          "CSS": 500,
+          "Fonts": 100,
+          "Images": 500,
+          "Videos": 500
+        }
+      }
+    }
+  ]
+}

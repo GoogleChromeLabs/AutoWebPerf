@@ -1,11 +1,11 @@
-{
+module.exports = {
   connector: 'JSON',
   helper: 'Node',
   dataSources: ['webpagetest', 'psi'],
   extensions: [
     'budgets',
   ],
-  json: { // Config for JSON connector.
+  json: { // Configuring JSON connector.
     tests: argv['tests'],
     results: argv['results'],
   },
@@ -14,4 +14,4 @@
   },
   verbose: true,
   debug: false,
-}
+};
