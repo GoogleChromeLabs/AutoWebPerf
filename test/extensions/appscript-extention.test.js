@@ -16,12 +16,12 @@
 
 'use strict';
 
-const GoogleSheetsExtension = require('../../src/extensions/googlesheets-extension');
+const AppScriptExtension = require('../../src/extensions/appscript-extension');
 const setObject = require('../../src/utils/set-object');
 const patternFilter = require('../../src/utils/pattern-filter');
 const Status = require('../../src/common/status');
-const {SystemVars} = require('../../src/helpers/googlesheets-helper');
-const {SpreadsheetApp, Session, Utilities} = require('../connectors/googlesheets-test-utils');
+const {SystemVars} = require('../../src/helpers/appscript-helper');
+const {SpreadsheetApp, Session, Utilities} = require('../connectors/appscript-test-utils');
 
 const RETRIEVE_PENDING_RESULTS_FUNC = 'retrievePendingResults';
 
@@ -46,14 +46,14 @@ let connector = {
   },
   getList: (tabId) => {return dataByTabId[tabId];},
   getResultList: (options) => {
-    let results = dataByTabId[options.googlesheets.resultsTab];
+    let results = dataByTabId[options.appscript.resultsTab];
     return patternFilter(results, options.filters);
   },
   updateList: jest.fn(),
   getSystemVar: (key) => {return systemVars[key];},
   setSystemVar: (key, value) => {systemVars[key] = value;},
 };
-let extension = new GoogleSheetsExtension({
+let extension = new AppScriptExtension({
   connector: connector,
   apiHandler: {},
   dataSource: 'webpagetest',
@@ -63,9 +63,9 @@ let dataByTabId = {
   'Results-1': [],
   'LatestResults-1': [],
 };
-let GoogleSheetsHelper = extension.getGoogleSheetsHelper();
-GoogleSheetsHelper.createTimeBasedTrigger = () => {return 'trigger-1';};
-GoogleSheetsHelper.deleteTriggerByFunction = jest.fn();
+let AppScriptHelper = extension.getAppScriptHelper();
+AppScriptHelper.createTimeBasedTrigger = () => {return 'trigger-1';};
+AppScriptHelper.deleteTriggerByFunction = jest.fn();
 
 extension.apiHandler = {
   fetch: jest.fn(),
@@ -89,7 +89,7 @@ connector.getList = (tabId) => {
   }
 };
 
-describe('GoogleSheetsExtension beforeRun', () => {
+describe('AppScriptExtension beforeRun', () => {
   it('converts location name to location id for WebPageTest test', () => {
     let context = {
       test: {
@@ -101,7 +101,7 @@ describe('GoogleSheetsExtension beforeRun', () => {
         }
       },
     };
-    extension.beforeRun(context, {googlesheets: {resultsTab: 'Results-1'}});
+    extension.beforeRun(context, {appscript: {resultsTab: 'Results-1'}});
     expect(context.test.webpagetest.settings.locationId).toEqual('location-1');
   });
 
@@ -116,12 +116,12 @@ describe('GoogleSheetsExtension beforeRun', () => {
         }
       },
     };
-    extension.beforeRun(context, {googlesheets: {resultsTab: 'Results-1'}});
+    extension.beforeRun(context, {appscript: {resultsTab: 'Results-1'}});
     expect(context.test.webpagetest).toEqual(undefined);
   });
 });
 
-describe('GoogleSheetsExtension afterRun', () => {
+describe('AppScriptExtension afterRun', () => {
   it('sets default values for specific properties if no values assigned', () => {
     let context = {
       test: {
@@ -137,12 +137,12 @@ describe('GoogleSheetsExtension afterRun', () => {
         status: Status.SUBMITTED,
       },
     };
-    extension.afterRun(context, {googlesheets: {resultsTab: 'Results-1'}});
+    extension.afterRun(context, {appscript: {resultsTab: 'Results-1'}});
     expect(context.result.selected).toEqual(false);
   });
 });
 
-describe('GoogleSheetsExtension afterAllRuns', () => {
+describe('AppScriptExtension afterAllRuns', () => {
   beforeEach(() => {
     connector.updateList = jest.fn();
   });
@@ -157,8 +157,8 @@ describe('GoogleSheetsExtension afterAllRuns', () => {
       }],
     };
 
-    GoogleSheetsHelper.createTimeBasedTrigger = () => {return 'trigger-1';};
-    extension.afterAllRuns(context, {googlesheets: {resultsTab: 'Results-1'}});
+    AppScriptHelper.createTimeBasedTrigger = () => {return 'trigger-1';};
+    extension.afterAllRuns(context, {appscript: {resultsTab: 'Results-1'}});
     expect(systemVars[SystemVars.RETRIEVE_TRIGGER_ID]).toEqual('trigger-1');
   });
 
@@ -172,14 +172,14 @@ describe('GoogleSheetsExtension afterAllRuns', () => {
       }],
     };
 
-    GoogleSheetsHelper.createTimeBasedTrigger = jest.fn();
-    extension.afterAllRuns(context, {googlesheets: {resultsTab: 'Results-1'}});
-    expect(GoogleSheetsHelper.createTimeBasedTrigger).not.toHaveBeenCalled();
+    AppScriptHelper.createTimeBasedTrigger = jest.fn();
+    extension.afterAllRuns(context, {appscript: {resultsTab: 'Results-1'}});
+    expect(AppScriptHelper.createTimeBasedTrigger).not.toHaveBeenCalled();
   });
 
 });
 
-describe('GoogleSheetsExtension afterAllRetrieves', () => {
+describe('AppScriptExtension afterAllRetrieves', () => {
   beforeEach(() => {
     connector.updateList = jest.fn();
   });
@@ -199,8 +199,8 @@ describe('GoogleSheetsExtension afterAllRetrieves', () => {
       'Results-1': fakeResults,
       'LatestResults-1': [],
     };
-    extension.afterAllRetrieves({results: fakeResults}, {googlesheets: {resultsTab: 'Results-1'}});
-    expect(GoogleSheetsHelper.deleteTriggerByFunction).not.toHaveBeenCalled();
+    extension.afterAllRetrieves({results: fakeResults}, {appscript: {resultsTab: 'Results-1'}});
+    expect(AppScriptHelper.deleteTriggerByFunction).not.toHaveBeenCalled();
 
     fakeResults = [{
       id: 'id-1234',
@@ -215,8 +215,8 @@ describe('GoogleSheetsExtension afterAllRetrieves', () => {
       'Results-1': fakeResults,
       'LatestResults-1': [],
     };
-    extension.afterAllRetrieves({results: fakeResults}, {googlesheets: {resultsTab: 'Results-1'}});
-    expect(GoogleSheetsHelper.deleteTriggerByFunction).toHaveBeenCalledWith(
+    extension.afterAllRetrieves({results: fakeResults}, {appscript: {resultsTab: 'Results-1'}});
+    expect(AppScriptHelper.deleteTriggerByFunction).toHaveBeenCalledWith(
         RETRIEVE_PENDING_RESULTS_FUNC);
   });
 

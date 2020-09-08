@@ -51,7 +51,7 @@ class AutoWebPerf {
    * - awpConfig.helper {string} Helper name. E.g. 'node'.
    *
    * Sub-configs:
-   * - Connector config. E.g. `awpConfig.googlesheets` is the config object for
+   * - Connector config. E.g. `awpConfig.appscript` is the config object for
    *     GoogleSheets connector and extension module.
    * - Extension config. E.g. `awpConfig.budget` is the config object for Budget
    *     extension module.
@@ -77,9 +77,9 @@ class AutoWebPerf {
         this.apiHandler = new NodeApiHandler();
         break;
 
-      case 'googlesheets':
-        let {GoogleSheetsApiHandler} = require('./helpers/googlesheets-helper');
-        this.apiHandler = new GoogleSheetsApiHandler();
+      case 'appscript':
+        let {AppScriptApiHandler} = require('./helpers/appscript-helper');
+        this.apiHandler = new AppScriptApiHandler();
         break;
 
       case 'fake':
@@ -104,8 +104,8 @@ class AutoWebPerf {
         ConnectorClass = require('./connectors/json-connector');
         break;
 
-      case 'googlesheets':
-        ConnectorClass = require('./connectors/googlesheets-connector');
+      case 'appscript':
+        ConnectorClass = require('./connectors/appscript-connector');
         break;
 
       case 'fake':
@@ -144,8 +144,8 @@ class AutoWebPerf {
             ExtensionClass = require('./extensions/budgets');
             break;
 
-          case 'googlesheets':
-            ExtensionClass = require('./extensions/googlesheets-extension');
+          case 'appscript':
+            ExtensionClass = require('./extensions/appscript-extension');
             break;
 
           default:

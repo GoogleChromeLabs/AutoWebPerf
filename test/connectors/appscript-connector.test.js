@@ -16,11 +16,11 @@
 
 'use strict';
 
-const GoogleSheetsConnector = require('../../src/connectors/googlesheets-connector');
+const AppScriptConnector = require('../../src/connectors/appscript-connector');
 const assert = require('../../src/utils/assert');
 const setObject = require('../../src/utils/set-object');
 const Status = require('../../src/common/status');
-const {initFakeSheet, fakeSheetData} = require('./googlesheets-test-utils');
+const {initFakeSheet, fakeSheetData} = require('./appscript-test-utils');
 
 let fakeSheets = {
   'EnvVars': initFakeSheet(fakeSheetData.fakeEnvVarsSheetData),
@@ -134,7 +134,7 @@ let fakeTests = [
         location: 'TestLocation',
       }
     },
-    googlesheets: {
+    appscript: {
       rowIndex: 4,
     }
   },
@@ -152,7 +152,7 @@ let fakeTests = [
         location: 'TestLocation',
       }
     },
-    googlesheets: {
+    appscript: {
       rowIndex: 5,
     }
   },
@@ -170,7 +170,7 @@ let fakeTests = [
         location: 'TestLocation',
       }
     },
-    googlesheets: {
+    appscript: {
       rowIndex: 6,
     }
   }
@@ -188,7 +188,7 @@ let fakeResults = [
         SpeedIndex: 500,
       },
     },
-    googlesheets: {
+    appscript: {
       rowIndex: 4,
     }
   },
@@ -203,7 +203,7 @@ let fakeResults = [
         SpeedIndex: 800,
       },
     },
-    googlesheets: {
+    appscript: {
       rowIndex: 5,
     }
   },
@@ -213,11 +213,11 @@ let connector;
 
 /* eslint-env jest */
 
-describe('GoogleSheetsConnector EnvVars tab', () => {
+describe('AppScriptConnector EnvVars tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     fakeSheets['EnvVars'] = initFakeSheet(fakeSheetData.fakeEnvVarsSheetData);
-    connector = new GoogleSheetsConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
   });
 
   it('returns list of envVars values from the EnvVars sheet', async () => {
@@ -241,12 +241,12 @@ describe('GoogleSheetsConnector EnvVars tab', () => {
   });
 });
 
-describe('GoogleSheetsConnector Tests tab', () => {
+describe('AppScriptConnector Tests tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     fakeSheets['Tests-1'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
     fakeSheets['Tests-2'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
-    connector = new GoogleSheetsConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
   });
 
   it('returns all tests from the Tests sheet', async () => {
@@ -301,7 +301,7 @@ describe('GoogleSheetsConnector Tests tab', () => {
 
   it('filters tests based on rowIndex', async () => {
     let tests = connector.getTestList({
-      filters: ['googlesheets.rowIndex===6']
+      filters: ['appscript.rowIndex===6']
     });
 
     expect(tests).toEqual([
@@ -310,10 +310,10 @@ describe('GoogleSheetsConnector Tests tab', () => {
   });
 });
 
-describe('GoogleSheetsConnector Results tab', () => {
+describe('AppScriptConnector Results tab', () => {
   beforeEach(() => {
     fakeSheets['Results-1'] = initFakeSheet(fakeSheetData.fakeResultsSheetData);
-    connector = new GoogleSheetsConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
   });
 
   it('returns list of results from the Results sheet', async () => {
@@ -376,7 +376,7 @@ describe('GoogleSheetsConnector Results tab', () => {
           SpeedIndex: 500,
         },
       },
-      googlesheets: {
+      appscript: {
         rowIndex: 6,
       }
     };
@@ -400,7 +400,7 @@ describe('GoogleSheetsConnector Results tab', () => {
           SpeedIndex: 800,
         },
       },
-      googlesheets: {
+      appscript: {
         rowIndex: 5,
       }
     };
@@ -449,7 +449,7 @@ describe('GoogleSheetsConnector Results tab', () => {
     // Append results and spread cruxbigquery.metrics into multiple rows if it's
     // an array.
     connector.appendResultList(results, {
-      googlesheets: {
+      appscript: {
         spreadArrayProperty: 'cruxbigquery.metrics',
       },
     });
@@ -506,7 +506,7 @@ describe('GoogleSheetsConnector Results tab', () => {
     // Append results and spread cruxbigquery.metrics into multiple rows if it's
     // an array.
     connector.appendResultList(results, {
-      googlesheets: {
+      appscript: {
         spreadArrayProperty: 'cruxbigquery.metrics',
       },
     });
@@ -545,7 +545,7 @@ describe('GoogleSheetsConnector Results tab', () => {
     // Append results and spread cruxbigquery.metrics into multiple rows if it's
     // an array.
     connector.appendResultList(results, {
-      googlesheets: {
+      appscript: {
         spreadArrayProperty: 'cruxbigquery.metrics',
       },
     });
@@ -560,11 +560,11 @@ describe('GoogleSheetsConnector Results tab', () => {
   });
 });
 
-describe('GoogleSheetsConnector System tab', () => {
+describe('AppScriptConnector System tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     fakeSheets['System'] = initFakeSheet(fakeSheetData.fakeSystemSheetData);
-    connector = new GoogleSheetsConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
   });
 
   it('returns a specific system variable from the System sheet', async () => {
@@ -579,11 +579,11 @@ describe('GoogleSheetsConnector System tab', () => {
   });
 });
 
-describe('GoogleSheetsConnector Locations tab', () => {
+describe('AppScriptConnector Locations tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     fakeSheets['Locations'] = initFakeSheet(fakeSheetData.fakeLocationsSheetData);
-    connector = new GoogleSheetsConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
   });
 
   it('updates locations to LocationsTab', async () => {
@@ -627,14 +627,14 @@ describe('GoogleSheetsConnector Locations tab', () => {
   });
 });
 
-describe('GoogleSheetsConnector additional functions', () => {
+describe('AppScriptConnector additional functions', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     fakeSheets['EnvVars'] = initFakeSheet(fakeSheetData.fakeEnvVarsSheetData);
     fakeSheets['System'] = initFakeSheet(fakeSheetData.fakeSystemSheetData);
     fakeSheets['Tests-1'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
     fakeSheets['Results-1'] = initFakeSheet(fakeSheetData.fakeResultsSheetData);
-    connector = new GoogleSheetsConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
   });
 
   it('returns property lookup values for sheet with DataAxis.ROW', async () => {
