@@ -77,6 +77,9 @@ class PSIGatherer extends Gatherer {
       'lighthouse.Manifest': 'lighthouseResult.audits["installable-manifest"].score',
       'lighthouse.ServiceWorker': 'lighthouseResult.audits["service-worker"].score',
       'lighthouse.Offline': 'lighthouseResult.audits["works-offline"].score',
+      'lighthouse.Accessibility': 'lighthouseResult.categories.accessibility.score',
+      'lighthouse.SEO': 'lighthouseResult.categories.seo.score',
+      'lighthouse.BestPractices': 'lighthouseResult.categories["best-practices"].score',
     };
 
     let bytesToKb = (x) => Math.round(x / 1000);
@@ -104,7 +107,7 @@ class PSIGatherer extends Gatherer {
     let params = {
       'url': encodeURIComponent(test.url),
       'key': this.apiKey || '',
-      'category': ['performance', 'pwa'],
+      'category': ['performance', 'pwa', 'accessibility', 'seo', 'best-practices'],
       'locale': settings.locale || 'en-us',
       'strategy': settings.strategy || 'mobile',
     }

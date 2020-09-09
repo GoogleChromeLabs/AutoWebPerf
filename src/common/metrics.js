@@ -68,6 +68,9 @@ const MetricKeys = [
   'Manifest',
   'ServiceWorker',
   'Offline',
+  'Accessibility',
+  'BestPractices',
+  'SEO',
 
   // tools
   'crux',
