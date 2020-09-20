@@ -1,17 +1,11 @@
 {
-  connector: 'JSON',
-  helper: 'Node',
-  dataSources: ['webpagetest', 'psi'],
-  extensions: [
-    'budgets',
-  ],
-  json: { // Config for JSON connector.
-    tests: argv['tests'],
-    results: argv['results'],
+  "connector": "json",
+  "helper": "node",
+  "extensions": ["budgets"],
+  "json": {
+    "testsPath": "examples/tests.json",
+    "resultsPath": "tmp/results.json"
   },
-  budgets: {
-    dataSource: 'webpagetest',
-  },
-  verbose: true,
-  debug: false,
+  "verbose": true,
+  "debug": false
 }

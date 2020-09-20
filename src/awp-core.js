@@ -51,7 +51,7 @@ class AutoWebPerf {
    * - awpConfig.helper {string} Helper name. E.g. 'node'.
    *
    * Sub-configs:
-   * - Connector config. E.g. `awpConfig.googlesheets` is the config object for
+   * - Connector config. E.g. `awpConfig.appscript` is the config object for
    *     GoogleSheets connector and extension module.
    * - Extension config. E.g. `awpConfig.budget` is the config object for Budget
    *     extension module.
@@ -62,13 +62,15 @@ class AutoWebPerf {
     this.config = {};
 
     assert(awpConfig, 'awpConfig is missing');
-    assert(awpConfig.dataSources, 'awpConfig.dataSources is missing.');
     assert(awpConfig.connector, 'awpConfig.connector is missing.');
     assert(awpConfig.helper, 'awpConfig.helper is missing.');
     this.awpConfig = awpConfig;
 
-    // Example data sources: ['webpagetest', 'psi']
-    this.dataSources = awpConfig.dataSources;
+    awpConfig.envVars = awpConfig.envVars || {};
+
+    // Selected gatherer names, e.g. ['webpagetest', 'psi']
+    this.gathererNames = awpConfig.gatherers ||
+        ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'];
 
     this.log(`Use helper: ${awpConfig.helper}`);
     switch (awpConfig.helper.toLowerCase()) {
@@ -77,9 +79,9 @@ class AutoWebPerf {
         this.apiHandler = new NodeApiHandler();
         break;
 
-      case 'googlesheets':
-        let {GoogleSheetsApiHandler} = require('./helpers/googlesheets-helper');
-        this.apiHandler = new GoogleSheetsApiHandler();
+      case 'appscript':
+        let {AppScriptApiHandler} = require('./helpers/appscript-helper');
+        this.apiHandler = new AppScriptApiHandler();
         break;
 
       case 'fake':
@@ -92,38 +94,38 @@ class AutoWebPerf {
         break;
     }
 
-    this.log(`Use connector: ${awpConfig.connector}`);
-    let ConnectorClass, connectorName = awpConfig.connector.toLowerCase();
-    let connectorConfig = awpConfig[connectorName];
+    this.log(`Use connector: ${JSON.stringify(awpConfig.connector)}`);
 
-    // The API Keys used by Gatherers are expected to be accessed through
-    // Connector, similar to environment variables. E.g. with GoogleSheets,
-    // API Keys are stored in Config tab for users to update easily.
-    switch (connectorName) {
-      case 'json':
-        ConnectorClass = require('./connectors/json-connector');
-        break;
+    // Create connector instance(s).
+    if (typeof awpConfig.connector === 'string') {
+      this.connector = this.getConnector(awpConfig.connector);
 
-      case 'googlesheets':
-        ConnectorClass = require('./connectors/googlesheets-connector');
-        break;
+    } else if (awpConfig.connector.tests && awpConfig.connector.results) {
+      this.connector = this.getConnector(awpConfig.connector.tests);
 
-      case 'fake':
-        // Do nothing. For testing purpose.
-        break;
+      // Override results-related methods.
+      let resultsConnector = this.getConnector(awpConfig.connector.results);
+      this.connector.getResultList = resultsConnector.getResultList;
+      this.connector.appendResultList = resultsConnector.appendResultList;
+      this.connector.updateResultList = resultsConnector.updateResultList;
 
-      default:
-        throw new Error(
-            `Connector ${awpConfig.connector} is not supported.`);
-        break;
+    } else {
+      throw new Error(`'awpConfig.connector' is not specified.`);
     }
 
-    // Get environment varaibles through the Connector.
+    // Note that API Keys used by Gatherers are expected to be loaded as envVars
+    // via either connector or awpConfig.
     this.envVars = {};
-    if (ConnectorClass) {
-      this.connector = new ConnectorClass(connectorConfig, this.apiHandler);
-      this.envVars = this.connector.getEnvVars();
+    if (this.connector) {
+      this.envVars = this.connector.getEnvVars() || {};
     }
+
+    // Overrides environment varaibles with awpConfig.envVars.
+    this.log(`Use envVars:`);
+    Object.keys(this.awpConfig.envVars).forEach(key => {
+      this.envVars[key] = this.awpConfig.envVars[key];
+      this.log(`\t${key} = ${this.envVars[key]}`);
+    });
 
     this.log(`Use extensions: ${awpConfig.extensions}`);
 
@@ -141,11 +143,11 @@ class AutoWebPerf {
 
         switch (extension) {
           case 'budgets':
-            ExtensionClass = require('./extensions/budgets');
+            ExtensionClass = require('./extensions/budgets-extension');
             break;
 
-          case 'googlesheets':
-            ExtensionClass = require('./extensions/googlesheets-extension');
+          case 'appscript':
+            ExtensionClass = require('./extensions/appscript-extension');
             break;
 
           default:
@@ -166,6 +168,38 @@ class AutoWebPerf {
     // update the data by calling connector.updateTestList or updateResultList.
     // When batchUpdateBuffer is 0, it will write back after all iteration.
     this.batchUpdateBuffer = awpConfig.batchUpdateBuffer || 0;
+  }
+
+  /**
+   * Return the singleton connector instance with given name.
+   * @param {string} name Connector name. E.g. 'json'.
+   * @return {object} Connector instance.
+   */
+  getConnector(name) {
+    let ConnectorClass = null, connectorName = name.toLowerCase();
+    let connectorConfig = this.awpConfig[connectorName];
+
+    switch (connectorName) {
+      case 'json':
+        ConnectorClass = require('./connectors/json-connector');
+        break;
+
+      case 'appscript':
+        ConnectorClass = require('./connectors/appscript-connector');
+        break;
+
+      case 'fake':
+        // Load dummy connector for testing purpose.
+        ConnectorClass = require('./connectors/connector');
+        break;
+
+      default:
+        throw new Error(
+            `Connector "${name}" is not supported.`);
+        break;
+    }
+
+    return new ConnectorClass(connectorConfig, this.apiHandler);
   }
 
   /**
@@ -230,31 +264,43 @@ class AutoWebPerf {
   async run(options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
-    let extResponse, errors = [];
+    let extResponse, overallErrors = [];
 
     let tests = this.connector.getTestList(options);
     this.logDebug(`AutoWebPerf::run with ${tests.length} tests`);
 
     // Before all runs.
     extResponse = this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
-    errors = errors.concat(extResponse.errors);
+    overallErrors = overallErrors.concat(extResponse.errors);
 
     // Run tests.
     let newResults = await this.runTests(tests, options);
+
+    // Collect all errors.
+    newResults.forEach(result => {
+      if (result.errors && result.errors.length > 0) {
+        overallErrors = overallErrors.concat(result.errors);
+      }
+    });
 
     // After all runs.
     extResponse = this.runExtensions(extensions, 'afterAllRuns', {
       tests: tests,
       results: newResults,
     }, options);
-    errors = errors.concat(extResponse.errors);
+    overallErrors = overallErrors.concat(extResponse.errors);
 
-    this.logDebug(`AutoWebPerf::run completed with ${tests.length} tests`);
+    if (overallErrors.length > 0) {
+      console.log(`Run completed for ${tests.length} tests with errors:`);
+      console.log(overallErrors);
+    } else {
+      console.log(`Run completed for ${tests.length} tests.`);
+    }
 
     return {
       tests: tests,
       results: newResults,
-      errors: errors,
+      errors: overallErrors,
     };
   }
 
@@ -350,8 +396,7 @@ class AutoWebPerf {
     // Update Tests.
     this.connector.updateTestList(tests, options);
 
-    this.logDebug(`AutoWebPerf::recurring completed with ${tests.length} ` +
-        `tests`);
+    console.log(`Recurring completed with ${tests.length} ` + `tests`);
 
     return {
       tests: tests,
@@ -415,7 +460,7 @@ class AutoWebPerf {
       newResult.modifiedTimestamp = Date.now();
 
       // Interate through all gatherers.
-      this.dataSources.forEach(dataSource => {
+      this.gathererNames.forEach(dataSource => {
         if (!result[dataSource]) return;
         if (result[dataSource].status === Status.RETRIEVED) return;
 
@@ -466,7 +511,12 @@ class AutoWebPerf {
         {results: results}, options);
     overallErrors = overallErrors.concat(extResponse.errors);
 
-    this.logDebug(`AutoWebPerf::retrieved ${results.length} results.`);
+    if (overallErrors.length > 0) {
+      console.log(`Retrieved ${results.length} results with errors:`);
+      console.log(overallErrors);
+    } else {
+      console.log(`Retrieved ${results.length} results.`);
+    }
 
     return {
       results: results,
@@ -490,7 +540,6 @@ class AutoWebPerf {
   async runTests(tests, options) {
     options = options || {};
     let extensions = options.extensions || Object.keys(this.extensions);
-    let overrideResults = options.overrideResults;
     let resultsToUpdate = [], allNewResults = [];
     let extResponse;
 
@@ -511,7 +560,7 @@ class AutoWebPerf {
       });
 
       // Run all gatherers.
-      for(const dataSource of this.dataSources) {
+      for(const dataSource of this.gathererNames) {
         await this.runGathererInBatch(tests, dataSource, options).then(responseList => {
           if(responseList)
             for (let i = 0; i<testResultPairs.length; i++) {
@@ -525,7 +574,7 @@ class AutoWebPerf {
         let result = pair.result;
 
         // Update the overall status.
-        let statuses = this.dataSources.map(dataSource => {
+        let statuses = this.gathererNames.map(dataSource => {
           return result[dataSource] ?
               result[dataSource].status : Status.RETRIEVED;
         });
@@ -558,7 +607,7 @@ class AutoWebPerf {
         let newResult = this.createNewResult(test, options);
 
         // Collect metrics from all data sources.
-        this.dataSources.forEach(dataSource =>  {
+        this.gathererNames.forEach(dataSource =>  {
           if (!test[dataSource]) return;
 
           let response = this.runGatherer(test, dataSource, options);
@@ -800,15 +849,15 @@ class AutoWebPerf {
     let errors = [];
 
     // Collect errors from all gatherers.
-    this.dataSources.forEach(dataSource => {
-      if (!result[dataSource]) return;
+    this.gathererNames.forEach(gathererName => {
+      if (!result[gathererName]) return;
 
       // Add data source prefix to all error messages.
-      (result[dataSource].errors || []).forEach(error => {
+      (result[gathererName].errors || []).forEach(error => {
         try {
-          errors.push(`[${dataSource}] ` + (error.message || error));
+          errors.push(`[${gathererName}] ` + (error.message || error));
         } catch (e) {
-          errors.push(`[${dataSource}] ` + error);
+          errors.push(`[${gathererName}] ` + error);
         }
       });
     });

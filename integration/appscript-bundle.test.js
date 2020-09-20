@@ -17,9 +17,9 @@
 'use strict';
 
 const fs = require('fs');
-const AutoWebPerf = require('../build/googlesheets-bundle');
+const AutoWebPerf = require('../build/appscript-bundle');
 const {initFakeSheet, fakeSheetData, SpreadsheetApp, Session, Utilities,
-    ScriptApp, Logger, Browser, UrlFetchApp} = require('../test/connectors/googlesheets-test-utils');
+    ScriptApp, Logger, Browser, UrlFetchApp} = require('../test/connectors/appscript-test-utils');
 const {Frequency, FrequencyInMinutes} = require('../src/common/frequency');
 
 let awp = null;
@@ -42,7 +42,7 @@ global.Logger = Logger;
 global.Browser = Browser;
 global.UrlFetchApp = UrlFetchApp;
 
-describe('AWP bundle for GoogleSheets', () => {
+describe('AWP bundle for AppScript', () => {
   beforeEach(() => {
     fakeSheets = {
       'EnvVars': initFakeSheet(fakeSheetData.fakeEnvVarsSheetData),
@@ -55,15 +55,15 @@ describe('AWP bundle for GoogleSheets', () => {
     };
 
     awp = new AutoWebPerf({
-      connector: 'GoogleSheets',
-      helper: 'GoogleSheets',
-      dataSources: ['webpagetest', 'psi', 'cruxbigquery'],
+      connector: 'AppScript',
+      helper: 'AppScript',
+      gatherers: ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'],
       extensions: [
         'budgets',
-        'googlesheets',
+        'appscript',
       ],
       // specific configs below
-      googlesheets: {
+      appscript: {
         defaultTestsTab: 'Tests-1',
         defaultResultsTab: 'Results-1',
         tabs: [{
@@ -140,7 +140,7 @@ describe('AWP bundle for GoogleSheets', () => {
     expect(awp).not.toBe(null);
   });
 
-  it('initializes AWP for GoogleSheets via connector init()', () => {
+  it('initializes AWP for AppScript via connector init()', () => {
     awp.connector.apiHelper.fetch = () => {
       return {
         statusCode: 200,
@@ -184,7 +184,7 @@ describe('AWP bundle for GoogleSheets', () => {
     // Running tests and writing to Results-2 tab.
     await awp.run({
       filters: ['selected'],
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-2',
       },
@@ -196,7 +196,7 @@ describe('AWP bundle for GoogleSheets', () => {
     // Running tests and writing to Results-1 tab.
     await awp.run({
       filters: ['selected'],
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
       },
@@ -228,7 +228,7 @@ describe('AWP bundle for GoogleSheets', () => {
     // Running tests and writing to Results-2 tab.
     await awp.run({
       filters: ['selected'],
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-2',
       },
@@ -241,7 +241,7 @@ describe('AWP bundle for GoogleSheets', () => {
     // Running tests and writing to Results-1 tab.
     await awp.run({
       filters: ['selected'],
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
       },
@@ -282,7 +282,7 @@ describe('AWP bundle for GoogleSheets', () => {
     await awp.run({
       filters: ['selected'],
       runByBatch: true, // Mandatory for Cruxbigquery gatherer.
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
         spreadArrayProperty: 'cruxbigquery.metrics',
@@ -322,7 +322,7 @@ describe('AWP bundle for GoogleSheets', () => {
     await awp.run({
       filters: ['selected'],
       runByBatch: true, // Mandatory for CrUXBigQuery gatherer.
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
         spreadArrayProperty: 'something.else',
@@ -340,7 +340,7 @@ describe('AWP bundle for GoogleSheets', () => {
     // Running recurring tests with activateOnly mode.
     await awp.recurring({
       activateOnly: true,
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
       },
@@ -377,9 +377,9 @@ describe('AWP bundle for GoogleSheets', () => {
 
     // Running recurring tests with activateOnly mode.
     await awp.recurring({
-      filters: ['googlesheets.rowIndex===4'],
+      filters: ['appscript.rowIndex===4'],
       activateOnly: true,
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-2',
         resultsTab: 'Results-2',
       },
@@ -413,7 +413,7 @@ describe('AWP bundle for GoogleSheets', () => {
 
     // Running tests and writing to Results-2 tab.
     await awp.recurring({
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
       },
@@ -454,7 +454,7 @@ describe('AWP bundle for GoogleSheets', () => {
 
     await awp.retrieve({
       filters: ['selected'],
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
       },
@@ -485,7 +485,7 @@ describe('AWP bundle for GoogleSheets', () => {
 
     await awp.retrieve({
       filters: ['selected'],
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
       },
@@ -525,7 +525,7 @@ describe('AWP bundle for GoogleSheets', () => {
 
     await awp.retrieve({
       filters: ['status!==""', 'status!=="Retrieved"', 'status!=="Error"'],
-      googlesheets: {
+      appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
       },

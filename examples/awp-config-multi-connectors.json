@@ -1,0 +1,19 @@
+{
+  "connector": {
+    "tests": "json",
+    "results": "bigquery"
+  },
+  "helper": "node",
+  "extensions": ["budgets"],
+  "json": {
+    "testsPath": "examples/tests.json",
+    "resultsPath": "tmp/results.json"
+  },
+  "bigquery": {
+    "testsPath": "path/to/table",
+    "resultsPath": "path/to/table",
+    "overrideResults": true
+  },
+  "verbose": true,
+  "debug": false
+}

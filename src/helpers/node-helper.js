@@ -16,6 +16,8 @@
 
 const request = require('sync-request');
 const ApiHandler = require('./api-handler');
+const fse = require('fs-extra');
+const path = require('path');
 
 class NodeApiHandler extends ApiHandler {
   fetch(url) {
@@ -43,6 +45,13 @@ class NodeApiHandler extends ApiHandler {
   }
 }
 
+NodeHelper = {
+  getJsonFromFile: (filepath) => {
+    return JSON.parse(fse.readFileSync(path.resolve(filepath)));
+  }
+}
+
 module.exports = {
   NodeApiHandler,
+  NodeHelper,
 };

@@ -184,7 +184,7 @@ describe('AutoWebPerf with fake modules', () => {
     awp = new AutoWebPerf({
       connector: 'fake',
       helper: 'fake',
-      dataSources: ['fake'],
+      gatherers: ['fake'],
     });
     awp.connector = new FakeConnector();
     awp.apiHandler = fakeApiHandler;
@@ -417,7 +417,7 @@ describe('AutoWebPerf with fake modules', () => {
       psiApiKey: 'TEST_APIKEY',
       gcpProjectId: 'TEST_PROJECTID'
     };
-    awp.dataSources = ['fake1', 'fake2', 'fake3'];
+    awp.gathererNames = ['fake1', 'fake2', 'fake3'];
 
     // When all gatherers return submitted.
     awp.connector.tests = generateFakeTests(1);
@@ -514,5 +514,38 @@ describe('AutoWebPerf with fake modules', () => {
     };
     errors = awp.getOverallErrors(result);
     expect(errors.length).toBe(0);
+  });
+});
+
+describe('AutoWebPerf with multiple connectors', () => {
+  let awp;
+
+  beforeEach(() => {
+    awp = new AutoWebPerf({
+      connector: {
+        tests: 'fake',
+        results: 'fake'
+      },
+      helper: 'fake',
+      gatherers: ['fake'],
+    });
+    awp.apiHandler = fakeApiHandler;
+    awp.gatherers = {
+      fake: new FakeGatherer(),
+    }
+    awp.extensions = {
+      fake: new FakeExtension(),
+    };
+
+    // Mock functions
+    ['beforeRun', 'afterRun', 'beforeRetrieve', 'afterRetrieve',
+        'beforeAllRuns', 'afterAllRuns', 'beforeAllRetrieves',
+        'afterAllRetrieves'].forEach(funcName => {
+          awp.extensions.fake[funcName] = jest.fn();
+        });
+  });
+
+  it('initializes normally.', async () => {
+    expect(awp).not.toBe(null);
   });
 });

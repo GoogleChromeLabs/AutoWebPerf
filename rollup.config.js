@@ -6,9 +6,9 @@ import banner from 'rollup-plugin-banner';
 import npmPackageJson from './package.json';
 
 export default [{
-  input: 'src/awp-core.js',
+  input: 'platforms/appscript.js',
   output: {
-    file: 'build/googlesheets-bundle.js',
+    file: 'build/appscript-bundle.js',
     format: 'cjs',
     esModule: false,
   },
@@ -20,6 +20,7 @@ export default [{
         './connectors/json-connector',
         './helpers/node-helper',
         '@google-cloud/bigquery',
+        '../../test/fakedata/psi-response.json', //FIXME: use exclude.
       ],
     }),
     babel({

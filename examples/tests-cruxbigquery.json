@@ -1,7 +1,5 @@
 {
   "envVars": {
-    "webPageTestApiKey": "TEST_APIKEY",
-    "psiApiKey": "TEST_APIKEY",
     "gcpKeyFilePath": "tmp/gcp-service-account.json",
     "gcpProjectId": "YOUR_GCP_PROJECT_ID"
   },

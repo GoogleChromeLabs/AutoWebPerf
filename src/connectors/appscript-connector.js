@@ -22,7 +22,7 @@ const Status = require('../common/status');
 const setObject = require('../utils/set-object');
 const transpose = require('../utils/transpose');
 const Connector = require('./connector');
-const {GoogleSheetsHelper, SystemVars, TabRole} = require('../helpers/googlesheets-helper');
+const {AppScriptHelper, SystemVars, TabRole} = require('../helpers/appscript-helper');
 
 const DataAxis = {
   ROW: 'row',
@@ -32,10 +32,10 @@ const DataAxis = {
 /**
  * the connector handles read and write actions with GoogleSheets as a data
  * store. This connector works together with
- * `src/extensions/googlesheets-extensions.js` and
- * `src/helpers/googlesheets-helper.js`.
+ * `src/extensions/appscript-extensions.js` and
+ * `src/helpers/appscript-helper.js`.
  */
-class GoogleSheetsConnector extends Connector {
+class AppScriptConnector extends Connector {
   /**
    * constructor - Initilize the instance  with given config object and
    * singleton ApiHandler instance. The config object is a sub-property from
@@ -215,7 +215,7 @@ class GoogleSheetsConnector extends Connector {
 
       // Add metadata for GoogleSheets.
       if (options.appendRowIndex) {
-        newItem.googlesheets = {
+        newItem.appscript = {
           rowIndex: i + tabConfig.skipRows + 1,
         };
       }
@@ -234,10 +234,10 @@ class GoogleSheetsConnector extends Connector {
   getTestList(options) {
     options = options || {};
     options.appendRowIndex = true;
-    let googlesheets = options.googlesheets || {};
+    let appscript = options.appscript || {};
 
     // If tabId is not specified, use the default Tests tabId.
-    let tests = this.getList(googlesheets.testsTab || this.defaultTestsTab, options);
+    let tests = this.getList(appscript.testsTab || this.defaultTestsTab, options);
     tests = patternFilter(tests, options.filters);
     return tests;
   }
@@ -250,13 +250,13 @@ class GoogleSheetsConnector extends Connector {
    */
   updateTestList(newTests, options) {
     options = options || {};
-    let googlesheets = options.googlesheets || {};
+    let appscript = options.appscript || {};
 
     // If tabId is not specified, use the default Tests tabId.
-    this.updateList(googlesheets.testsTab || this.defaultTestsTab, newTests,
+    this.updateList(appscript.testsTab || this.defaultTestsTab, newTests,
         (test, rowIndex) => {
-      // test.googlesheets.rowIndex in each Test is added in getList().
-      return test.googlesheets.rowIndex;
+      // test.appscript.rowIndex in each Test is added in getList().
+      return test.appscript.rowIndex;
     } /* rowIndexFunc */);
   }
 
@@ -324,10 +324,10 @@ class GoogleSheetsConnector extends Connector {
   getResultList(options) {
     options = options || {};
     options.appendRowIndex = true;
-    let googlesheets = options.googlesheets || {};
+    let appscript = options.appscript || {};
 
     // If tabId is not specified, use the default Results tabId.
-    let tabId = googlesheets.resultsTab || this.defaultResultsTab;
+    let tabId = appscript.resultsTab || this.defaultResultsTab;
     let results = this.getList(tabId, options);
     results = patternFilter(results, options.filters);
 
@@ -339,24 +339,24 @@ class GoogleSheetsConnector extends Connector {
    * @param  {Array<object>} newResults Array of new Results
    *
    * Available options:
-   * - options.googlesheets.spreadArrayProperty {string}: To specify a property
+   * - options.appscript.spreadArrayProperty {string}: To specify a property
    *     key for spreading an array of metrics into multiple rows of single
    *     metric object.
    */
   appendResultList(newResults, options) {
     options = options || {};
-    let googlesheets = options.googlesheets || {};
+    let appscript = options.appscript || {};
     let resultsToUpdate = [];
 
     // If tabId is not specified, use the default Results tabId.
-    let tabId = googlesheets.resultsTab || this.defaultResultsTab;
+    let tabId = appscript.resultsTab || this.defaultResultsTab;
     let tabConfig = this.tabConfigs[tabId];
 
     // Spread arrays into multple rows if specific properties are arrays.
-    if (googlesheets.spreadArrayProperty) {
+    if (appscript.spreadArrayProperty) {
       newResults.forEach(result => {
         try {
-          let spreadArray = eval(`result.${googlesheets.spreadArrayProperty}`);
+          let spreadArray = eval(`result.${appscript.spreadArrayProperty}`);
 
           // Break a result into multiple Duplicate rows, and keep the first row
           // as the original status.
@@ -364,7 +364,7 @@ class GoogleSheetsConnector extends Connector {
             for (let i = 0; i <spreadArray.length; i++) {
               let newResult = JSON.parse(JSON.stringify(result));
               if (i > 0) newResult.status = Status.DUPLICATE;
-              eval(`newResult.${googlesheets.spreadArrayProperty} = spreadArray[i]`);
+              eval(`newResult.${appscript.spreadArrayProperty} = spreadArray[i]`);
               resultsToUpdate.push(newResult);
             }
           } else {
@@ -394,15 +394,15 @@ class GoogleSheetsConnector extends Connector {
    */
   updateResultList(newResults, options) {
     options = options || {};
-    let googlesheets = options.googlesheets || {};
+    let appscript = options.appscript || {};
 
     // If tabId is not specified, use the default Results tabId.
-    let tabId = googlesheets.resultsTab || this.defaultResultsTab;
+    let tabId = appscript.resultsTab || this.defaultResultsTab;
     let tabConfig = this.tabConfigs[tabId];
     let rowIndex = tabConfig.skipRows + 1;
 
     this.updateList(tabId, newResults, (result, rowIndex) => {
-      return result.googlesheets.rowIndex;
+      return result.appscript.rowIndex;
     } /* rowIndexFunc */);
   }
 
@@ -460,14 +460,14 @@ class GoogleSheetsConnector extends Connector {
    * initTriggers - Create recurring and onEdit triggers if not exist.
    */
   initTriggers() {
-    GoogleSheetsHelper.deleteAllTriggers();
+    AppScriptHelper.deleteAllTriggers();
     Object.keys(SystemVars).forEach(key => {
       this.setSystemVar(key, '');
     });
 
     // Create recurring trigger.
     let triggerId;
-    triggerId = GoogleSheetsHelper.createTimeBasedTrigger(
+    triggerId = AppScriptHelper.createTimeBasedTrigger(
         'submitRecurringTests', 10 /* minutes */);
     this.setSystemVar(SystemVars.RECURRING_TRIGGER_ID, triggerId);
   }
@@ -685,7 +685,7 @@ class GoogleSheetsConnector extends Connector {
    * initUserTimeZone - Set the user timezone to System tab.
    */
   initUserTimeZone() {
-    let userTimeZone = GoogleSheetsHelper.getUserTimeZone();
+    let userTimeZone = AppScriptHelper.getUserTimeZone();
     this.setSystemVar('USER_TIMEZONE', userTimeZone);
   }
 
@@ -846,4 +846,4 @@ class GoogleSheetsConnector extends Connector {
   }
 }
 
-module.exports = GoogleSheetsConnector;
+module.exports = AppScriptConnector;

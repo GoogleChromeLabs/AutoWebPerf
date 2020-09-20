@@ -21,7 +21,7 @@ const Status = require('../common/status');
 const {TestType} = require('../common/types');
 const setObject = require('../utils/set-object');
 const Extension = require('./extension');
-const {GoogleSheetsHelper, SystemVars} = require('../helpers/googlesheets-helper');
+const {AppScriptHelper, SystemVars} = require('../helpers/appscript-helper');
 
 const TrackingType = {
   RESULT: 'Result',
@@ -33,7 +33,7 @@ const TrackingType = {
 const RETRIEVE_PENDING_RESULTS_FUNC = 'retrievePendingResults';
 
 /**
- * The extension for providing additional actions for AWP on GoogleSheets.
+ * The extension for providing additional actions for AWP on AppScript.
  * In a nutshell, it provides the following additions:
  * - Before each run, convert location name to id based on location tab.
  * - After each run, convert location id to name based on location tab.
@@ -43,9 +43,9 @@ const RETRIEVE_PENDING_RESULTS_FUNC = 'retrievePendingResults';
  * - After all retrieves, delete trigger for
  *     retreiving results.
  */
-class GoogleSheetsExtension extends Extension {
+class AppScriptExtension extends Extension {
   /**
-   * @param {object} config The config for this extension, as the "googlesheets"
+   * @param {object} config The config for this extension, as the "appscript"
    *     property in awpConfig loaded from src/awp-core.js.
    */
   constructor(config, envVars) {
@@ -57,9 +57,9 @@ class GoogleSheetsExtension extends Extension {
     this.envVars = envVars;
     this.connector = config.connector;
     this.apiHandler = config.apiHandler;
-    this.userTimeZone = GoogleSheetsHelper.getUserTimeZone();
-    this.clientEmail = GoogleSheetsHelper.getClientEmail();
-    this.spreadsheetId = GoogleSheetsHelper.getSpreadsheetId();
+    this.userTimeZone = AppScriptHelper.getUserTimeZone();
+    this.clientEmail = AppScriptHelper.getClientEmail();
+    this.spreadsheetId = AppScriptHelper.getSpreadsheetId();
     this.awpVersion = config.awpVersion || 'awp';
     this.gaAccount = config.gaAccount;
     this.locations = null;
@@ -113,7 +113,7 @@ class GoogleSheetsExtension extends Extension {
     // Format recurring.nextTrigger with user's timezone.
     if (test.recurring) {
       if (test.recurring.nextTriggerTimestamp) {
-        test.recurring.nextTriggerTime = GoogleSheetsHelper.getFormattedDate(
+        test.recurring.nextTriggerTime = AppScriptHelper.getFormattedDate(
             new Date(test.recurring.nextTriggerTimestamp), this.userTimeZone);
       } else {
         test.recurring.nextTriggerTime = '';
@@ -123,12 +123,12 @@ class GoogleSheetsExtension extends Extension {
     if (result) {
       // Format createdDate
       if (result.createdTimestamp) {
-        result.createdDate = GoogleSheetsHelper.getFormattedDate(
+        result.createdDate = AppScriptHelper.getFormattedDate(
             new Date(result.createdTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:mm:ss');
       }
       // Format modifiedDate
       if (result.modifiedTimestamp) {
-        result.modifiedDate = GoogleSheetsHelper.getFormattedDate(
+        result.modifiedDate = AppScriptHelper.getFormattedDate(
             new Date(result.modifiedTimestamp), this.userTimeZone, 'MM/dd/YYYY HH:mm:ss');
       }
 
@@ -168,7 +168,7 @@ class GoogleSheetsExtension extends Extension {
       if (options.verbose) console.log(`${SystemVars.RETRIEVE_TRIGGER_ID} = ${triggerId}`);
 
       if (!triggerId) {
-        triggerId = GoogleSheetsHelper.createTimeBasedTrigger(
+        triggerId = AppScriptHelper.createTimeBasedTrigger(
             RETRIEVE_PENDING_RESULTS_FUNC, 10 /* minutes */);
         this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, triggerId);
         if (options.verbose) console.log(
@@ -187,7 +187,7 @@ class GoogleSheetsExtension extends Extension {
 
     // Format modifiedDate
     if (result.modifiedTimestamp) {
-      result.modifiedDate = GoogleSheetsHelper.getFormattedDate(
+      result.modifiedDate = AppScriptHelper.getFormattedDate(
           new Date(result.modifiedTimestamp), this.userTimeZone,
           'MM/dd/YYYY HH:mm:ss');
     }
@@ -205,7 +205,7 @@ class GoogleSheetsExtension extends Extension {
    *     and Result objects.
    */
   afterAllRetrieves(context, options) {
-    let googlesheets = (options || {}).googlesheets || {};
+    let appscript = (options || {}).appscript || {};
 
     // Skip when there's no newly updated results from the context.
     if (!context.results || context.results.length === 0) return;
@@ -220,7 +220,7 @@ class GoogleSheetsExtension extends Extension {
     resultsTabIds.forEach(tabId => {
       let tabConfig = this.connector.tabConfigs[tabId];
       let results = this.connector.getResultList({
-        googlesheets: {resultsTab: tabId},
+        appscript: {resultsTab: tabId},
         filters: [`status==="${Status.SUBMITTED}"`],
       });
       pendingResults = pendingResults.concat(results);
@@ -230,7 +230,7 @@ class GoogleSheetsExtension extends Extension {
       if (options.verbose) {
         console.log('Deleting Trigger for RETRIEVE_PENDING_RESULTS_FUNC...');
       }
-      GoogleSheetsHelper.deleteTriggerByFunction(RETRIEVE_PENDING_RESULTS_FUNC);
+      AppScriptHelper.deleteTriggerByFunction(RETRIEVE_PENDING_RESULTS_FUNC);
       this.connector.setSystemVar(SystemVars.RETRIEVE_TRIGGER_ID, '');
     }
   }
@@ -239,7 +239,7 @@ class GoogleSheetsExtension extends Extension {
    * trackAction - Tracking with pageview
    *
    * @param {TrackingType} trackingType A TrackingType, e.g. TrackingType.RESULT.
-   * @param {string} sheetId GoogleSheets ID.
+   * @param {string} sheetId AppScript ID.
    * @param {object} result Processed Result object.
    */
   trackAction(trackingType, sheetId, result) {
@@ -283,7 +283,7 @@ class GoogleSheetsExtension extends Extension {
 
   /**
    * trackError - Record an error event to Google Analytics.
-   * @param {string} sheetId GoogleSheets ID.
+   * @param {string} sheetId AppScript ID.
    * @param {string} errorStr Error details.
    */
   trackError(sheetId, errorStr) {
@@ -420,12 +420,12 @@ class GoogleSheetsExtension extends Extension {
   }
 
   /**
-   * Returns the GoogleSheetsHelper for unit test purpose.
+   * Returns the AppScriptHelper for unit test purpose.
    * @return {object}
    */
-  getGoogleSheetsHelper() {
-    return GoogleSheetsHelper;
+  getAppScriptHelper() {
+    return AppScriptHelper;
   }
 }
 
-module.exports = GoogleSheetsExtension;
+module.exports = AppScriptExtension;

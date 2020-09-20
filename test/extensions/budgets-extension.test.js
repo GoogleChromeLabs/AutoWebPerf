@@ -16,7 +16,7 @@
 
 'use strict';
 
-const BudgetsExtension = require('../../src/extensions/budgets');
+const BudgetsExtension = require('../../src/extensions/budgets-extension');
 const Status = require('../../src/common/status');
 let extension;
 

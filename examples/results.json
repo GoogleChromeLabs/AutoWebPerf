@@ -1,178 +1,93 @@
 {
   "results": [
     {
-      "id": "1583781065474-https://thinkwithgoogle.com",
+      "id": "1599534225837-https://web.dev",
       "type": "Single",
       "status": "Retrieved",
-      "label": "Think With Google",
-      "url": "https://thinkwithgoogle.com",
-      "createdTimestamp": 1583781065474,
-      "modifiedTimestamp": 1583781070307,
-      "webpagetest": {
+      "label": "web.dev",
+      "url": "https://web.dev",
+      "createdTimestamp": 1599534225837,
+      "modifiedTimestamp": 1599534225837,
+      "errors": [],
+      "psi": {
         "status": "Retrieved",
         "statusText": "Success",
         "settings": {
-          "locationId": "Dulles_MotoG",
-          "device": "Pixel",
-          "connection": "4G",
-          "runs": 1,
-          "repeatView": true,
-          "timeline": true,
-          "block": null,
-          "script": null
+          "locale": "en-GB",
+          "strategy": "mobile"
         },
         "metadata": {
-          "testId": "200601_X6_efeb625266aacabaece9ffe9d4bcd207",
-          "ownerKey": "9c58809d442152143c04bb7f1a711224aac3cfde",
-          "jsonUrl": "https://webpagetest.org/jsonResult.php?test=200601_X6_efeb625266aacabaece9ffe9d4bcd207",
-          "xmlUrl": "https://webpagetest.org/xmlResult/200601_X6_efeb625266aacabaece9ffe9d4bcd207/",
-          "userUrl": "https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/",
-          "summaryCSV": "https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/page_data.csv",
-          "detailCSV": "https://webpagetest.org/result/200601_X6_efeb625266aacabaece9ffe9d4bcd207/requests.csv"
+          "testId": "https://web.dev/",
+          "requestedUrl": "https://web.dev/",
+          "finalUrl": "https://web.dev/",
+          "lighthouseVersion": "6.1.0",
+          "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/83.0.4103.93 Safari/537.36",
+          "fetchTime": "2020-09-08T03:02:51.198Z"
         },
         "metrics": {
-          "lighthouse": {
-            "Performance": 0.97,
-            "ProgressiveWebApp": 0.38,
-            "FirstContentfulPaint": 1805.008,
-            "FirstMeaningfulPaint": 1912.109,
-            "SpeedIndex": 1971,
-            "TimeToInteractive": 3032.887,
-            "FirstInputDelay": 74.297,
-            "FirstCPUIdle": 3032.887,
-            "TotalBlockingTime": 24.297000000000025,
-            "LargestContentfulPaint": 2089,
-            "ThirdParty": 423059,
-            "RenderBlockingResources": 0,
-            "UnusedCSS": 0,
-            "UseWebPImages": 0,
-            "UseOptimizedImages": 0,
-            "OffscreenImages": 0
+          "RenderBlockingResources": 24263,
+          "crux": {
+            "LargestContentfulPaint": {
+              "category": "FAST",
+              "percentile": 2048,
+              "good": 0.8312754314578362,
+              "ni": 0.09814788831205275,
+              "poor": 0.07057668023011082
+            },
+            "FirstInputDelay": {
+              "category": "FAST",
+              "percentile": 17,
+              "good": 0.9344195519348271,
+              "ni": 0.036863543788187375,
+              "poor": 0.02871690427698574
+            },
+            "FirstContentfulPaint": {
+              "category": "AVERAGE",
+              "percentile": 2017,
+              "good": 0.30902913889977784,
+              "ni": 0.5767672808049131,
+              "poor": 0.11420358029530907
+            },
+            "CumulativeLayoutShift": {
+              "category": "FAST",
+              "percentile": 3,
+              "good": 0.8293258426966292,
+              "ni": 0.06865168539325843,
+              "poor": 0.10202247191011238
+            }
           },
-          "TimeToFirstByte": 482,
-          "FirstPaint": 700,
-          "FirstContentfulPaint": 692,
-          "FirstMeaningfulPaint": 692,
-          "VisualComplete": 900,
-          "SpeedIndex": 702,
-          "LoadEvent": 1681,
-          "TimeToInteractive": 3527,
-          "DOMContentLoaded": 741,
-          "Requests": 17,
-          "DOMElements": 206,
-          "Connections": 10,
-          "CSS": 0,
-          "Fonts": 31,
-          "Javascript": 311,
-          "Images": 19,
-          "Videos": 0
+          "lighthouse": {
+            "FirstContentfulPaint": 1584,
+            "FirstMeaningfulPaint": 1660,
+            "LargestContentfulPaint": 3685.6558830092026,
+            "SpeedIndex": 1749,
+            "TimeToInteractive": 4853,
+            "FirstCPUIdle": 3673,
+            "FirstInputDelay": 13,
+            "TotalBlockingTime": 129,
+            "CumulativeLayoutShift": 0,
+            "TotalSize": 409,
+            "HTML": 7,
+            "Javascript": 144,
+            "CSS": 24,
+            "Fonts": 74,
+            "Images": 147,
+            "Medias": 0,
+            "ThirdParty": 212,
+            "UnusedCSS": 20,
+            "WebPImages": 23,
+            "OptimizedImages": 22,
+            "ResponsiveImages": 31,
+            "OffscreenImages": 0,
+            "DOMElements": 322,
+            "Performance": 0.86,
+            "ProgressiveWebApp": 0.96,
+            "Manifest": 1,
+            "ServiceWorker": 1,
+            "Offline": 1
+          }
         },
         "errors": []
-      },
-      "budgets": {
-        "dataSource": "webpagetest",
-        "budget": {
-          "FirstContentfulPaint": 1500,
-          "FirstMeaningfulPaint": 2000,
-          "SpeedIndex": 3000,
-          "TimeToInteractive": 5000,
-          "Javascript": 500,
-          "CSS": 500,
-          "Fonts": 100,
-          "Images": 500,
-          "Videos": 500
-        },
-        "metrics": {
-          "FirstContentfulPaint": {
-            "budget": {
-              "milliseconds": 1500,
-              "seconds": 1.5
-            },
-            "metric": {
-              "milliseconds": 692,
-              "seconds": 0.69
-            },
-            "overRatio": -0.54
-          },
-          "FirstMeaningfulPaint": {
-            "budget": {
-              "milliseconds": 2000,
-              "seconds": 2
-            },
-            "metric": {
-              "milliseconds": 692,
-              "seconds": 0.69
-            },
-            "overRatio": -0.65
-          },
-          "SpeedIndex": {
-            "budget": {
-              "milliseconds": 3000,
-              "seconds": 3
-            },
-            "metric": {
-              "milliseconds": 702,
-              "seconds": 0.7
-            },
-            "overRatio": -0.77
-          },
-          "TimeToInteractive": {
-            "budget": {
-              "milliseconds": 5000,
-              "seconds": 5
-            },
-            "metric": {
-              "milliseconds": 3527,
-              "seconds": 3.53
-            },
-            "overRatio": -0.29
-          },
-          "Javascript": {
-            "budget": {
-              "KB": 500
-            },
-            "metric": {
-              "KB": 311
-            },
-            "overRatio": -0.38
-          },
-          "CSS": {
-            "budget": {
-              "KB": 500
-            },
-            "metric": {
-              "KB": 0
-            },
-            "overRatio": null
-          },
-          "Fonts": {
-            "budget": {
-              "KB": 100
-            },
-            "metric": {
-              "KB": 31
-            },
-            "overRatio": -0.69
-          },
-          "Images": {
-            "budget": {
-              "KB": 500
-            },
-            "metric": {
-              "KB": 19
-            },
-            "overRatio": -0.96
-          },
-          "Videos": {
-            "budget": {
-              "KB": 500
-            },
-            "metric": {
-              "KB": 0
-            },
-            "overRatio": null
-          }
-        }
       }
     }
   ]
