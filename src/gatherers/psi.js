@@ -230,9 +230,9 @@ class PSIGatherer extends Gatherer {
   }
 
   preprocessData(json, dataSource) {
-    if (dataSource === 'crux') {
+    if (dataSource === 'crux' && json.loadingExperience) {
       let processedLoadingExperience = {};
-      let expMetrics = json.loadingExperience.metrics;
+      let expMetrics = json.loadingExperience.metrics || {};
       let expMetricsToProcess = {
         lcp: expMetrics.LARGEST_CONTENTFUL_PAINT_MS,
         fid: expMetrics.FIRST_INPUT_DELAY_MS,
