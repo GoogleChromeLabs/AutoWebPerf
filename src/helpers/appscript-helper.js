@@ -31,11 +31,12 @@ class AppScriptApiHandler extends ApiHandler {
 
     } catch(e) {
       console.error('There was an error while fetching ' + url);
-      console.log(e);
+      console.error(e);
 
       return  {
         statusCode: e.code || 500,
         statusText: e.message,
+        error: e
       }
     }
   }
@@ -59,11 +60,12 @@ class AppScriptApiHandler extends ApiHandler {
       }
     } catch(e) {
       console.error('There was an error while fetching ' + url);
-      console.log(e);
+      console.error(e);
 
       return  {
         statusCode: e.code || 500,
         statusText: e.message,
+        error: e
       }
     }
   }
