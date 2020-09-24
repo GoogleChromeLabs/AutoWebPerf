@@ -48,13 +48,13 @@ class CrUXAPIGatherer extends Gatherer {
   run(test, options) {
     assert(test, 'Parameter test is missing.');
     options = options || {};
-   
+
     let url = this.runApiEndpoint + '?key=' + this.apiKey;
 
     if (options.debug) console.log(test);
 
     let gathererData = test.cruxapi || {};
-    let settings = gathererData.settings;
+    let settings = gathererData.settings || {};
 
     let apiJsonOutput = {},
       statusText = "",
@@ -64,29 +64,43 @@ class CrUXAPIGatherer extends Gatherer {
 
     if (this.apiKey === 'TEST_APIKEY') {
       apiJsonOutput = this.fakeRunResponse();
-      // "cruxApiKey": "AIzaSyCGW5PmVoCHs7TSRajfHZDR5Fh2AWI3cLY"
+
     } else {
-    
-      var apiOptions = {
-        json : {} 
+      let apiOptions = {
+        json : {}
       };
 
       assert(test.url, 'Parameter URL is missing.');
-
-      if(!settings.urlType)
-        settings.urlType = 'Origin';
-
-      if(settings.urlType=='Page')
+      settings.urlType = settings.urlType || 'Origin';
+      if (settings.urlType === 'Page') {
         apiOptions.json.url = test.url;
-      else
+      } else {
         apiOptions.json.origin = test.url;
+      }
 
-      if(settings.formFactor && settings.formFactor!='ALL')
+      if(settings.formFactor && settings.formFactor !== 'ALL')
         apiOptions.json.formFactor = settings.formFactor;
 
+      if (options.debug) {
+        console.log(`Sending POST request to ${url} with parameters:`);
+        console.log(JSON.stringify(apiOptions, null, 2));
+      }
+
       let response = this.apiHelper.post(url, apiOptions);
-      if(response.statusCode == 200)
+      if (response.statusCode === 200) {
         apiJsonOutput = JSON.parse(response.body);
+
+      } else {
+        let errorMsg = response.statusText;
+
+        try {
+          let errorBody = JSON.parse(response.error.body);
+          errorMsg = errorBody.error.message;
+        } catch (e) {
+          // do nothing.
+        }
+        errors.push(errorMsg);
+      }
     }
 
     if(apiJsonOutput && apiJsonOutput.record && apiJsonOutput.record.metrics) {
@@ -96,7 +110,7 @@ class CrUXAPIGatherer extends Gatherer {
         // Using eval for the assigning to support non-string and non-numeric
         // value, like Date object.
         try {
-          eval(`value = apiJsonOutput.${this.metricsMap[key]};`); 
+          eval(`value = apiJsonOutput.${this.metricsMap[key]};`);
           metrics.set(key, value);
 
         } catch (e) {
@@ -104,7 +118,7 @@ class CrUXAPIGatherer extends Gatherer {
               `metrics: ${e.message}`);
         }
       });
- 
+
       status = Status.RETRIEVED;
       statusText = 'Success';
 
@@ -159,7 +173,7 @@ class CrUXAPIGatherer extends Gatherer {
       "record": {
         "key": {
           "formFactor": "PHONE",
-          "url": "https://web.dev/"
+          "url": "[FAKE_RESPONSE] https://web.dev/"
         },
         "metrics": {
           "cumulative_layout_shift": {

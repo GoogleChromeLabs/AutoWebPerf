@@ -21,26 +21,38 @@ const path = require('path');
 
 class NodeApiHandler extends ApiHandler {
   fetch(url) {
-    var response = request('GET', url);
-		return {
-      statusCode: response.statusCode,
-      body: response.getBody().toString(),
-    }
+    return this.get(url);
   }
 
   get(url) {
-    var response = request('GET', url);
-    return {
-      statusCode: response.statusCode,
-      body: response.getBody().toString(),
+    try {
+      let response = request('GET', url);
+  		return {
+        statusCode: response.statusCode,
+        body: response.getBody().toString(),
+      }
+    } catch (e) {
+      return  {
+        statusCode: e.code || 500,
+        statusText: e.message,
+        error: e,
+      }
     }
   }
 
   post(url, postOptions) {
-    var response = request('POST', url, postOptions);
-    return {
-      statusCode: response.statusCode,
-      body: response.getBody().toString(),
+    try {
+      let response = request('POST', url, postOptions);
+      return {
+        statusCode: response.statusCode,
+        body: response.getBody().toString(),
+      }
+    } catch (e) {
+      return  {
+        statusCode: e.code || 500,
+        statusText: e.message,
+        error: e,
+      }
     }
   }
 }
