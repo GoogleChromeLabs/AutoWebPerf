@@ -41,15 +41,15 @@ class AppScriptConnector extends Connector {
    * singleton ApiHandler instance. The config object is a sub-property from
    * the awpConfig object at the top level.
    * @param  {Object} config The config object for initializing this connector.
-   * @param  {Object} apiHelper ApiHandler instance initialized in awp-core.
+   * @param  {Object} apiHandler ApiHandler instance initialized in awp-core.
    */
-  constructor(config, apiHelper) {
+  constructor(config, apiHandler) {
     super();
     assert(config.tabs, 'tabs is missing in config.');
     assert(config.defaultTestsTab, 'defaultTestsTab is missing in config.');
     assert(config.defaultResultsTab, 'defaultResultsTab is missing in config.');
 
-    this.apiHelper = apiHelper;
+    this.apiHandler = apiHandler;
     this.locationApiEndpoint = 'http://www.webpagetest.org/getLocations.php?f=json&k=A';
     this.activeSpreadsheet = SpreadsheetApp.getActive();
     this.defaultTestsTab = config.defaultTestsTab;
@@ -483,7 +483,7 @@ class AppScriptConnector extends Connector {
     let sheet = this.getSheet('locationsTab');
 
     // Get new locations from remote API.
-    let response = this.apiHelper.fetch(this.locationApiEndpoint);
+    let response = this.apiHandler.fetch(this.locationApiEndpoint);
     if(response.statusCode == 200) {
       let json = JSON.parse(response.body);
 

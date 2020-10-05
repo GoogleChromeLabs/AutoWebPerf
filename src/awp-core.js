@@ -20,6 +20,7 @@ const Status = require('./common/status');
 const {Frequency, FrequencyInMinutes} = require('./common/frequency');
 const assert = require('./utils/assert');
 const {TestType} = require('./common/types');
+const MultiConnector = require('./connectors/multi-connector');
 
 /**
  * AutoWebPerf (AWP) main class.
@@ -62,9 +63,11 @@ class AutoWebPerf {
     this.config = {};
 
     assert(awpConfig, 'awpConfig is missing');
-    assert(awpConfig.connector, 'awpConfig.connector is missing.');
-    assert(awpConfig.helper, 'awpConfig.helper is missing.');
+    assert(awpConfig.tests, 'awpConfig.tests is missing.');
+    assert(awpConfig.results, 'awpConfig.results is missing.');
+
     this.awpConfig = awpConfig;
+    this.appendResults = this.awpConfig.appendResults || false;
 
     awpConfig.envVars = awpConfig.envVars || {};
 
@@ -72,6 +75,8 @@ class AutoWebPerf {
     this.gathererNames = awpConfig.gatherers ||
         ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'];
 
+    // Initialize helper. Use Node helper by default.
+    awpConfig.helper = awpConfig.helper || 'node';
     this.log(`Use helper: ${awpConfig.helper}`);
     switch (awpConfig.helper.toLowerCase()) {
       case 'node':
@@ -94,23 +99,23 @@ class AutoWebPerf {
         break;
     }
 
-    this.log(`Use connector: ${JSON.stringify(awpConfig.connector)}`);
-
     // Create connector instance(s).
-    if (typeof awpConfig.connector === 'string') {
-      this.connector = this.getConnector(awpConfig.connector);
+    awpConfig.tests.connector = awpConfig.tests.connector || 'json';
+    awpConfig.results.connector = awpConfig.results.connector || 'json';
+    this.log(`Use connector for tests: ${JSON.stringify(awpConfig.tests.connector)}`);
+    this.log(`Use connector for results: ${JSON.stringify(awpConfig.results.connector)}`);
 
-    } else if (awpConfig.connector.tests && awpConfig.connector.results) {
-      this.connector = this.getConnector(awpConfig.connector.tests);
+    // When using the same connector for both tests and results, initialize
+    // just one connector.
+    if (awpConfig.tests.connector === awpConfig.results.connector) {
+      this.connector = this.getConnector(awpConfig.tests.connector);
 
-      // Override results-related methods.
-      let resultsConnector = this.getConnector(awpConfig.connector.results);
-      this.connector.getResultList = resultsConnector.getResultList;
-      this.connector.appendResultList = resultsConnector.appendResultList;
-      this.connector.updateResultList = resultsConnector.updateResultList;
-
+    // When using different connectors, initialize a MultiConnector.
     } else {
-      throw new Error(`'awpConfig.connector' is not specified.`);
+      let testsConnector = this.getConnector(awpConfig.tests.connector);
+      let resultsConnector = this.getConnector(awpConfig.results.connector);
+      this.connector = new MultiConnector(awpConfig, this.apiHandler,
+          testsConnector, resultsConnector);
     }
 
     // Note that API Keys used by Gatherers are expected to be loaded as envVars
@@ -177,11 +182,20 @@ class AutoWebPerf {
    */
   getConnector(name) {
     let ConnectorClass = null, connectorName = name.toLowerCase();
-    let connectorConfig = this.awpConfig[connectorName];
+    let connectorConfig = this.awpConfig[connectorName] || {};
+
+    connectorConfig.testsPath = this.awpConfig.tests.path;
+    connectorConfig.resultsPath = this.awpConfig.results.path;
+    connectorConfig.verbose = this.awpConfig.verbose;
+    connectorConfig.debug = this.awpConfig.debug;
 
     switch (connectorName) {
       case 'json':
         ConnectorClass = require('./connectors/json-connector');
+        break;
+
+      case 'csv':
+        ConnectorClass = require('./connectors/csv-connector');
         break;
 
       case 'appscript':
