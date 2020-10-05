@@ -17,7 +17,10 @@ export default [{
     commonjs({
       ignore: [
         'sync-request',
+        'fs-extra',
+        'path',
         './connectors/json-connector',
+        './connectors/csv-connector',
         './helpers/node-helper',
         '@google-cloud/bigquery',
         '../../test/fakedata/psi-response.json', //FIXME: use exclude.

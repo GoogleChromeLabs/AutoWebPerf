@@ -217,7 +217,7 @@ describe('AppScriptConnector EnvVars tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     fakeSheets['EnvVars'] = initFakeSheet(fakeSheetData.fakeEnvVarsSheetData);
-    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHandler */);
   });
 
   it('returns list of envVars values from the EnvVars sheet', async () => {
@@ -246,7 +246,7 @@ describe('AppScriptConnector Tests tab', () => {
     // Overrides properties for testing.
     fakeSheets['Tests-1'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
     fakeSheets['Tests-2'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
-    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHandler */);
   });
 
   it('returns all tests from the Tests sheet', async () => {
@@ -313,7 +313,7 @@ describe('AppScriptConnector Tests tab', () => {
 describe('AppScriptConnector Results tab', () => {
   beforeEach(() => {
     fakeSheets['Results-1'] = initFakeSheet(fakeSheetData.fakeResultsSheetData);
-    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHandler */);
   });
 
   it('returns list of results from the Results sheet', async () => {
@@ -564,7 +564,7 @@ describe('AppScriptConnector System tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     fakeSheets['System'] = initFakeSheet(fakeSheetData.fakeSystemSheetData);
-    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHandler */);
   });
 
   it('returns a specific system variable from the System sheet', async () => {
@@ -583,11 +583,11 @@ describe('AppScriptConnector Locations tab', () => {
   beforeEach(() => {
     // Overrides properties for testing.
     fakeSheets['Locations'] = initFakeSheet(fakeSheetData.fakeLocationsSheetData);
-    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHandler */);
   });
 
   it('updates locations to LocationsTab', async () => {
-    connector.apiHelper.fetch = () => {
+    connector.apiHandler.fetch = () => {
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -634,7 +634,7 @@ describe('AppScriptConnector additional functions', () => {
     fakeSheets['System'] = initFakeSheet(fakeSheetData.fakeSystemSheetData);
     fakeSheets['Tests-1'] = initFakeSheet(fakeSheetData.fakeTestsSheetData);
     fakeSheets['Results-1'] = initFakeSheet(fakeSheetData.fakeResultsSheetData);
-    connector = new AppScriptConnector(connectorConfig, {} /* apiHelper */);
+    connector = new AppScriptConnector(connectorConfig, {} /* apiHandler */);
   });
 
   it('returns property lookup values for sheet with DataAxis.ROW', async () => {

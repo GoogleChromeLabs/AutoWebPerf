@@ -62,7 +62,7 @@ Examples:
   ./awp run --tests=examples/tests-cruxbigquery.json --results=tmp/results.json --runByBatch --envVars=gcpKeyFilePath=KEY_PATH,gcpProjectId=PROJECT_ID
 
   # Run with multiple connectors: tests from local JSON and writes results to BigQuery.
-  ./awp run --tests=json:examples/tests.json --results=bigquery:path/to/table --envVars=psiApiKey=SAMPLE_APIKEY
+  ./awp run --tests=csv:examples/tests.csv --results=json:tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY
 
   # Run tests with budget extension
   ./awp run --tests=examples/tests.json --results=tmp/results.json --extensions=budgets
@@ -98,7 +98,7 @@ async function begin() {
   let testsPath = argv['tests'];
   let resultsPath = argv['results'];
   let config = argv['config'];
-  let overrideResults = argv['append-results'] ? false : true;
+  let appendResults = argv['append-results'];
   let gatherers = argv['gatherers'] ? argv['gatherers'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let runByBatch = argv['runByBatch'] ?  true : false;
@@ -137,9 +137,14 @@ async function begin() {
 
     // Construct overall AWP config and individual connector's config.
     awpConfig = {
-      connector: {
-        tests: testsConnector,
-        results: resultsConnector,
+      tests: {
+        connector: testsConnector,
+        path: testsPath,
+      },
+      results: {
+        connector: resultsConnector,
+        path: resultsPath,
+        appendResults: appendResults,
       },
       helper: 'node',
       gatherers: gatherers || ['webpagetest', 'psi', 'cruxbigquery', 'cruxapi'],
@@ -148,14 +153,6 @@ async function begin() {
       verbose: verbose,
       debug: debug,
     };
-
-    let connectorConfig = {
-      testsPath: testsPath,
-      resultsPath: resultsPath,
-      overrideResults: overrideResults,
-    };
-    awpConfig[testsConnector] = connectorConfig;
-    awpConfig[resultsConnector] = connectorConfig;
   }
 
   if (verbose) {

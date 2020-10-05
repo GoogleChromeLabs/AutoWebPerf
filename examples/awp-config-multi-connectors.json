@@ -1,19 +1,15 @@
 {
-  "connector": {
-    "tests": "json",
-    "results": "bigquery"
+  "tests": {
+    "connector": "csv",
+    "path": "examples/tests.csv"
+  },
+  "results": {
+    "connector": "json",
+    "path": "tmp/results.json",
+    "appendResults": false
   },
   "helper": "node",
   "extensions": ["budgets"],
-  "json": {
-    "testsPath": "examples/tests.json",
-    "resultsPath": "tmp/results.json"
-  },
-  "bigquery": {
-    "testsPath": "path/to/table",
-    "resultsPath": "path/to/table",
-    "overrideResults": true
-  },
   "verbose": true,
   "debug": false
 }

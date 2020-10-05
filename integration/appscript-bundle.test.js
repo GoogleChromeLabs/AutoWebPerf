@@ -54,9 +54,14 @@ describe('AWP bundle for AppScript', () => {
       'Results-2': initFakeSheet(fakeSheetData.fakeEmptyResultsSheetData),
     };
 
-    awp = new AutoWebPerf({
-      connector: 'AppScript',
-      helper: 'AppScript',
+    let awpConfig = {
+      tests: {
+        connector: 'appscript',
+      },
+      results: {
+        connector: 'appscript',
+      },
+      helper: 'appscript',
       gatherers: ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'],
       extensions: [
         'budgets',
@@ -116,12 +121,6 @@ describe('AWP bundle for AppScript', () => {
           skipRows: 2,
           skipColumns: 0,
         }],
-        // validationsMaps: [{
-        //   targetTab: 'Tests-1',
-        //   targetProperty: 'webpagetest.settings.location',
-        //   validationTab: 'Locations',
-        //   validationProperty: 'name',
-        // }],
         // For GA tracking
         gaAccount: 'UA-123456789-1',
         awpVersion: 'awp-dev',
@@ -133,7 +132,9 @@ describe('AWP bundle for AppScript', () => {
       batchUpdateBuffer: 10,
       verbose: false,
       debug: false,
-    });
+    };
+
+    awp = new AutoWebPerf(awpConfig);
   });
 
   it('creates AWP instance', () => {
@@ -141,7 +142,7 @@ describe('AWP bundle for AppScript', () => {
   });
 
   it('initializes AWP for AppScript via connector init()', () => {
-    awp.connector.apiHelper.fetch = () => {
+    awp.connector.apiHandler.fetch = () => {
       return {
         statusCode: 200,
         body: JSON.stringify({
@@ -445,7 +446,7 @@ describe('AWP bundle for AppScript', () => {
     ];
     fakeSheets['Results-1'] = initFakeSheet(resultsData);
 
-    awp.connector.apiHelper.fetch = () => {
+    awp.connector.apiHandler.fetch = () => {
       return {
         statusCode: 200,
         body: fs.readFileSync('./test/fakedata/wpt-retrieve-response.json')
@@ -476,7 +477,7 @@ describe('AWP bundle for AppScript', () => {
     ];
     fakeSheets['Results-1'] = initFakeSheet(resultsData);
 
-    awp.connector.apiHelper.fetch = () => {
+    awp.connector.apiHandler.fetch = () => {
       return {
         statusCode: 400,
         statusText: 'Some error',
@@ -516,7 +517,7 @@ describe('AWP bundle for AppScript', () => {
     ];
     fakeSheets['System'] = initFakeSheet(systemData);
 
-    awp.connector.apiHelper.fetch = () => {
+    awp.connector.apiHandler.fetch = () => {
       return {
         statusCode: 200,
         body: fs.readFileSync('./test/fakedata/wpt-retrieve-response.json')

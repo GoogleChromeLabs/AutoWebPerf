@@ -24,26 +24,26 @@ const Connector = require('./connector');
 /**
  * the connector handles read and write actions with local JSON files as a data
  * store. This connector works together with `src/helpers/node-helper.js`.
+ * @param  {Object} config The config object for initializing this connector.
+ * @param  {Object} apiHandler ApiHandler instance initialized in awp-core.
  */
 class JSONConnector extends Connector {
-  constructor(config) {
-    super();
-    this.testsPath = config.testsPath;
-    this.resultsPath = config.resultsPath;
-    this.testsJson = null;
-    this.resultsJson = null;
+  constructor(config, apiHandler) {
+    super(config, apiHandler);
+    this.tests = null;
+    this.results = null;
   }
 
   getTestsJson() {
-    if (this.testsJson) return this.testsJson;
-    assert(this.testsPath, 'testsPath is missing in config.');
+    if (this.tests) return this.tests;
+    assert(this.testsPath, 'testsPath is not defined.');
 
     return JSON.parse(fse.readFileSync(path.resolve(`${this.testsPath}`)));
   }
 
   getResultsJson() {
-    if (this.resultsJson) return this.resultsJson;
-    assert(this.resultsPath, 'resultsPath is missing in config.');
+    if (this.results) return this.results;
+    assert(this.resultsPath, 'resultsPath is not defined.');
 
     let filepath = path.resolve(`${this.resultsPath}`);
     if (fse.existsSync(filepath)) {
@@ -57,23 +57,23 @@ class JSONConnector extends Connector {
   }
 
   getEnvVars() {
-    let testsJson = this.getTestsJson();
-    let envVars = (testsJson || {}).envVars;
+    let tests = this.getTestsJson();
+    let envVars = (tests || {}).envVars;
     return envVars;
   }
 
   getTestList(options) {
-    let testsJson = this.getTestsJson();
+    let tests = this.getTestsJson();
 
     // Manually add index to all test objects.
     let index = 0;
-    testsJson.tests.forEach(test => {
+    tests.tests.forEach(test => {
       test.json = {
         index: index++,
       }
     });
 
-    return testsJson.tests;
+    return tests.tests;
   }
 
   updateTestList(newTests) {
@@ -102,14 +102,14 @@ class JSONConnector extends Connector {
       }, null, 2));
 
     // Reset the tests json cache.
-    this.testsJson = null;
+    this.tests = null;
   }
 
   getResultList(options) {
     let results = [];
     try {
-      let resultsJson = this.getResultsJson();
-      results = resultsJson.results || [];
+      let json = this.getResultsJson();
+      results = json.results || [];
 
     } catch (error) {
       console.log(error);
@@ -128,7 +128,7 @@ class JSONConnector extends Connector {
       }, null, 2));
 
     // Reset the results json cache.
-    this.resultsJson = null;
+    this.results = null;
   }
 
   updateResultList(newResults, options) {
@@ -150,7 +150,7 @@ class JSONConnector extends Connector {
       }, null, 2));
 
     // Reset the results json cache.
-    this.resultsJson = null;
+    this.results = null;
   }
 }
 
