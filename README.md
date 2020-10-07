@@ -65,7 +65,7 @@ PSI_APIKEY=SAMPLE_KEY ./awp run examples/tests.json output/results.json
 
 To run tests defined in a CSV file and write results to a JSON file:
 ```
-./awp run csv:examples/tests.csv json:output/results.csv
+./awp run csv:examples/tests.csv json:output/results.json
 ```
 
 To run WebPageTest tests:
