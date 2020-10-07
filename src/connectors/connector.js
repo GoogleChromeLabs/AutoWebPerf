@@ -15,9 +15,10 @@
  */
 
 class Connector {
-  constructor(config, apiHandler) {
+  constructor(config, apiHandler, envVars) {
     config = config || {};
     this.apiHandler = apiHandler;
+    this.envVars = envVars;
     this.testsPath = config.testsPath;
     this.resultsPath = config.resultsPath;
     this.verbose = config.verbose;

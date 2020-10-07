@@ -30,7 +30,7 @@ class PSIGatherer extends Gatherer {
 
     this.runApiEndpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
     this.resultApiEndpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
-    this.apiKey = envVars['psiApiKey'];
+    this.apiKey = envVars.PSI_APIKEY || envVars.psiApiKey;
     this.apiHelper = apiHelper;
 
     // TODO: Metadata keys should be standardized.

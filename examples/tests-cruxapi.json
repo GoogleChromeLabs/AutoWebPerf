@@ -1,7 +1,4 @@
 {
-  "envVars": {
-    "cruxApiKey": "SAMPLE_APIKEY"
-  },
   "tests": [
     {
       "label":"Web Vitals",

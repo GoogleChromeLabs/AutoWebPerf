@@ -53,9 +53,13 @@ class WebPageTestGatherer extends Gatherer {
     }
 
     // Get mandatory API key from environmental variables.
-    this.apiKey = envVars['webPageTestApiKey'];
-    assert(this.apiKey, 'Unable to locate "webPageTestApiKey" in envVars');
+    this.apiKey = envVars.WPT_APIKEY || envVars.wptAPiKey ||
+        envVars.webPageTestApiKey;
+    assert(this.apiKey, 'Unable to locate "WPT_APIKEY" or "webPageTestApiKey" in envVars');
 
+    if (this.debug) {
+      console.log('Using API Key: ' + this.apiKey);
+    }
 
     // TODO: Metadata keys should be standardized.
     this.metadataMap = {
@@ -175,15 +179,19 @@ class WebPageTestGatherer extends Gatherer {
       urlParams.push(key + '=' + params[key]);
     });
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
-    if (this.debug) console.log('WPTGatherer::run\n', url);
 
     let response, body = {}, statusText;
     if (this.apiKey === 'TEST_APIKEY') {
+      if (this.debug) {
+        console.log('Using fake WPT response.');
+      }
+
       response = this.fakeRunResponse();
       body = response.body || {};
       statusText = body.statusText;
 
     } else {
+      if (this.debug) console.log('WPTGatherer::run\n', url);
       response = this.apiHelper.fetch(url);
 
       if (this.debug) {

@@ -21,7 +21,7 @@ const {NodeHelper} = require('./helpers/node-helper');
 
 const printUsage = () => {
   let usage = `
-Usage: ./awp [ACTION] [OPTIONS...]
+Usage: ./awp <ACTION> <TESTS> <RESULTS> [OPTIONS...]
 
 Available Actions:
   run\t\tExecute audits from the test list.
@@ -29,13 +29,15 @@ Available Actions:
   recurring\t\tExecute recurring audits from the test list.
   retrieve\tRetrieve test results from the results list.
 
+Mandatory arguments:
+  tests\t\tThe path to the tests list in JSON. E.g. examples/tests.json. To specify a different connector, use <connector>:<path>. E.g. csv:example/tests.csv.
+  results\t\tThe path to the results output in JSON. E.g. output/results.json. To specify a different connector, use <connector>:<path>. E.g. csv:tmp/results.csv.
+
 Options (*denotes default value if not passed in):
-  tests\t\tThe JSON file with the URL list for audit.
-  results\t\tThe output JSON file for writing test results to. By default, it will overrides the existing results list.
-  gatherers\t\ttComma-separated list of data sources. Default: webpagetest.
-  extensions\t\tComma-separated list of extensions.
-  selectedOnly\t\tOnly execute with tests or results with selected=true.
+  gatherers\t\ttComma-separated list of data sources. Default: psi.
+  extensions\t\tComma-separated list of extensions. Default: null.
   config\t\tLoad a custom awpConfig. See examples/awp-config.json for example.
+  override-results\tWhether to append results to the existing result list. Default: false.
   verbose\t\tPrint out verbose logs.
   debug\t\tPrint out debug console logs.
 
@@ -44,28 +46,34 @@ Examples:
   ./awp --help
 
   # Run tests
-  ./awp run --tests=examples/tests.json --results=tmp/results.json
+  ./awp run examples/tests.json output/results.json
+
+  # Run tests from a CSV file and writes results to a JSON file.
+  ./awp run csv:examples/tests.csv json:output/results.json
 
   # Run recurring tests
-  ./awp recurring --tests=examples/tests-recurring.json --results=tmp/results.json
+  ./awp recurring examples/tests-recurring.json output/results.json
 
   # Activate recurring tests without running actual tests.
-  ./awp recurringActivate --tests=examples/tests-recurring --results=tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY
+  ./awp recurringActivate examples/tests-recurring.json output/results.json
+
+  # Run PageSpeedInsight tests with an API Key.
+  PSI_APIKEY=SAMPLE_KEY ./awp run examples/tests.json output/results.json
+
+  # Run WebPageTest tests with an API Key.
+  WPT_APIKEY=SAMPLE_KEY ./awp run examples/tests-wpt.json output/results.json
 
   # Retrieve pending results (For WebPageTest usage)
-  ./awp retrieve --tests=examples/tests-wpt.json --results=tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY
+  WPT_APIKEY=SAMPLE_KEY ./awp retrieve examples/tests-wpt.json output/results.json
 
-  # Retrieve results from CrUX API
-  ./awp run --tests=examples/tests-cruxapi.json --results=tmp/results.json --envVars=cruxApiKey=SAMPLE_APIKEY
-
-  # Retrieve historical CrUX via BigQuery in runByBatch mode
-  ./awp run --tests=examples/tests-cruxbigquery.json --results=tmp/results.json --runByBatch --envVars=gcpKeyFilePath=KEY_PATH,gcpProjectId=PROJECT_ID
-
-  # Run with multiple connectors: tests from local JSON and writes results to BigQuery.
-  ./awp run --tests=csv:examples/tests.csv --results=json:tmp/results.json --envVars=psiApiKey=SAMPLE_APIKEY
+  # Retrieve from CrUX API
+  CRUX_APIKEY=SAMPLE_KEY ./awp run examples/tests-cruxapi.json output/results.json
 
   # Run tests with budget extension
-  ./awp run --tests=examples/tests.json --results=tmp/results.json --extensions=budgets
+  ./awp run examples/tests.json output/results.json --extensions=budgets
+
+  # Run tests and override existing results in the output file.
+  ./awp run examples/tests.json output/results.json --override-results
 
   # Run with a custom awpConfig.
   ./awp run --config=examples/awp-config.json
@@ -95,17 +103,24 @@ const parseVars = (varString) => {
  */
 async function begin() {
   let action = argv['_'][0], output = argv['output'];
-  let testsPath = argv['tests'];
-  let resultsPath = argv['results'];
+  let testsPath = argv['_'][1];
+  let resultsPath = argv['_'][2];
   let config = argv['config'];
-  let appendResults = argv['append-results'];
+  let overrideResults = argv['override-results'];
   let gatherers = argv['gatherers'] ? argv['gatherers'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let runByBatch = argv['runByBatch'] ?  true : false;
-  let envVars = parseVars(argv['envVars']);
+  // let envVars = parseVars(argv['envVars']);
   let debug = argv['debug'];
   let verbose = argv['verbose'];
   let filters = [], awpConfig;
+
+  // Get environment variables.
+  let envVars = process.env;
+  let envVarsFromParam = parseVars(argv['envVars']) || {};
+  Object.keys(envVarsFromParam).forEach(key => {
+    envVars[key] = envVarsFromParam[key];
+  });
 
   // Assert mandatory parameters
   if (!action) {
@@ -123,16 +138,14 @@ async function begin() {
     if (argv['selectedOnly']) filters.push('selected');
 
     // Parse connector names.
-    let testsConnector = 'json', resultsConnector = 'json', connector, path;
-    [connector, path] = argv['tests'].split(':');
-    if (path) {
-      testsConnector = connector;
-      testsPath = path;
+    let testsConnector = 'json', resultsConnector = 'json';
+    if (testsPath.indexOf(':') >= 0) {
+      testsConnector = testsPath.slice(0, testsPath.indexOf(':'));
+      testsPath = testsPath.slice(testsPath.indexOf(':') + 1);
     }
-    [connector, path] = argv['results'].split(':');
-    if (path) {
-      resultsConnector = connector;
-      resultsPath = path;
+    if (resultsPath.indexOf(':') >= 0) {
+      resultsConnector = resultsPath.slice(0, resultsPath.indexOf(':'));;
+      resultsPath = resultsPath.slice(resultsPath.indexOf(':') + 1);;
     }
 
     // Construct overall AWP config and individual connector's config.
@@ -144,7 +157,6 @@ async function begin() {
       results: {
         connector: resultsConnector,
         path: resultsPath,
-        appendResults: appendResults,
       },
       helper: 'node',
       gatherers: gatherers || ['webpagetest', 'psi', 'cruxbigquery', 'cruxapi'],
@@ -166,6 +178,7 @@ async function begin() {
   let options = {
     filters: filters,
     runByBatch: runByBatch,
+    overrideResults: overrideResults,
     verbose: verbose,
     debug: debug,
   };
