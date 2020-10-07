@@ -28,8 +28,8 @@ class CrUXBigQueryGatherer extends Gatherer {
     assert(config, 'Parameter config is missing.');
     assert(apiHelper, 'Parameter apiHelper is missing.');
 
-    this.gcpProjectId = envVars.gcpProjectId;
-    this.keyFilename = envVars.gcpKeyFilePath;
+    this.gcpProjectId = envVars.gcpProjectId || envVars.GCP_PROJECT_ID;
+    this.keyFilename = envVars.gcpKeyFilePath || envVars.GCP_KEYFILE_PATH;
 
     assert(this.gcpProjectId, 'gcpProjectId is not defined in Environment ' +
         'Variables');

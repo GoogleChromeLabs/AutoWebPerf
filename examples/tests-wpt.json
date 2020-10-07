@@ -1,8 +1,4 @@
 {
-  "envVars": {
-    "webPageTestApiKey": "SAMPLE_APIKEY",
-    "webPageTestApiEndpoint": "https://webpagetest.org"
-  },
   "tests": [
     {
       "label": "Think With Google",
@@ -20,26 +16,6 @@
         },
         "metadata": {
           "lastTestId": "200601_X6_efeb625266aacabaece9ffe9d4bcd207"
-        }
-      },
-      "psi": {
-        "settings": {
-          "locale": "en-US",
-          "strategy": "mobile"
-        }
-      },
-      "budgets": {
-        "dataSource": "webpagetest",
-        "budget": {
-          "FirstContentfulPaint": 1500,
-          "FirstMeaningfulPaint": 2000,
-          "SpeedIndex": 3000,
-          "TimeToInteractive": 5000,
-          "Javascript": 500,
-          "CSS": 500,
-          "Fonts": 100,
-          "Images": 500,
-          "Videos": 500
         }
       }
     }

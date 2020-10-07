@@ -28,8 +28,8 @@ const Connector = require('./connector');
  * @param  {Object} apiHandler ApiHandler instance initialized in awp-core.
  */
 class JSONConnector extends Connector {
-  constructor(config, apiHandler) {
-    super(config, apiHandler);
+  constructor(config, apiHandler, envVars) {
+    super(config, apiHandler, envVars);
     this.tests = null;
     this.results = null;
   }
@@ -120,7 +120,8 @@ class JSONConnector extends Connector {
   }
 
   appendResultList(newResults, options) {
-    let results = this.getResultList();
+    options = options || {};
+    let results = options.overrideResults ? [] : this.getResultList();
     fse.outputFileSync(
       path.resolve(`${this.resultsPath}`),
       JSON.stringify({

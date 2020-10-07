@@ -27,42 +27,64 @@ file.
 etc.
 - Metric gatherers are designed as modules that are decoupled with the output
 data format and automation logic.
-- Connector modules are designed to write audit results to specific data format
-or platforms. e.g. a connector for GoogleSheets.
-(See ```src/connectors/googlesheets-connector``` for details)
+- Connector modules are designed to read Test list and write audit results to
+specific data format or platforms. e.g. a connector for CSV files.
+(See ```src/connectors/csv-connector``` for details)
 
 ### How does this compare to the rest of Google's speed measurement tools?
 
 AutoWebPerf serves as a performance audit aggregator that automates the process
 of performance audit and metrics collection through multiple speed measurement
-tools including WebPageTest, PageSpeedInsight, and Chrome UX Report. As each
+tools including WebPageTest, PageSpeedInsights, and Chrome UX Report. As each
 individual speed measurement tool provides audit metrics, AutoWebPerf aggregates
 the results and writes to any preferred data storage platform, such as local
 JSONs, cloud-based database, or GoogleSheets.
 
-## Getting Started
+## Quickstart
 
-To quickly run audits with CLI:
+First, clone AWP repo and run npm install:
+```
+git clone https://github.com/GoogleChromeLabs/AutoWebPerf.git
+npm install
+```
+
+To run tests:
+```
+./awp run examples/tests.json output/results.json
+```
+
+To run recurring tests and update the next trigger time:
+```
+./awp recurring examples/tests-recurring.json output/results.json
+```
+
+To run PageSpeedInsight tests with an [API Key](https://developers.google.com/speed/docs/insights/v5/get-started):
+```
+PSI_APIKEY=SAMPLE_KEY ./awp run examples/tests.json output/results.json
+```
+
+To run tests defined in a CSV file and write results to a JSON file:
+```
+./awp run csv:examples/tests.csv json:output/results.csv
+```
+
+To run WebPageTest tests:
+```
+WPT_APIKEY=SAMPLE_KEY ./awp run examples/tests-wpt.json output/results.json
+```
+
+To run a single PageSpeedInsights test of a specific URL:
+```
+./awp run --url=https://www.thinkwithgoogle.com/ output/results.json
 
 ```
-# List CLI options
-./awp --help
 
-# Run tests
-./awp run --tests=examples/tests.json --results=output/results.json
-
-# Run recurring tests
-./awp recurring --tests=examples/tests.json --results=output/results.json
-
-# Retrieve pending results
-./awp retrieve --tests=examples/tests.json --results=output/results.json
+To run tests and override existing results in the output file
+```
+./awp run examples/tests.json output/results.json --override-results
 ```
 
 ### Using AWP with Node CLI
-
-```
-$ npm install
-```
 
 #### Run tests
 
@@ -77,21 +99,31 @@ To run tests, you can run the following CLI command with given Tests JSON, like
 `examples/tests.json` for the data structure of Tests.
 
 ```
-./awp run --tests=examples/tests.json --results=output/results.json
+./awp run examples/tests.json output/results.json
 ```
 
 This will generate the result object(s) in the given path to `results.json`.
 
-For some audit platforms like WebPageTest, each test may take a few minutes to
-fetch actual results. For these type of *asynchronous* audits, each Result will stay in "Submitted" status. You will need to explicitly retrieve results later.
+By default, AWP will use JSON as the default connector for both reading tests
+and writing results. Alternatively, you can specify a different connector in the
+format of `<connector>:<path>`.
+
+E.g. to run tests defined in CSV and write results in JSON:
+```
+./awp run csv:examples/tests.csv json:output/results.csv
+```
 
 #### Retrieve test results
+
+For some audit platforms like WebPageTest, each test may take a few minutes to
+fetch actual results. For these type of *asynchronous* audits, each Result will
+stay in "Submitted" status. You will need to explicitly retrieve results later.
 
 Run the following to retrieve the final metrics of results in the
 `results.json`.
 
 ```
-./awp retrieve --tests=examples/tests.json --results=output/results.json
+./awp retrieve examples/tests.json output/results.json
 ```
 
 This will fetch metrics for all audit platforms and update to the Result object
@@ -104,16 +136,64 @@ If you'd like to set up recurring tests, you can define the `recurring` object
 that contains `frequency` for that Test.
 
 ```
-./awp recurring --tests=examples/tests.json --results=output/results.json
+./awp recurring examples/tests-recurring.json output/results.json
 ```
 
 This will generate the Result object in the `results.json` and updates the next
-trigger time to its original Test object in the `tests.json`.
+trigger time to its original Test object in the `tests.json`. E.g. the updated
+Test object would look like the following, with the updated `nextTriggerTimestamp`.
+
+```
+{
+  "label": "web.dev",
+  "url": "https://web.dev",
+  "recurring": {
+    "frequency": "Daily",
+    "nextTriggerTimestamp": 1599692305567,
+    "activatedFrequency": "Daily"
+  },
+  "psi": {
+    "settings": {
+      "locale": "en-GB",
+      "strategy": "mobile"
+    }
+  }
+}
+```
+
+The `nextTriggerTimestamp` will be updated to the next day based on the previous
+timestamp. This is to prevent repeated runs with the same Test and to guarantee
+that this Test is executed only once per day.
+
+#### Set up a cron job to run recurring tests
+
+In most Unix-like operating system, you can set up a cron job to run the AWP CLI
+periodically.
+
+For example, in macOS, you can run the following commands to set up a daily cron
+job with AWP:
+
+```
+# Edit the cronjob with a text editor.
+EDITOR=nano crontab -e
+```
+
+Add the following line to the crontab for a daily run at 12:00 at noon. Note
+that this is based on the system time where it runs AWP.
+
+```
+0 12 * * * PSI_APIKEY=SAMPLE_KEY cd ~/workspace/awp && ./awp run examples/tests.json csv:output/results-recurring.csv
+```
 
 #### Run tests with extensions
 
+An extension is a module to assist AWP to run tests with additional process and
+computation. For example, `budgets` extension is able to add performance budgets
+and compute the delta between the targets and the result metrics.
+
+To run with extensions:
 ```
-./awp run --tests=examples/tests.json --results=output/results.json --extensions=budgets
+./awp run examples/tests.json output/results.json --extensions=budgets
 ```
 
 ## Tests and Results
@@ -143,13 +223,13 @@ list.
 Each `Test` object defines which audits to run by defining `gatherers` property.
 For example, the first `Test` has a `webpagetest` property which defines the
 configuration of running a WebPageTest audit. The second `Test` has a `psi`
-property that defines how to run PageSpeedInsight audit.
+property that defines how to run PageSpeedInsights audit.
 
 ### Generate the Results
 
 After running tests, a list of `Results` is generated like below. Each `Result`
 contains its corresponding metrics to the predefined `gatherers` such as
-WebPageTest and PageSpeedInsight. See the example below.
+WebPageTest and PageSpeedInsights. See the example below.
 
 ```
 [{
@@ -208,7 +288,7 @@ TBD
 ## Design
 
 AWP is designed with modules, including modules for running audits
-with WebPageTest, PageSpeedInsight, or other tools, and modules for
+with WebPageTest, PageSpeedInsights, or other tools, and modules for
 reading/writing data from data platforms such as JSON, GoogleSheets or
 a Cloud service.
 
@@ -360,7 +440,7 @@ following methods:
 
 - `constructor(config, apiHelper, options)`:
   - `config`: The config defined in a property with this gatherer's name in the
-  AWP config. Some audit tools like WebPageTest or PageSpeedInsight require API keys. The API key for the gatherer is located in the `config.apiKey`.
+  AWP config. Some audit tools like WebPageTest or PageSpeedInsights require API keys. The API key for the gatherer is located in the `config.apiKey`.
   - `options`: Additional settings like `verbose` and `debug`.
 
 - `run(test, options)`:
@@ -466,8 +546,8 @@ original `Test` object.
 
 ### Standardized Metrics
 
-All metric names used in AWP are required to follow the names below, case
-sensitive.
+All metric names used in AWP are required to follow the names, case
+sensitive. See the full list of standardized metrics in `src/common/metrics.js`
 
 - **Timing metrics**
   - `TimeToFirstByte`
@@ -510,7 +590,6 @@ organized into the following subfolders:
 - `connectors`: Connector classes.
 - `extensions`: Extension classes.
 - `gatherers`: Gatherer classes.
-- `fakedata`: JSON files for unit tests.
 - `utils`: Utilities and tools.
 
 ## Unit Test
@@ -534,7 +613,3 @@ jest test/some-module.test.js
 The Unit Test is based on [Jest](https://jestjs.io/) unit test framework. All
 unit tests are located in the `./test` folder, and are organized into its own
 corresponding subfolders, as the same structure as in the `src` folder.
-
-## Resources
-
-TBD

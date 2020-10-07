@@ -29,8 +29,8 @@ const Connector = require('./connector');
  * store. This connector works together with `src/helpers/node-helper.js`.
  */
 class CSVConnector extends Connector {
-  constructor(config, apiHelper) {
-    super(config, apiHelper);
+  constructor(config, apiHandler, envVars) {
+    super(config, apiHandler, envVars);
   }
 
   /**
@@ -197,7 +197,8 @@ class CSVConnector extends Connector {
    * @param {Object} options
    */
   appendResultList(newResults, options) {
-    let results = this.getResultList();
+    options = options || {};
+    let results = options.overrideResults ? [] : this.getResultList();
 
     if (this.debug) {
       console.log(`Appending ${newResults.length} results to the existing ` +

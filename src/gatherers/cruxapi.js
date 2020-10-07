@@ -29,7 +29,7 @@ class CrUXAPIGatherer extends Gatherer {
     assert(apiHelper, 'Parameter apiHelper is missing.');
 
     this.runApiEndpoint = 'https://chromeuxreport.googleapis.com/v1/records:queryRecord';
-    this.apiKey = envVars['cruxApiKey'];
+    this.apiKey = envVars['CRUX_APIKEY'] || envVars['cruxApiKey'];
     this.apiHelper = apiHelper;
 
     // TODO: Metadata keys should be standardized.

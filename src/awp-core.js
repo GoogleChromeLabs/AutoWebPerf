@@ -67,8 +67,6 @@ class AutoWebPerf {
     assert(awpConfig.results, 'awpConfig.results is missing.');
 
     this.awpConfig = awpConfig;
-    this.appendResults = this.awpConfig.appendResults || false;
-
     awpConfig.envVars = awpConfig.envVars || {};
 
     // Selected gatherer names, e.g. ['webpagetest', 'psi']
@@ -115,7 +113,7 @@ class AutoWebPerf {
       let testsConnector = this.getConnector(awpConfig.tests.connector);
       let resultsConnector = this.getConnector(awpConfig.results.connector);
       this.connector = new MultiConnector(awpConfig, this.apiHandler,
-          testsConnector, resultsConnector);
+          this.envVars, testsConnector, resultsConnector);
     }
 
     // Note that API Keys used by Gatherers are expected to be loaded as envVars
@@ -213,7 +211,7 @@ class AutoWebPerf {
         break;
     }
 
-    return new ConnectorClass(connectorConfig, this.apiHandler);
+    return new ConnectorClass(connectorConfig, this.apiHandler, this.envVars);
   }
 
   /**

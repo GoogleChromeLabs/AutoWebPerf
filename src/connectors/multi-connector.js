@@ -24,8 +24,8 @@ const Connector = require('./connector');
  * store. This connector works together with `src/helpers/node-helper.js`.
  */
 class MultiConnector extends Connector {
-  constructor(config, apiHandler, testsConnector, resultsConnector) {
-    super(config, apiHandler);
+  constructor(config, apiHandler, envVars, testsConnector, resultsConnector) {
+    super(config, apiHandler, envVars);
     this.apiHandler = apiHandler;
 
     this.testsConnector = testsConnector;
