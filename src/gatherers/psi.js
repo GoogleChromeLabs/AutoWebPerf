@@ -103,7 +103,7 @@ class PSIGatherer extends Gatherer {
   run(test, options) {
     assert(test, 'Parameter test is missing.');
     options = options || {};
-    let settings = test.psi.settings;
+    let settings = test.psi.settings || {};
     let params = {
       'url': encodeURIComponent(test.url),
       'key': this.apiKey || '',
