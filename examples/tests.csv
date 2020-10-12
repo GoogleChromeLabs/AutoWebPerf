@@ -1,2 +1,2 @@
-label,url,psi.settings.strategy
-web.dev,https://web.dev,mobile
+label,url,recurring.frequency,recurring.nextTriggerTimestamp,psi.settings.locale,psi.settings.strategy
+web.dev,https://web.dev,Daily,1602561756780,en-GB,mobile
