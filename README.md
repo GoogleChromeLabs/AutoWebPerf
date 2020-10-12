@@ -1,5 +1,10 @@
 # AutoWebPerf (AWP)
 
+<p align="left">
+  <img src="https://i.imgur.com/f87A9xi.png" width="200" alt="quicklink">
+</p>
+
+
 > AutoWebPerf provides a flexible and scalable framework for running web
 performance audits with arbitrary audit tools like WebPageTest and
 PageSpeedInsights. This library enables developers to collect metrics
