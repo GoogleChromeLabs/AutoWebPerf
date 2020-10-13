@@ -206,8 +206,11 @@ class AutoWebPerf {
         break;
 
       default:
-        throw new Error(
-            `Connector "${name}" is not supported.`);
+        try {
+          ConnectorClass = require(`./connectors/${name}-connector`);
+        } catch (e) {
+          throw new Error(`Unable to load connector: ./connectors/${name}-connector`);
+        }
         break;
     }
 
@@ -252,7 +255,12 @@ class AutoWebPerf {
           break;
 
         default:
-          throw new Error(`Gatherer ${name} is not supported.`);
+          try {
+            GathererClass = require('./gatherers/' + name);
+          } catch (e) {
+            console.error(e);
+            throw new Error(`Unable to load gatherer: ./gatherers/${name}`);
+          }
           break;
       }
       this.gatherers[name] = new GathererClass(gathererConfig, this.envVars,
@@ -279,8 +287,7 @@ class AutoWebPerf {
     let extResponse, overallErrors = [];
 
     let tests = this.connector.getTestList(options);
-    this.logDebug(`AutoWebPerf::run with ${tests.length} tests`);
-    this.logDebug(tests);
+    console.log(`Run with ${tests.length} test(s)`);
 
     // Before all runs.
     extResponse = this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
@@ -354,8 +361,7 @@ class AutoWebPerf {
     overallErrors = overallErrors.concat(extResponse.errors);
 
     if (options.activateOnly) {
-      this.logDebug(`AutoWebPerf::recurring with ${tests.length} tests, ` +
-          `activate only.`);
+      console.log(`Run recurring with ${tests.length} test(s), activate only.`);
 
       // Update next trigger timestamp only.
       tests.forEach(test => {
@@ -384,9 +390,7 @@ class AutoWebPerf {
             (!recurring.nextTriggerTimestamp ||
             recurring.nextTriggerTimestamp <= nowtime);
       });
-
-      this.logDebug(`AutoWebPerf::recurring with ${tests.length} tests`);
-      this.logDebug(tests);
+      console.log(`Run recurring with ${tests.length} test(s).`);
 
       // Run tests and updates next trigger timestamp.
       newResults = await this.runTests(tests, options);
@@ -450,9 +454,7 @@ class AutoWebPerf {
         return result.status === Status.SUBMITTED;
       });
     }
-
-    this.logDebug('AutoWebPerf::retrieve, results.length=' + results.length);
-    this.logDebug(results);
+    console.log(`Retrieve ${results.length} result(s).`);
 
     // FIXME: Add batch gathering support.
 
