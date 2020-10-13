@@ -280,6 +280,7 @@ class AutoWebPerf {
 
     let tests = this.connector.getTestList(options);
     this.logDebug(`AutoWebPerf::run with ${tests.length} tests`);
+    this.logDebug(tests);
 
     // Before all runs.
     extResponse = this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
@@ -364,11 +365,8 @@ class AutoWebPerf {
           result: null,
         }, options);
 
-        let recurring = test.recurring;
-        if (recurring.frequency !== recurring.activatedFrequency) {
-          this.logDebug('AutoWebPerf::recurring with activateOnly.');
-          this.updateNextTriggerTimestamp(test);
-        }
+        this.logDebug('AutoWebPerf::recurring with activateOnly.');
+        this.updateNextTriggerTimestamp(test);
 
         // After each run with empty result.
         this.runExtensions(extensions, 'afterRun', {
@@ -388,6 +386,7 @@ class AutoWebPerf {
       });
 
       this.logDebug(`AutoWebPerf::recurring with ${tests.length} tests`);
+      this.logDebug(tests);
 
       // Run tests and updates next trigger timestamp.
       newResults = await this.runTests(tests, options);
@@ -446,13 +445,14 @@ class AutoWebPerf {
     overallErrors = overallErrors.concat(extResponse.errors);
 
     // Default filter for penging results only.
-    if (!options.filters) {
+    if (!options.filters || options.filters.length === 0) {
       results = results.filter(result => {
-        return result.status !== Status.RETRIEVED;
+        return result.status === Status.SUBMITTED;
       });
     }
 
-    this.logDebug('AutoWebPerf::retrieve, results.length=\n', results.length);
+    this.logDebug('AutoWebPerf::retrieve, results.length=' + results.length);
+    this.logDebug(results);
 
     // FIXME: Add batch gathering support.
 
@@ -846,34 +846,38 @@ class AutoWebPerf {
    * @param {object} test Test object to run.
    */
   updateNextTriggerTimestamp(test) {
+    if (!test.recurring) return;
+
     let nowtime = Date.now();
-    let recurring = test.recurring;
-    let offset = FrequencyInMinutes[recurring.frequency.toUpperCase()];
-    recurring.nextTriggerTimestamp = offset ? nowtime + offset : '';
-    recurring.activatedFrequency = recurring.frequency;
+    let frequency = (test.recurring || {}).frequency;
+    let offset = FrequencyInMinutes[frequency.toUpperCase()];
+    test.recurring.nextTriggerTimestamp = offset ? nowtime + offset : '';
   }
 
   /**
-   * Update overall errors to a Result.
-   * @param {object} result Result object.
+   * Get overall errors from a Result.
+   * @param {Array<object>} errors Overall error array.
    */
   getOverallErrors(result) {
-    let errors = [];
+    let overallErrors = [];
 
     // Collect errors from all gatherers.
     this.gathererNames.forEach(gathererName => {
       if (!result[gathererName]) return;
 
+      let errors = result[gathererName].errors || [];
+      if (!Array.isArray(errors)) errors = [errors];
+
       // Add data source prefix to all error messages.
-      (result[gathererName].errors || []).forEach(error => {
-        try {
-          errors.push(`[${gathererName}] ` + (error.message || error));
-        } catch (e) {
-          errors.push(`[${gathererName}] ` + error);
+      (errors || []).forEach(error => {
+        if (error.message) {
+          overallErrors.push(`[${gathererName}] ` + error.message);
+        } else {
+          overallErrors.push(`[${gathererName}] ` + error);
         }
       });
     });
-    return errors.filter(e => e);
+    return overallErrors.filter(e => e);
   }
 
   /**

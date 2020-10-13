@@ -45,7 +45,10 @@ class CSVConnector extends Connector {
 
     if (fs.existsSync(filename)) {
       let fileContent = fs.readFileSync(filename);
-      let data = parse(fileContent, {columns: true});
+      let data = parse(fileContent, {
+        columns: true,
+        relax_column_count: true,
+      });
       return this.convertJson(data);
 
     } else {
@@ -62,6 +65,11 @@ class CSVConnector extends Connector {
       console.log('writing to csv file: ' + filename);
     }
 
+    // Remove csv-specific metadata.
+    data.forEach(item => {
+      delete item.csv;
+    });
+    
     jsonexport(data, function(err, csv){
       if (err) {
         throw new Error(err);
@@ -121,8 +129,7 @@ class CSVConnector extends Connector {
    * @return {Object} EnvVars object.
    */
   getEnvVars() {
-    // FIXME: CSV Connector doesn't support embedded EnvVars with the tests list.
-    return {};
+    return this.envVars;
   }
 
   /**
@@ -167,7 +174,7 @@ class CSVConnector extends Connector {
       index++;
     })
 
-    this.writeCsv(this.testsPath, tests);
+    this.writeCsv(this.testsPath, testsToUpdate);
 
     // Reset the tests cache.
     this.tests = null;
