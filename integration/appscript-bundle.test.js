@@ -62,7 +62,7 @@ describe('AWP bundle for AppScript', () => {
         connector: 'appscript',
       },
       helper: 'appscript',
-      gatherers: ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'],
+      gatherers: [],
       extensions: [
         'budgets',
         'appscript',
@@ -283,6 +283,7 @@ describe('AWP bundle for AppScript', () => {
     await awp.run({
       filters: ['selected'],
       runByBatch: true, // Mandatory for Cruxbigquery gatherer.
+      gatherer: 'cruxbigquery',
       appscript: {
         testsTab: 'Tests-1',
         resultsTab: 'Results-1',
@@ -291,6 +292,8 @@ describe('AWP bundle for AppScript', () => {
     });
 
     resultsData = fakeSheets['Results-1'].fakeData;
+
+    console.log(resultsData);
     expect(resultsData.length).toEqual(6);
     expect(resultsData[3][1]).toBe('https://example.com');
     expect(resultsData[3][2]).toBe('mobile');

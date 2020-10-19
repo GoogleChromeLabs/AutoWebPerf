@@ -1,23 +1,23 @@
 {
   "envVars": {
-    "gcpKeyFilePath": "tmp/gcp-service-account.json",
-    "gcpProjectId": "YOUR_GCP_PROJECT_ID"
+    "GCP_KEYFILE_PATH": "tmp/gcp-service-account.json",
+    "GCP_PROJECT_ID": "YOUR_GCP_PROJECT_ID"
   },
   "tests": [
     {
       "label":"Web.dev no Protocol",
       "origin": "web.dev",
-      "cruxbigquery": {}
+      "gatherer": "cruxbigquery"
     },
     {
       "label":"Web.dev Correct",
       "origin": "https://web.dev",
-      "cruxbigquery": {}
+      "gatherer": "cruxbigquery"
     },
     {
       "label":"Google Correct",
       "origin": "https://www.google.com",
-      "cruxbigquery": {}
+      "gatherer": "cruxbigquery"
     }
   ]
 }

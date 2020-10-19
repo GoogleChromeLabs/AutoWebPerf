@@ -9,6 +9,7 @@
       "createdTimestamp": 1599534225837,
       "modifiedTimestamp": 1599534225837,
       "errors": [],
+      "gatherer": "psi",
       "psi": {
         "status": "Retrieved",
         "statusText": "Success",

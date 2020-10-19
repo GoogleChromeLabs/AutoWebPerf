@@ -22,16 +22,16 @@ const {Metrics} = require('../common/metrics');
 const Gatherer = require('./gatherer');
 
 class PSIGatherer extends Gatherer {
-  constructor(config, envVars, apiHelper) {
+  constructor(config, envVars, apiHandler) {
     super();
     assert(config, 'Parameter config is missing.');
-    assert(envVars, 'Parameter apiHelper is missing.');
-    assert(apiHelper, 'Parameter apiHelper is missing.');
+    assert(envVars, 'Parameter apiHandler is missing.');
+    assert(apiHandler, 'Parameter apiHandler is missing.');
 
     this.runApiEndpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
     this.resultApiEndpoint = 'https://www.googleapis.com/pagespeedonline/v5/runPagespeed';
     this.apiKey = envVars.PSI_APIKEY || envVars.psiApiKey;
-    this.apiHelper = apiHelper;
+    this.apiHandler = apiHandler;
 
     // TODO: Metadata keys should be standardized.
     this.metadataMap = {
@@ -103,7 +103,8 @@ class PSIGatherer extends Gatherer {
   run(test, options) {
     assert(test, 'Parameter test is missing.');
     options = options || {};
-    let settings = test.psi.settings;
+    let psiConfig = test.psi || {};
+    let settings = psiConfig.settings || {};
     let params = {
       'url': encodeURIComponent(test.url),
       'key': this.apiKey || '',
@@ -133,7 +134,7 @@ class PSIGatherer extends Gatherer {
 
     } else {
       try {
-        response = this.apiHelper.fetch(url);
+        response = this.apiHandler.fetch(url);
       } catch (e) {
         return {
           status: Status.ERROR,
@@ -207,7 +208,7 @@ class PSIGatherer extends Gatherer {
       return {
         status: Status.RETRIEVED,
         statusText: 'Success',
-        settings: test.psi.settings,
+        settings: settings,
         metadata: metadata,
         metrics: metrics.toObject() || {},
         errors: errors,
