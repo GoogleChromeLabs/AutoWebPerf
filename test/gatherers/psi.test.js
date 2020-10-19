@@ -156,4 +156,39 @@ describe('PSIGatherer unit test', () => {
     })
     expect(notSupported).toEqual([]);
   });
+
+  it('parses bundle size details', async () => {
+    let response, fakeResponse = {};
+
+    let test = {
+      selected: true,
+      label: "YT",
+      url: "https://www.youtube.com",
+      psi: {
+        settings: {
+          locale: "en-GB",
+          strategy: "mobile"
+        }
+      }
+    };
+
+    setObject(fakeResponse,
+      'lighthouseResult.audits.render-blocking-resources.details.items[0].totalBytes',
+      100);
+    setObject(fakeResponse,
+      'lighthouseResult.audits.render-blocking-resources.details.items[1].totalBytes',
+      250);  
+    psiGatherer.fakeRunResponse = () => {
+        return fakeResponse;
+      };
+    response = psiGatherer.run(test, {} /* options */);
+    expect(response.metrics.RenderBlockingResources).toEqual(350);
+
+    // Handles when the render-blocking-resources is not defined.
+    fakeResponse = {};
+    setObject(fakeResponse, 'lighthouseResult.audits', {});
+    response = psiGatherer.run(test, {} /* options */);
+    expect(response.metrics).toEqual({});
+    expect(response.metrics.RenderBlockingResources).toEqual(undefined);
+  });
 });

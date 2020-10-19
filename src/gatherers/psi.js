@@ -172,7 +172,8 @@ class PSIGatherer extends Gatherer {
         let blockingResourceSize = 0;
         const blockingResources = json.lighthouseResult.audits['render-blocking-resources'];
         if (blockingResources) {
-          blockingResources.details.items.forEach((br) => {
+          let detailedItems = (blockingResources.details || {}).items || [];
+          detailedItems.forEach((br) => {
             blockingResourceSize += br.totalBytes;
           });
           metrics.set('RenderBlockingResources', blockingResourceSize);
