@@ -19,10 +19,10 @@ class Gatherer {
    * constructor
    * @param  {object} config The config object specific for the gatherer.
    * @param  {object} envVars The object of all environment variables.
-   * @param  {object} apiHelper API helper instance.
+   * @param  {object} apiHandler API handler instance.
    * @param  {object} options Options object.
    */
-  constructor(config, envVars, apiHelper, options) {}
+  constructor(config, envVars, apiHandler, options) {}
 
   /**
    * Run a single Test.

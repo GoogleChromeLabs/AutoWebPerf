@@ -128,6 +128,7 @@ let fakeTests = [
       frequency: 'Daily',
       nextTriggerTimestamp: null,
     },
+    gatherer: 'webpagetest',
     webpagetest: {
       settings: {
         connection: '4G',
@@ -146,6 +147,7 @@ let fakeTests = [
       frequency: null,
       nextTriggerTimestamp: null,
     },
+    gatherer: 'webpagetest',
     webpagetest: {
       settings: {
         connection: '3G',
@@ -164,6 +166,7 @@ let fakeTests = [
       frequency: 'Daily',
       nextTriggerTimestamp: null,
     },
+    gatherer: 'webpagetest',
     webpagetest: {
       settings: {
         connection: '3G',

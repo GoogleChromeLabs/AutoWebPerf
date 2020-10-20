@@ -109,7 +109,7 @@ async function begin() {
   let overrideResults = argv['override-results'];
   let gatherers = argv['gatherers'] ? argv['gatherers'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
-  let runByBatch = argv['runByBatch'] ?  true : false;
+  let runByBatch = argv['batch-mode'] ?  true : false;
   // let envVars = parseVars(argv['envVars']);
   let debug = argv['debug'];
   let verbose = argv['verbose'];
@@ -123,7 +123,7 @@ async function begin() {
   });
 
   // Assert mandatory parameters
-  if (!action) {
+  if (!action || !testsPath || !resultsPath) {
     printUsage();
     return;
   }

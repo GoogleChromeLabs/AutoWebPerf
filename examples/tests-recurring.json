@@ -5,15 +5,9 @@
       "url": "https://web.dev",
       "recurring": {
         "frequency": "Daily",
-        "nextTriggerTimestamp": 1599692305567,
-        "activatedFrequency": "Daily"
+        "nextTriggerTimestamp": 1599692305567
       },
-      "psi": {
-        "settings": {
-          "locale": "en-GB",
-          "strategy": "mobile"
-        }
-      },
+      "gatherer": "psi",
       "errors": []
     }
   ]

@@ -31,6 +31,7 @@ let generateFakeTests = function(amount, options) {
       id: 'test-' + count,
       url: 'url-' + count,
       label: 'label-' + count,
+      gatherer: 'fake',
       fake: {
         settings: {
           connection: '4G',
@@ -61,6 +62,7 @@ let generateFakeResults = function(amount, options) {
       url: 'url-' + count,
       label: 'label-' + count,
       status: Status.SUBMITTED,
+      gatherer: 'fake',
       fake: {
         status: Status.SUBMITTED,
         settings: {
@@ -191,7 +193,6 @@ describe('AutoWebPerf with fake modules', () => {
         path: 'fake/path'
       },
       helper: 'fake',
-      gatherers: ['fake'],
     };
     awp = new AutoWebPerf(awpConfig);
     awp.connector = new FakeConnector();
@@ -254,6 +255,19 @@ describe('AutoWebPerf with fake modules', () => {
     let expectedResults = generateFakeResults(1);
     expectedResults[0].type = 'Recurring';
     expect(awp.getResults()).toEqual(expectedResults);
+  });
+
+  it('retrieves non-complete results.', async () => {
+    awp.connector.tests = generateFakeTests(1);
+    await awp.run();
+    await awp.retrieve();
+
+    cleanFakeResults(awp.connector.results);
+    let expectedResults = generateFakeResults(1, {status: Status.RETRIEVED});
+
+    let results = awp.getResults();
+    expect(results).toEqual(expectedResults);
+    expect(results[0].fake.metrics.SpeedIndex).toEqual(500);
   });
 
   it('retrieves all non-complete results.', async () => {
@@ -425,85 +439,79 @@ describe('AutoWebPerf with fake modules', () => {
       psiApiKey: 'TEST_APIKEY',
       gcpProjectId: 'TEST_PROJECTID'
     };
-    awp.gathererNames = ['fake1', 'fake2', 'fake3'];
 
     // When all gatherers return submitted.
     awp.connector.tests = generateFakeTests(1);
-    awp.connector.tests[0].fake1 = {};
-    awp.connector.tests[0].fake2 = {};
-    awp.connector.tests[0].fake3 = {};
-    fakeGatherer1 = genGatherer(Status.SUBMITTED);
-    fakeGatherer2 = genGatherer(Status.SUBMITTED);
-    fakeGatherer3 = genGatherer(Status.SUBMITTED);
+    awp.connector.tests[0].gatherer = ['fake1', 'fake2', 'fake3'];
     awp.gatherers = {
-      fake1: fakeGatherer1,
-      fake2: fakeGatherer2,
-      fake3: fakeGatherer3,
+      fake1: genGatherer(Status.SUBMITTED),
+      fake2: genGatherer(Status.SUBMITTED),
+      fake3: genGatherer(Status.SUBMITTED),
     }
     await awp.run();
 
     result = awp.getResults()[0];
+    expect(result.fake1).toBeDefined();
+    expect(result.fake2).toBeDefined();
+    expect(result.fake3).toBeDefined();
     expect(result.status).toEqual(Status.SUBMITTED);
 
     // When some gatherers return submitted.
     awp.connector.tests = generateFakeTests(1);
-    awp.connector.tests[0].fake1 = {};
-    awp.connector.tests[0].fake2 = {};
-    awp.connector.tests[0].fake3 = {};
-    fakeGatherer1 = genGatherer(Status.RETRIEVED);
-    fakeGatherer2 = genGatherer(Status.RETRIEVED);
-    fakeGatherer3 = genGatherer(Status.SUBMITTED);
+    awp.connector.tests[0].gatherer = ['fake1', 'fake2', 'fake3'];
     awp.gatherers = {
-      fake1: fakeGatherer1,
-      fake2: fakeGatherer2,
-      fake3: fakeGatherer3,
+      fake1: genGatherer(Status.RETRIEVED),
+      fake2: genGatherer(Status.RETRIEVED),
+      fake3: genGatherer(Status.SUBMITTED),
     }
     await awp.run();
 
     result = awp.getResults()[1];
+    expect(result.fake1).toBeDefined();
+    expect(result.fake2).toBeDefined();
+    expect(result.fake3).toBeDefined();
     expect(result.status).toEqual(Status.SUBMITTED);
 
     // When all gatherers return retrieved.
     awp.connector.tests = generateFakeTests(1);
-    awp.connector.tests[0].fake1 = {};
-    awp.connector.tests[0].fake2 = {};
-    awp.connector.tests[0].fake3 = {};
-    fakeGatherer1 = genGatherer(Status.RETRIEVED);
-    fakeGatherer2 = genGatherer(Status.RETRIEVED);
-    fakeGatherer3 = genGatherer(Status.RETRIEVED);
+    awp.connector.tests[0].gatherer = ['fake1', 'fake2', 'fake3'];
     awp.gatherers = {
-      fake1: fakeGatherer1,
-      fake2: fakeGatherer2,
-      fake3: fakeGatherer3,
+      fake1: genGatherer(Status.RETRIEVED),
+      fake2: genGatherer(Status.RETRIEVED),
+      fake3: genGatherer(Status.RETRIEVED),
     }
     await awp.run();
 
     result = awp.getResults()[2];
+    expect(result.fake1).toBeDefined();
+    expect(result.fake2).toBeDefined();
+    expect(result.fake3).toBeDefined();
     expect(result.status).toEqual(Status.RETRIEVED);
 
     // When any gatherer returns error.
     awp.connector.tests = generateFakeTests(1);
-    awp.connector.tests[0].fake1 = {};
-    awp.connector.tests[0].fake2 = {};
-    awp.connector.tests[0].fake3 = {};
-    fakeGatherer1 = genGatherer(Status.RETRIEVED);
-    fakeGatherer2 = genGatherer(Status.ERROR);
-    fakeGatherer3 = genGatherer(Status.RETRIEVED);
+    awp.connector.tests[0].gatherer = ['fake1', 'fake2', 'fake3'];
     awp.gatherers = {
-      fake1: fakeGatherer1,
-      fake2: fakeGatherer2,
-      fake3: fakeGatherer3,
+      fake1: genGatherer(Status.RETRIEVED),
+      fake2: genGatherer(Status.ERROR),
+      fake3: genGatherer(Status.RETRIEVED),
     }
     await awp.run();
 
     result = awp.getResults()[3];
+    expect(result.fake1).toBeDefined();
+    expect(result.fake2).toBeDefined();
+    expect(result.fake3).toBeDefined();
     expect(result.status).toEqual(Status.ERROR);
   });
 
   it('gets overall errors from all gatherers.', () => {
+    awp.overallGathererNames = ['fake'];
+
     let result, errors;
     result = {
       url: 'example.com',
+      gatherer: 'fake',
       fake: {
         status: Status.ERROR,
         errors: [new Error('Fake error')],

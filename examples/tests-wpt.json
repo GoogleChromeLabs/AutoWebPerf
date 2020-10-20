@@ -3,21 +3,7 @@
     {
       "label": "Think With Google",
       "url": "https://thinkwithgoogle.com",
-      "webpagetest": {
-        "settings": {
-          "locationId": "Dulles_MotoG",
-          "device": "Pixel",
-          "connection": "4G",
-          "runs": 1,
-          "repeatView": true,
-          "timeline": true,
-          "block": null,
-          "script": null
-        },
-        "metadata": {
-          "lastTestId": "200601_X6_efeb625266aacabaece9ffe9d4bcd207"
-        }
-      }
+      "gatherer": "webpagetest"
     }
   ]
 }

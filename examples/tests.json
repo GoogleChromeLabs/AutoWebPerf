@@ -3,12 +3,7 @@
     {
       "label": "web.dev",
       "url": "https://web.dev",
-      "psi": {
-        "settings": {
-          "locale": "en-GB",
-          "strategy": "mobile"
-        }
-      }
+      "gatherer": "psi"
     }
   ]
 }

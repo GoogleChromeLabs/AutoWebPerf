@@ -22,15 +22,15 @@ const {Metrics} = require('../common/metrics');
 const Gatherer = require('./gatherer');
 
 class CrUXAPIGatherer extends Gatherer {
-  constructor(config, envVars, apiHelper) {
+  constructor(config, envVars, apiHandler) {
     super();
     assert(config, 'Parameter config is missing.');
-    assert(envVars, 'Parameter apiHelper is missing.');
-    assert(apiHelper, 'Parameter apiHelper is missing.');
+    assert(envVars, 'Parameter apiHandler is missing.');
+    assert(apiHandler, 'Parameter apiHandler is missing.');
 
     this.runApiEndpoint = 'https://chromeuxreport.googleapis.com/v1/records:queryRecord';
     this.apiKey = envVars['CRUX_APIKEY'] || envVars['cruxApiKey'];
-    this.apiHelper = apiHelper;
+    this.apiHandler = apiHandler;
 
     // TODO: Metadata keys should be standardized.
     this.metadataMap = {
@@ -53,8 +53,8 @@ class CrUXAPIGatherer extends Gatherer {
 
     if (options.debug) console.log(test);
 
-    let gathererData = test.cruxapi || {};
-    let settings = gathererData.settings || {};
+    let cruxConfig = test.cruxapi || {};
+    let settings = cruxConfig.settings || {};
 
     let apiJsonOutput = {},
       statusText = "",
@@ -86,7 +86,7 @@ class CrUXAPIGatherer extends Gatherer {
         console.log(JSON.stringify(apiOptions, null, 2));
       }
 
-      let response = this.apiHelper.post(url, apiOptions);
+      let response = this.apiHandler.post(url, apiOptions);
       if (response.statusCode === 200) {
         apiJsonOutput = JSON.parse(response.body);
 
@@ -95,7 +95,7 @@ class CrUXAPIGatherer extends Gatherer {
 
         try {
           let errorBody = JSON.parse(response.error.body);
-          errorMsg = errorBody.error.message;
+          errorMsg = `${errorBody.error.message} (${test.url})`;
         } catch (e) {
           // do nothing.
         }
@@ -131,7 +131,7 @@ class CrUXAPIGatherer extends Gatherer {
       status: status,
       statusText: statusText,
       metrics: metrics.toObject() || {},
-      settings: gathererData.settings,
+      settings: cruxConfig.settings,
       errors: errors,
     }
   }

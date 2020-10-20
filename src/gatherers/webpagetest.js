@@ -27,14 +27,14 @@ const PUBLIC_RUN_ENDPOINT = 'https://webpagetest.org/runtest.php';
 const PUBLIC_RESULT_ENDPOINT = 'https://webpagetest.org/jsonResult.php';
 
 class WebPageTestGatherer extends Gatherer {
-  constructor(config, envVars, apiHelper, options) {
+  constructor(config, envVars, apiHandler, options) {
     super();
     assert(config, 'Parameter config is missing.');
-    assert(apiHelper, 'Parameter apiHelper is missing.');
+    assert(apiHandler, 'Parameter apiHandler is missing.');
 
     envVars = envVars || {};
     options = options || {};
-    this.apiHelper = apiHelper;
+    this.apiHandler = apiHandler;
     this.debug = options.debug;
 
     // Get endpoints for run and result actions. Override these endpoints when
@@ -144,11 +144,12 @@ class WebPageTestGatherer extends Gatherer {
     assert(test.url, 'Parameter test.url is missing.');
     options = options || {};
 
-    let gathererData = test.webpagetest || {};
-    let settings = gathererData.settings;
-    assert(settings, 'webpagetest.settings is not defined.');
+    let wptConfig = test.webpagetest || {};
+    let settings = wptConfig.settings || {};
+    let locationId = settings.locationId || 'Dulles_MotoG';
+    let connection = settings.connection || '4G';
 
-    let location = `${settings.locationId}.${settings.connection}`;
+    let location = `${locationId}.${connection}`;
     let params = {
       'label': encodeURIComponent(test.label || test.url),
       'url': encodeURIComponent(test.url),
@@ -166,7 +167,7 @@ class WebPageTestGatherer extends Gatherer {
       'mobileDevice': settings.device || '',
     }
 
-    let customParemeters = test.webpagetest.settings.customParameters;
+    let customParemeters = settings.customParameters;
     if (customParemeters) {
       customParemeters.split(',').forEach(element => {
         let obj = element.split("=");
@@ -192,7 +193,7 @@ class WebPageTestGatherer extends Gatherer {
 
     } else {
       if (this.debug) console.log('WPTGatherer::run\n', url);
-      response = this.apiHelper.fetch(url);
+      response = this.apiHandler.fetch(url);
 
       if (this.debug) {
         console.log('WPTGatherer::run API response: \n', response);
@@ -202,8 +203,8 @@ class WebPageTestGatherer extends Gatherer {
         return {
           status: Status.ERROR,
           statusText: response.statusText,
-          settings: gathererData.settings,
-          metadata: gathererData.metadata,
+          settings: wptConfig.settings,
+          metadata: wptConfig.metadata,
           errors: [response.statusText],
         };
       }
@@ -290,21 +291,21 @@ class WebPageTestGatherer extends Gatherer {
   retrieve(result, options) {
     options = options || {};
     let errors = [];
-    let gathererData = result.webpagetest || {};
+    let wptConfig = result.webpagetest || {};
     let urlParams = [
-      'test=' + gathererData.metadata.testId,
+      'test=' + wptConfig.metadata.testId,
     ];
     let url = this.resultApiEndpoint + '?' + urlParams.join('&');
     if (this.debug) console.log('WPTGatherer::retrieve\n', url);
 
-    let response = this.apiHelper.fetch(url);
+    let response = this.apiHandler.fetch(url);
 
     if (response.statusCode >= 400) {
       return {
         status: Status.ERROR,
         statusText: response.statusText,
-        settings: gathererData.settings,
-        metadata: gathererData.metadata,
+        settings: wptConfig.settings,
+        metadata: wptConfig.metadata,
         metrics: {},
         errors: [response.statusText],
       };
@@ -386,8 +387,8 @@ class WebPageTestGatherer extends Gatherer {
     return {
       status: status,
       statusText: statusText,
-      settings: gathererData.settings,
-      metadata: gathererData.metadata,
+      settings: wptConfig.settings,
+      metadata: wptConfig.metadata,
       metrics: metrics.toObject() || {},
       errors: errors || [],
     };
