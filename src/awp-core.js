@@ -441,6 +441,50 @@ class AutoWebPerf {
   }
 
   /**
+   * Continuously run AWP for recurring tests and retrieve pending results.
+   * @param {object} options
+   * @return {object} Procssed Tests and Results.
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
+   */
+  async continue(options) {
+    options = options || {};
+    options.recurring = true;
+    let self = this;
+    let isRunning = false;
+
+    // Set timer interval as every 10 mins by default.
+    let timerInterval = options.timerInterval ? 
+        parseInt(options.timerInterval) : 60 * 10;
+
+    if (options.verbose) {
+      this.log(`Timer interval sets as ${timerInterval} seconds.`);
+    }
+
+    await self.recurring(options);
+
+    // Run contiuously.
+    return await new Promise(resolve => {
+      const interval = setInterval(async () => {
+        if (isRunning) return;
+
+        await self.recurring(options);
+        await self.retrieve(options);
+        isRunning = false;
+
+        if (options.verbose) {
+          self.log('Waiting for next timer triggered...');
+        }
+      }, timerInterval * 1000);
+    });
+  }
+
+  /**
    * Retrieve test result for all filtered Results.
    * @param  {object} options
    * @return {object} Procssed Results.
@@ -474,7 +518,7 @@ class AutoWebPerf {
         return result.status === Status.SUBMITTED;
       });
     }
-    console.log(`Retrieve ${results.length} result(s).`);
+    console.log(`Retrieving ${results.length} result(s).`);
 
     // FIXME: Add batch gathering support.
 
