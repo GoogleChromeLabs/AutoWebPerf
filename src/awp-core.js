@@ -200,6 +200,10 @@ class AutoWebPerf {
         ConnectorClass = require('./connectors/appscript-connector');
         break;
 
+      case 'sheet':
+        ConnectorClass = require ('./connectors/sheets-connector.js');
+        break;
+
       case 'fake':
         // Load dummy connector for testing purpose.
         ConnectorClass = require('./connectors/connector');
