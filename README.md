@@ -58,10 +58,11 @@ To run tests:
 ./awp run examples/tests.json output/results.json
 ```
 
-To run recurring tests and update the next trigger time:
+To continuously run recurring tests and update the next trigger time:
 ```
-./awp recurring examples/tests-recurring.json output/results.json
+./awp continue examples/tests-recurring.json output/results.json
 ```
+- Please note that `recurring.frequency` property is required for a recurring test.
 
 To run PageSpeedInsight tests with an [API Key](https://developers.google.com/speed/docs/insights/v5/get-started):
 ```
@@ -411,17 +412,8 @@ awp.retrieve({
   filters: ['status!=="Retrieved"'],
 });
 ```
-For more advanced usage of PatternFilter, please check out
+- For more advanced usage of PatternFilter, please check out
 `src/utils/pattern-filter.js` with more examples.
-
-
-To activate recurring tests without actually submitting. This will update the
-nextTriggerTimestamp in the Test objects only.
-```
-awp.recurring({
-  activateOnly: true  
-});
-```
 
 To run recurring tests:
 ```
