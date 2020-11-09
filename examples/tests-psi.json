@@ -3,6 +3,7 @@
     {
       "label": "YT",
       "url": "https://www.youtube.com",
+      "gatherer": "psi",
       "psi": {
         "settings": {
           "locale": "en-GB",

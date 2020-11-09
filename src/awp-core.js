@@ -21,6 +21,7 @@ const {Frequency, FrequencyInMinutes} = require('./common/frequency');
 const assert = require('./utils/assert');
 const {TestType} = require('./common/types');
 const MultiConnector = require('./connectors/multi-connector');
+const ApiHandler = require('./helpers/api-handler');
 
 /**
  * AutoWebPerf (AWP) main class.
@@ -30,7 +31,7 @@ const MultiConnector = require('./connectors/multi-connector');
  *   let awp = new AutoWebPerf({
  *     connector: 'JSON',
  *     helper: 'Node',
- *     dataSources: ['webpagetest'],
+ *     gathererNames: ['webpagetest'],
  *     extensions: extensions,
  *     json: { // Config for JSON connector.
  *       tests: argv['tests'],
@@ -46,9 +47,12 @@ class AutoWebPerf {
    *     for connetor, helpers, gatherers, and extension modules.
    *
    * Mandatory properties:
-   * - awpConfig.dataSources {Array<string>} The array of gatherer names.
+   * - awpConfig.gathererNames {Array<string>} The array of gatherer names.
    *     e.g. ['webpagetest', 'psi']
-   * - awpConfig.connector {string} Connector name. E.g. 'json'.
+   * - awpConfig.tests {object} Settings for tests including connector and path.
+   *     e.g. {'connector': 'json', 'path': '/path/to/tests.json'}
+   * - awpConfig.results {object} Settings for results including connector and path.
+   *     e.g. {'connector': 'json', 'path': '/path/to/results.json'}
    * - awpConfig.helper {string} Helper name. E.g. 'node'.
    *
    * Sub-configs:
@@ -68,10 +72,7 @@ class AutoWebPerf {
 
     this.awpConfig = awpConfig;
     awpConfig.envVars = awpConfig.envVars || {};
-
-    // Selected gatherer names, e.g. ['webpagetest', 'psi']
-    this.gathererNames = awpConfig.gatherers ||
-        ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'];
+    this.overallGathererNames = ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'];
 
     // Initialize helper. Use Node helper by default.
     awpConfig.helper = awpConfig.helper || 'node';
@@ -88,7 +89,9 @@ class AutoWebPerf {
         break;
 
       case 'fake':
-        // Do nothing. For testing purpose.
+        // Use a dummy ApiHandler for test purpose.
+        let ApiHandler = require('./helpers/api-handler');
+        this.apiHandler = new ApiHandler();
         break;
 
       default:
@@ -163,7 +166,7 @@ class AutoWebPerf {
       });
     }
 
-    // Initialize gatherers.
+    // Initialize overall gatherers from awpConfig.
     this.gatherers = {};
 
     // The frequency of when to write data back via a connector.
@@ -210,8 +213,11 @@ class AutoWebPerf {
         break;
 
       default:
-        throw new Error(
-            `Connector "${name}" is not supported.`);
+        try {
+          ConnectorClass = require(`./connectors/${name}-connector`);
+        } catch (e) {
+          throw new Error(`Unable to load connector: ./connectors/${name}-connector`);
+        }
         break;
     }
 
@@ -229,7 +235,7 @@ class AutoWebPerf {
       debug: this.debug,
     };
 
-    // FIXME: Remove the hardcoded require path without breaking RollUp bundle.
+    if (!name) return null;
     if (!this.gatherers[name]) {
       let GathererClass = null;
       let gathererConfig = this.awpConfig[name] || {};
@@ -252,17 +258,39 @@ class AutoWebPerf {
           break;
 
         case 'fake':
-          // Do nothing, for testing purpose.
+          // Return dummy gatherer for testing purpose.
+          GathererClass = require('./gatherers/gatherer');
           break;
 
         default:
-          throw new Error(`Gatherer ${name} is not supported.`);
+          try {
+            GathererClass = require('./gatherers/' + name);
+          } catch (e) {
+            console.error(e);
+            throw new Error(`Unable to load gatherer: ./gatherers/${name}`);
+          }
           break;
       }
       this.gatherers[name] = new GathererClass(gathererConfig, this.envVars,
           this.apiHandler, options);
     }
     return this.gatherers[name];
+  }
+
+  /**
+   * Parse the given gatherer name in a single string, comma-separated or
+   * array format, and return an array of gathererNames.
+   * @param {object} gathererName
+   * @return {Array<string>} Array of gatherer names. 
+   */
+  parseGathererNames(gathererName) {
+    if (!gathererName) return [];
+
+    if (Array.isArray(gathererName)) {
+      return gathererName;
+    } else {
+      return gathererName.split(',');
+    }
   }
 
   /**
@@ -283,8 +311,7 @@ class AutoWebPerf {
     let extResponse, overallErrors = [];
 
     let tests = this.connector.getTestList(options);
-    this.logDebug(`AutoWebPerf::run with ${tests.length} tests`);
-    this.logDebug(tests);
+    console.log(`Run with ${tests.length} test(s)`);
 
     // Before all runs.
     extResponse = this.runExtensions(extensions, 'beforeAllRuns', {tests: tests}, options);
@@ -358,8 +385,7 @@ class AutoWebPerf {
     overallErrors = overallErrors.concat(extResponse.errors);
 
     if (options.activateOnly) {
-      this.logDebug(`AutoWebPerf::recurring with ${tests.length} tests, ` +
-          `activate only.`);
+      console.log(`Run recurring with ${tests.length} test(s), activate only.`);
 
       // Update next trigger timestamp only.
       tests.forEach(test => {
@@ -388,9 +414,7 @@ class AutoWebPerf {
             (!recurring.nextTriggerTimestamp ||
             recurring.nextTriggerTimestamp <= nowtime);
       });
-
-      this.logDebug(`AutoWebPerf::recurring with ${tests.length} tests`);
-      this.logDebug(tests);
+      console.log(`Run recurring with ${tests.length} test(s).`);
 
       // Run tests and updates next trigger timestamp.
       newResults = await this.runTests(tests, options);
@@ -418,6 +442,50 @@ class AutoWebPerf {
       results: newResults,
       errors: overallErrors,
     };
+  }
+
+  /**
+   * Continuously run AWP for recurring tests and retrieve pending results.
+   * @param {object} options
+   * @return {object} Procssed Tests and Results.
+   *
+   * Available options:
+   * - filters {Array<string>}: Use `options.filters` to filter
+   *     tests that match conditions. See `src/utils/pattern-filter.js` for
+   *     more details.
+   * - verbose {boolean}: Whether to show verbose messages in terminal.
+   * - debug {boolean}: Whether to show debug messages in terminal.
+   */
+  async continue(options) {
+    options = options || {};
+    options.recurring = true;
+    let self = this;
+    let isRunning = false;
+
+    // Set timer interval as every 10 mins by default.
+    let timerInterval = options.timerInterval ? 
+        parseInt(options.timerInterval) : 60 * 10;
+
+    if (options.verbose) {
+      this.log(`Timer interval sets as ${timerInterval} seconds.`);
+    }
+
+    await self.recurring(options);
+
+    // Run contiuously.
+    return await new Promise(resolve => {
+      const interval = setInterval(async () => {
+        if (isRunning) return;
+
+        await self.recurring(options);
+        await self.retrieve(options);
+        isRunning = false;
+
+        if (options.verbose) {
+          self.log('Waiting for next timer triggered...');
+        }
+      }, timerInterval * 1000);
+    });
   }
 
   /**
@@ -454,9 +522,7 @@ class AutoWebPerf {
         return result.status === Status.SUBMITTED;
       });
     }
-
-    this.logDebug('AutoWebPerf::retrieve, results.length=' + results.length);
-    this.logDebug(results);
+    console.log(`Retrieving ${results.length} result(s).`);
 
     // FIXME: Add batch gathering support.
 
@@ -476,17 +542,18 @@ class AutoWebPerf {
       newResult.modifiedTimestamp = Date.now();
 
       // Interate through all gatherers.
-      this.gathererNames.forEach(dataSource => {
-        if (!result[dataSource]) return;
-        if (result[dataSource].status === Status.RETRIEVED) return;
+      let gathererNames = this.overallGathererNames.concat(
+          this.parseGathererNames(result.gatherer));
+      [...new Set(gathererNames)].forEach(gathererName => {
+        if (!result[gathererName]) return;
+        if (result[gathererName].status === Status.RETRIEVED) return;
 
-        let gatherer = this.getGatherer(dataSource);
-        let response = gatherer.retrieve(result, {debug: true});
-
+        let response = this.getGatherer(gathererName).retrieve(
+            result, {debug: true});
         statuses.push(response.status);
-        newResult[dataSource] = response;
+        newResult[gathererName] = response;
 
-        this.log(`Retrieve: ${dataSource} result: status=${response.status}`);
+        this.log(`Retrieve: ${gathererName} result: status=${response.status}`);
       });
 
       // Collect errors from all gatherers.
@@ -566,21 +633,24 @@ class AutoWebPerf {
     });
 
     if (options.runByBatch) {
-      // Run Tests with Data Sources that uses run batch mode.
+      // Run Tests with gatherers that uses run batch mode.
       // Note that run batch mode doesn't support batch update to the connector.
-      let testResultPairs = tests.map(test => {
-        return {
+      let gathererNames = [], testResultPairs = [];
+      tests.forEach(test => {
+        testResultPairs.push({
           test: test,
           result: this.createNewResult(test, options),
-        };
+        });
+        gathererNames = gathererNames.concat(this.parseGathererNames(test.gatherer));
       });
 
       // Run all gatherers.
-      for(const dataSource of this.gathererNames) {
-        await this.runGathererInBatch(tests, dataSource, options).then(responseList => {
+      gathererNames = gathererNames.concat(this.parseGathererNames(options.gatherer));
+      for(const gathererName of [...new Set(gathererNames)]) {
+        await this.runGathererInBatch(tests, gathererName, options).then(responseList => {
           if(responseList)
             for (let i = 0; i<testResultPairs.length; i++) {
-              testResultPairs[i].result[dataSource] = responseList[i];
+              testResultPairs[i].result[gathererName] = responseList[i];
             }
         });
       }
@@ -590,9 +660,9 @@ class AutoWebPerf {
         let result = pair.result;
 
         // Update the overall status.
-        let statuses = this.gathererNames.map(dataSource => {
-          return result[dataSource] ?
-              result[dataSource].status : Status.RETRIEVED;
+        let statuses = this.overallGathererNames.map(gathererName => {
+          return result[gathererName] ?
+              result[gathererName].status : Status.RETRIEVED;
         });
         result.status = this.getOverallStatus(statuses);
 
@@ -615,21 +685,21 @@ class AutoWebPerf {
       });
 
     } else {
-      // Run one test at a time and collect metrics from all data sources.
+      // Run one test at a time and collect metrics from all gatherers.
       tests.forEach(test => {
         let statuses = [];
 
         // Create a dummy Result.
         let newResult = this.createNewResult(test, options);
 
-        // Collect metrics from all data sources.
-        this.gathererNames.forEach(dataSource =>  {
-          if (!test[dataSource]) return;
-
-          let response = this.runGatherer(test, dataSource, options);
+        // Collect metrics from all gatherers.
+        let gathererNames = this.parseGathererNames(test.gatherer);
+        gathererNames = gathererNames.concat(this.parseGathererNames(options.gatherer));          
+        [...new Set(gathererNames)].forEach(gathererName =>  {
+          let response = this.runGatherer(test, gathererName, options);
           if (response) {
-            newResult[dataSource] = response;
-            statuses.push(newResult[dataSource].status);
+            newResult[gathererName] = response;
+            statuses.push(newResult[gathererName].status);
           }
         });
 
@@ -714,12 +784,11 @@ class AutoWebPerf {
    * - verbose {boolean}: Whether to show verbose messages in terminal.
    * - debug {boolean}: Whether to show debug messages in terminal.
    */
-  runGatherer(test, dataSource, options) {
+  runGatherer(test, gathererName, options) {
     options = options || {};
-    if (!test[dataSource]) return;
 
     try {
-      let gatherer = this.getGatherer(dataSource);
+      let gatherer = this.getGatherer(gathererName);
       let response = gatherer.run(test, options);
       return response;
 
@@ -737,15 +806,15 @@ class AutoWebPerf {
   /**
    * Run all gatherers and return a detailed response from a gatherer.
    * @param  {type} tests      description
-   * @param  {type} dataSource description
+   * @param  {type} gathererName description
    * @param  {type} options    description
    * @return {type}            description
    */
-  async runGathererInBatch(tests, dataSource, options) {
+  async runGathererInBatch(tests, gathererName, options) {
     let responseList = [];
 
     try {
-      let gatherer = this.getGatherer(dataSource);
+      let gatherer = this.getGatherer(gathererName);
 
       await gatherer.runBatchAsync(tests, options).then(res => {
         // If there's no response, it means that the specific gatherer doesn't
@@ -777,17 +846,20 @@ class AutoWebPerf {
   createNewResult(test, options) {
     let nowtime = Date.now();
 
-    return {
+    let newResult = {
       id: nowtime + '-' + test.url || test.origin,
       type: options.recurring ? TestType.RECURRING : TestType.SINGLE,
+      gatherer: test.gatherer,
       status: Status.SUBMITTED,
       label: test.label,
-      url: test.url,
-      origin: test.origin,
       createdTimestamp: nowtime,
       modifiedTimestamp: nowtime,
       errors: test.errors || [],
-    };
+    }
+    if (test.url) newResult.url = test.url;
+    if (test.origin) newResult.origin = test.origin;
+
+    return newResult;
   }
 
   /**
@@ -832,8 +904,8 @@ class AutoWebPerf {
    * @return {string} Overall status
    */
   getOverallStatus(statuses) {
-    // The overall status depends on the aggregation of all data sources.
-    // If all data sources returne retrieved, the overall status is retrieved.
+    // The overall status depends on the aggregation of all gatherers.
+    // If all gatherers returne retrieved, the overall status is retrieved.
     // If any of the data source return error, the overall status is error.
     // Otherwise, it's pending.
     if (statuses.filter(s => s === Status.RETRIEVED).length === statuses.length) {
@@ -866,7 +938,9 @@ class AutoWebPerf {
     let overallErrors = [];
 
     // Collect errors from all gatherers.
-    this.gathererNames.forEach(gathererName => {
+    let gathererNames = this.parseGathererNames(result.gatherer);
+    gathererNames = gathererNames.concat(this.overallGathererNames);
+    [...new Set(gathererNames)].forEach(gathererName => {
       if (!result[gathererName]) return;
 
       let errors = result[gathererName].errors || [];
@@ -874,7 +948,7 @@ class AutoWebPerf {
 
       // Add data source prefix to all error messages.
       (errors || []).forEach(error => {
-        if (error.message) {
+        if (error && error.message) {
           overallErrors.push(`[${gathererName}] ` + error.message);
         } else {
           overallErrors.push(`[${gathererName}] ` + error);

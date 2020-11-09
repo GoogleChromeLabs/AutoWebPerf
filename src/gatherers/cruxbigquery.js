@@ -23,13 +23,13 @@ const {Metrics} = require('../common/metrics');
 const {BigQueryHandler} = require('../helpers/gcp-handler');
 
 class CrUXBigQueryGatherer extends Gatherer {
-  constructor(config, envVars, apiHelper, options) {
+  constructor(config, envVars, apiHandler, options) {
     super();
     assert(config, 'Parameter config is missing.');
-    assert(apiHelper, 'Parameter apiHelper is missing.');
+    assert(apiHandler, 'Parameter apiHandler is missing.');
 
-    this.gcpProjectId = envVars.gcpProjectId || envVars.GCP_PROJECT_ID;
-    this.keyFilename = envVars.gcpKeyFilePath || envVars.GCP_KEYFILE_PATH;
+    this.gcpProjectId = envVars.GCP_PROJECT_ID || envVars.gcpProjectId;
+    this.keyFilename = envVars.GCP_KEYFILE_PATH || envVars.gcpKeyFilePath;
 
     assert(this.gcpProjectId, 'gcpProjectId is not defined in Environment ' +
         'Variables');

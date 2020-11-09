@@ -24,10 +24,10 @@ const printUsage = () => {
 Usage: ./awp <ACTION> <TESTS> <RESULTS> [OPTIONS...]
 
 Available Actions:
-  run\t\tExecute audits from the test list.
-  recurringActivate\tUpdate test frequency and timestamps.
-  recurring\t\tExecute recurring audits from the test list.
-  retrieve\tRetrieve test results from the results list.
+  run\t\tExecute audits in a test list.
+  continue\t\tContinuously execute recurring audits in a test list.
+  recurring\t\tExecute recurring audits in a test list.
+  retrieve\tRetrieve pending results in a results list.
 
 Mandatory arguments:
   tests\t\tThe path to the tests list in JSON. E.g. examples/tests.json. To specify a different connector, use <connector>:<path>. E.g. csv:example/tests.csv.
@@ -38,6 +38,7 @@ Options (*denotes default value if not passed in):
   extensions\t\tComma-separated list of extensions. Default: null.
   config\t\tLoad a custom awpConfig. See examples/awp-config.json for example.
   override-results\tWhether to append results to the existing result list. Default: false.
+  timer-interval\tSet the timer interval for executing recurring continuously.
   verbose\t\tPrint out verbose logs.
   debug\t\tPrint out debug console logs.
 
@@ -51,11 +52,8 @@ Examples:
   # Run tests from a CSV file and writes results to a JSON file.
   ./awp run csv:examples/tests.csv json:output/results.json
 
-  # Run recurring tests
-  ./awp recurring examples/tests-recurring.json output/results.json
-
-  # Activate recurring tests without running actual tests.
-  ./awp recurringActivate examples/tests-recurring.json output/results.json
+  # Run recurring tests continuously. Press CTRL/Command+C to stop.
+  ./awp continue examples/tests-recurring.json output/results.json
 
   # Run PageSpeedInsight tests with an API Key.
   PSI_APIKEY=SAMPLE_KEY ./awp run examples/tests.json output/results.json
@@ -107,9 +105,10 @@ async function begin() {
   let resultsPath = argv['_'][2];
   let config = argv['config'];
   let overrideResults = argv['override-results'];
+  let timerInterval = argv['timer-interval'];
   let gatherers = argv['gatherers'] ? argv['gatherers'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
-  let runByBatch = argv['runByBatch'] ?  true : false;
+  let runByBatch = argv['batch-mode'] ?  true : false;
   // let envVars = parseVars(argv['envVars']);
   let debug = argv['debug'];
   let verbose = argv['verbose'];
@@ -123,7 +122,7 @@ async function begin() {
   });
 
   // Assert mandatory parameters
-  if (!action) {
+  if (!action || !testsPath || !resultsPath) {
     printUsage();
     return;
   }
@@ -179,6 +178,7 @@ async function begin() {
     filters: filters,
     runByBatch: runByBatch,
     overrideResults: overrideResults,
+    timerInterval: timerInterval,
     verbose: verbose,
     debug: debug,
   };
@@ -196,6 +196,9 @@ async function begin() {
     case 'recurring':
       await awp.recurring(options);
       break;
+
+    case 'continue':
+      await awp.continue(options);
 
     case 'retrieve':
       await awp.retrieve(options);
