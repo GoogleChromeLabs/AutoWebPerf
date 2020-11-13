@@ -18,6 +18,7 @@
 
 const assert = require('../utils/assert');
 const setObject = require('../utils/set-object');
+const jsonexport = require('jsonexport');
 const Connector = require('./connector');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 
@@ -88,30 +89,11 @@ class SheetsConnector extends Connector {
    * @return {Array<Object>} Array of Test objects.
    */
   async getTestList(options) {
-    let sheet = await this.getTestsSheet();
-    let rows = await sheet.getRows();
-    let headers = sheet.headerValues;
-    let tests = [];
-
-    // Manually add index to all test objects.
-    let index = 0;
-    rows.forEach(row => {
-      let test = {
-        sheets: {
-          index: index++,
-        }
-      };
-      headers.forEach(header => {
-        test[header] = row[header];
-      });
-      tests.push(test);
-    });
-
+    let tests = await this.readSheetData(await this.getTestsSheet());
     if (this.debug) {
       console.log(`SheetsAPI: Got tests from sheet "${this.testsSheetName}":`);
       console.log(tests);
     }
-
     return tests;
   }
 
@@ -121,6 +103,7 @@ class SheetsConnector extends Connector {
    * @param  {Object} options
    */
   async updateTestList(newTests, options) {
+    console.log('updateTestList');
 
     // TODO: write back to Sheets.
 
@@ -128,16 +111,83 @@ class SheetsConnector extends Connector {
     this.tests = null;    
   }
 
+  async readSheetData(sheet) {
+    let rows = await sheet.getRows();
+    let headers = sheet.headerValues;
+    let output = [];
+    let index = 0;
+    rows.forEach(row => {
+      let obj = {
+        sheets: {
+          index: index++,
+        }
+      };
+      headers.forEach(header => {
+        obj[header] = row[header];
+      });
+      output.push(obj);
+    });
+    return output;
+  }
+
+  async writeSheetData(sheet, results) {
+    //console.log('writeSheetData');
+
+    var rowsToAdd = [];
+    results.forEach(result => {
+      rowsToAdd = rowsToAdd.concat(this.readInObject(result));
+    });
+
+    console.log(rowsToAdd);
+
+    rowsToAdd.forEach(row => {
+      sheet.addRow(row);
+    })
+    await sheet.saveUpdatedCells();
+  }
+
+  readInObject(object, _parentProperty) {
+    let parentProperty = _parentProperty!=undefined ? (_parentProperty + ".") : "";
+    let result = [];
+    for(let subObject in object) {
+      if(typeof object[subObject]=='object') {
+        result = result.concat(this.readInObject(object[subObject], subObject));
+      } else {
+        var objToAdd = {};
+        objToAdd[parentProperty+subObject] = object[subObject]
+        //console.log(objToAdd);
+        result.push(objToAdd);
+      }
+    }
+    return result;
+  }
+
   /**
    * Get all results.
    * @param  {Object} options
    * @return {Array<Object>} Array of Result objects.
    */
-  async getResultList(options) {
-    let sheet = await this.getResultsSheet();
+  async getResults(options) {
+    if (this.results) return this.results;
+    assert(this.resultsPath, 'resultsPath is not defined.');
+
+    let results = await this.readSheetData(await this.getResultsSheet());
+    if (this.debug) {
+      console.log(`SheetsAPI: Got tests from sheet "${this.resultsSheetName}":`);
+      console.log(results);
+    }
+    return results;
+  }
+
+  /**
+   * Get all results.
+   * @param  {Object} options
+   * @return {Array<Object>} Array of Result objects.
+   */
+  getResultList(options) {
     let results;
     try {
-      // TODO: Get results from Results sheet.
+      results = this.getResults();
 
     } catch (error) {
       console.log(error);
@@ -153,16 +203,26 @@ class SheetsConnector extends Connector {
    * @param {Object} options
    */
   async appendResultList(newResults, options) {
-    console.log('appendResultList');
+    //console.log('appendResultList');
 
     options = options || {};
-    let results = options.overrideResults ? [] : this.getResultList();
+    let idToResults = {};
+    let results = options.overrideResults ? newResults : await this.getResultList();
 
     if (this.debug) {
       console.log(`Appending ${newResults.length} results to the existing ` +
           `file at ${this.resultsPath}`);
     }
-    // TODO: write back to Sheets.
+
+    newResults.forEach(result => {
+      idToResults[result.id] = result;
+    });
+
+    results = results.map(result => {
+      return idToResults[result.id] || result;
+    });
+
+    await this.writeSheetData(await this.getResultsSheet(), results);
 
     // Reset the results json cache.
     this.results = null;
@@ -189,6 +249,8 @@ class SheetsConnector extends Connector {
     results = results.map(result => {
       return idToResults[result.id] || result;
     });
+
+    console.log('results', results);
 
     // TODO: write back to Sheets.
 

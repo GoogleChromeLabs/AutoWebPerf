@@ -688,7 +688,7 @@ class AutoWebPerf {
 
     } else {
       // Run one test at a time and collect metrics from all gatherers.
-      tests.forEach(test => {
+      tests.forEach(async test => {
         let statuses = [];
 
         // Create a dummy Result.
@@ -725,7 +725,7 @@ class AutoWebPerf {
         // Batch update to the connector if the buffer is full.
         if (this.batchUpdateBuffer &&
             resultsToUpdate.length >= this.batchUpdateBuffer) {
-          this.connector.appendResultList(resultsToUpdate, options);
+          await this.connector.appendResultList(resultsToUpdate, options);
           this.log(`AutoWebPerf::retrieve, batch appends ` +
               `${resultsToUpdate.length} results.`);
           resultsToUpdate = [];
@@ -734,7 +734,7 @@ class AutoWebPerf {
     }
 
     // Update the remaining.
-    this.connector.appendResultList(resultsToUpdate, options);
+    await this.connector.appendResultList(resultsToUpdate, options);
 
     return allNewResults;
   }
