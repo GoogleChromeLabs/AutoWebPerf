@@ -131,32 +131,37 @@ class SheetsConnector extends Connector {
   }
 
   async writeSheetData(sheet, results) {
-    //console.log('writeSheetData');
-
     var rowsToAdd = [];
     results.forEach(result => {
-      rowsToAdd = rowsToAdd.concat(this.readInObject(result));
+      rowsToAdd.push(this.readInObject(result));
     });
 
-    console.log(rowsToAdd);
+    let headerArray = new Array();
 
-    rowsToAdd.forEach(row => {
-      sheet.addRow(row);
-    })
+    rowsToAdd.forEach(result => {
+      for (let object in result) {
+        if(headerArray.find(obj => obj == String(object) )==undefined) {
+          headerArray.push(String(object));
+        } 
+      }
+    });
+
+    console.log(headerArray);
+
+    await sheet.setHeaderRow(headerArray);
+    await sheet.addRows(results);
     await sheet.saveUpdatedCells();
   }
 
-  readInObject(object, _parentProperty) {
+  readInObject(object, _parentProperty, previousResult) {
     let parentProperty = _parentProperty!=undefined ? (_parentProperty + ".") : "";
-    let result = [];
+    let result = previousResult ? previousResult : {};
     for(let subObject in object) {
       if(typeof object[subObject]=='object') {
-        result = result.concat(this.readInObject(object[subObject], subObject));
+        this.readInObject(object[subObject], subObject, result);
       } else {
         var objToAdd = {};
-        objToAdd[parentProperty+subObject] = object[subObject]
-        //console.log(objToAdd);
-        result.push(objToAdd);
+        result[parentProperty+subObject] = object[subObject];
       }
     }
     return result;
@@ -207,22 +212,14 @@ class SheetsConnector extends Connector {
 
     options = options || {};
     let idToResults = {};
-    let results = options.overrideResults ? newResults : await this.getResultList();
+    let results = options.overrideResults ? [] : await this.getResultList();
 
     if (this.debug) {
       console.log(`Appending ${newResults.length} results to the existing ` +
           `file at ${this.resultsPath}`);
     }
 
-    newResults.forEach(result => {
-      idToResults[result.id] = result;
-    });
-
-    results = results.map(result => {
-      return idToResults[result.id] || result;
-    });
-
-    await this.writeSheetData(await this.getResultsSheet(), results);
+    await this.writeSheetData(await this.getResultsSheet(), results.concat(newResults));
 
     // Reset the results json cache.
     this.results = null;
@@ -234,8 +231,6 @@ class SheetsConnector extends Connector {
    * @param {Object} options
    */
   async updateResultList(newResults, options) {
-    console.log('updateResultList');
-
     if(!this.results)
       this.authorize();
 
@@ -249,8 +244,6 @@ class SheetsConnector extends Connector {
     results = results.map(result => {
       return idToResults[result.id] || result;
     });
-
-    console.log('results', results);
 
     // TODO: write back to Sheets.
 
