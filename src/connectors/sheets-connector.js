@@ -146,10 +146,8 @@ class SheetsConnector extends Connector {
       }
     });
 
-    console.log(headerArray);
-
     await sheet.setHeaderRow(headerArray);
-    await sheet.addRows(results);
+    await sheet.addRows(rowsToAdd);
     await sheet.saveUpdatedCells();
   }
 
