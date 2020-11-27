@@ -18,11 +18,11 @@ In order to use the [Google Sheets API](https://developers.google.com/sheets/api
 !["Google Sheets with Tests Tab"](img/sheets-connector-doc.png)
 
     2. Identify the Google Sheet ID (visibile in theURL between `/d/` and before `/edit`).
-Example for this URL `https://docs.google.com/spreadsheets/d/GOOGLE_SHEET_ID/edit` the Google Sheet ID would be "GOOGLE_SHEET_ID".
+Example for this URL `https://docs.google.com/spreadsheets/d/GOOGLE_SHEET_ID/edit` the Google Sheet ID would be `GOOGLE_SHEET_ID`.
 
 3. Download the service-account.json credentials from the [Service accounts page](https://console.cloud.google.com/iam-admin/serviceaccounts) and store them safely. In this example the file is stored inside a "tmp" folder.
 
-4. Run the command selecting the appropriate tests and results connector. In this example 2 URLs are being tested via PSI API defined into a Google Sheet file Tab "Tests" and Results" will be printed into the `Results` Tab.
+4. Run the command selecting the appropriate tests and results connector. In this example 2 URLs are being tested via PSI API defined into a Google Sheet file Tab `Tests` and the results will be printed into the `Results` Tab.
 
 
 ```
