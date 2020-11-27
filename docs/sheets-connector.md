@@ -12,11 +12,11 @@ In order to use the [Google Sheets API](https://developers.google.com/sheets/api
 1. Create or use an existing [Google Service Account](https://cloud.google.com/iam/docs/creating-managing-service-accounts).
 
 2. Create a Google Sheets file and share it with Editor permission with the previously created Google Service Account email address.
-⋅⋅1. This file should have Tab names useful to be used for both Tests information fetching and to write the Tests results.Example: you can have a Tab "Tests" and one other "Results" below:
+    1. This file should have Tab names useful to be used for both Tests information fetching and to write the Tests results.Example: you can have a Tab "Tests" and one other "Results" below:
 
-[example1]: img/sheets-connector-doc.png "Google Sheets with Tests Tab"
+    [example1]: img/sheets-connector-doc.png "Google Sheets with Tests Tab"
 
-⋅⋅2. Save the Google Sheet ID, identified in the URL between d/ and before /edit.
+    2. Save the Google Sheet ID, identified in the URL between d/ and before /edit.
 Example for this URL https://docs.google.com/spreadsheets/d/GOOGLE_SHEET_ID/edit the Google Sheet ID would be "GOOGLE_SHEET_ID".
 
 3. Download the service-account.json credentials from the [Service accounts page](https://console.cloud.google.com/iam-admin/serviceaccounts) and store them safely. In this example the file is stored inside a "tmp" folder.
