@@ -74,6 +74,13 @@ class AutoWebPerf {
     awpConfig.envVars = awpConfig.envVars || {};
     this.overallGathererNames = ['webpagetest', 'psi', 'cruxapi', 'cruxbigquery'];
 
+    // Load environment varaibles with awpConfig.envVars.
+    this.log(`Use envVars:`);
+    this.envVars = {};
+    Object.keys(this.awpConfig.envVars).forEach(key => {
+      this.envVars[key] = this.awpConfig.envVars[key];
+    });
+
     // Initialize helper. Use Node helper by default.
     awpConfig.helper = awpConfig.helper || 'node';
     this.log(`Use helper: ${awpConfig.helper}`);
@@ -121,17 +128,12 @@ class AutoWebPerf {
 
     // Note that API Keys used by Gatherers are expected to be loaded as envVars
     // via either connector or awpConfig.
-    this.envVars = {};
     if (this.connector) {
-      this.envVars = this.connector.getEnvVars() || {};
+      let envVarsFromConnector = this.connector.getEnvVars() || {};
+      Object.keys(envVarsFromConnector).forEach(key => {
+        this.envVars[key] = envVarsFromConnector[key];
+      });
     }
-
-    // Overrides environment varaibles with awpConfig.envVars.
-    this.log(`Use envVars:`);
-    Object.keys(this.awpConfig.envVars).forEach(key => {
-      this.envVars[key] = this.awpConfig.envVars[key];
-      this.log(`\t${key} = ${this.envVars[key]}`);
-    });
 
     this.log(`Use extensions: ${awpConfig.extensions}`);
 
@@ -201,6 +203,10 @@ class AutoWebPerf {
 
       case 'appscript':
         ConnectorClass = require('./connectors/appscript-connector');
+        break;
+
+      case 'sheets':
+        ConnectorClass = require ('./connectors/sheets-connector.js');
         break;
 
       case 'fake':
@@ -306,7 +312,7 @@ class AutoWebPerf {
     let extensions = options.extensions || Object.keys(this.extensions);
     let extResponse, overallErrors = [];
 
-    let tests = this.connector.getTestList(options);
+    let tests = await this.connector.getTestList(options);
     console.log(`Run with ${tests.length} test(s)`);
 
     // Before all runs.
@@ -369,7 +375,7 @@ class AutoWebPerf {
     let nowtime = Date.now();
 
     // Get recurring Tests that passed nextTriggerTimestamp only.
-    let tests = this.connector.getTestList(options);
+    let tests = await this.connector.getTestList(options);
     tests = tests.filter(test => {
       let recurring = test.recurring;
       return recurring && recurring.frequency &&
@@ -429,7 +435,7 @@ class AutoWebPerf {
     overallErrors = overallErrors.concat(extResponse.errors);
 
     // Update Tests.
-    this.connector.updateTestList(tests, options);
+    await this.connector.updateTestList(tests, options);
 
     console.log(`Recurring completed with ${tests.length} ` + `tests`);
 
@@ -501,7 +507,7 @@ class AutoWebPerf {
     let extensions = options.extensions || Object.keys(this.extensions);
     let resultsToUpdate = [], overallErrors = [], extResponse;
 
-    let results = this.connector.getResultList(options);
+    let results = await this.connector.getResultList(options);
 
     // Clean up previous errors.
     results.forEach(result => {
@@ -682,7 +688,7 @@ class AutoWebPerf {
 
     } else {
       // Run one test at a time and collect metrics from all gatherers.
-      tests.forEach(test => {
+      tests.forEach(async test => {
         let statuses = [];
 
         // Create a dummy Result.
@@ -719,7 +725,7 @@ class AutoWebPerf {
         // Batch update to the connector if the buffer is full.
         if (this.batchUpdateBuffer &&
             resultsToUpdate.length >= this.batchUpdateBuffer) {
-          this.connector.appendResultList(resultsToUpdate, options);
+          await this.connector.appendResultList(resultsToUpdate, options);
           this.log(`AutoWebPerf::retrieve, batch appends ` +
               `${resultsToUpdate.length} results.`);
           resultsToUpdate = [];
@@ -728,7 +734,7 @@ class AutoWebPerf {
     }
 
     // Update the remaining.
-    this.connector.appendResultList(resultsToUpdate, options);
+    await this.connector.appendResultList(resultsToUpdate, options);
 
     return allNewResults;
   }
@@ -870,9 +876,9 @@ class AutoWebPerf {
    * - verbose {boolean}: Whether to show verbose messages in terminal.
    * - debug {boolean}: Whether to show debug messages in terminal.
    */
-  getTests(options) {
+  async getTests(options) {
     options = options || {};
-    let tests = this.connector.getTestList(options);
+    let tests = await this.connector.getTestList(options);
     return tests;
   }
 
@@ -888,9 +894,9 @@ class AutoWebPerf {
    * - verbose {boolean}: Whether to show verbose messages in terminal.
    * - debug {boolean}: Whether to show debug messages in terminal.
    */
-  getResults(options) {
+  async getResults(options) {
     options = options || {};
-    let results = this.connector.getResultList(options);
+    let results = await this.connector.getResultList(options);
     return results;
   }
 

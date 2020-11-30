@@ -22,6 +22,7 @@
   "dependencies": {
     "@babel/core": "^7.8.3",
     "@google-cloud/bigquery": "^4.7.0",
+    "google-spreadsheet": "^3.0.13",
     "csv-parse": "^4.12.0",
     "dayjs": "^1.8.19",
     "fs": "0.0.1-security",
