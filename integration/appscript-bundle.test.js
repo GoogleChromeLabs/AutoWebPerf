@@ -62,7 +62,6 @@ describe('AWP bundle for AppScript', () => {
         connector: 'appscript',
       },
       helper: 'appscript',
-      gatherers: [],
       extensions: [
         'budgets',
         'appscript',
