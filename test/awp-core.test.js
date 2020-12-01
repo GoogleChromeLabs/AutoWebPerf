@@ -93,6 +93,7 @@ let cleanFakeResults = function(results) {
     delete result.createdTimestamp;
     delete result.modifiedTimestamp;
     count++;
+    return result;
   });
 }
 
@@ -222,7 +223,7 @@ describe('AutoWebPerf with fake modules', () => {
 
     cleanFakeResults(awp.connector.results);
     let expectedResults = generateFakeResults(10);
-    expect(awp.getResults()).toEqual(expectedResults);
+    expect(await awp.getResults()).toEqual(expectedResults);
 
     await awp.run();
 
@@ -230,7 +231,7 @@ describe('AutoWebPerf with fake modules', () => {
     expectedResults = expectedResults.concat(generateFakeResults(10, {
       idOffset: 10,
     }));
-    expect(awp.getResults()).toEqual(expectedResults);
+    expect(await awp.getResults()).toEqual(expectedResults);
   });
 
   it('runs recurring and gets initial Results.', async () => {
@@ -242,10 +243,6 @@ describe('AutoWebPerf with fake modules', () => {
     test.recurring = {
       frequency: 'daily',
     }
-    await awp.recurring({activateOnly: true});
-    expect(test.recurring.nextTrigger).not.toBe(null);
-    expect(test.recurring.nextTriggerTimestamp).toBeGreaterThan(nowtime);
-    expect(awp.getResults().length).toEqual(0);
 
     // Run recurring.
     test.recurring.nextTriggerTimestamp = nowtime;
@@ -254,7 +251,7 @@ describe('AutoWebPerf with fake modules', () => {
 
     let expectedResults = generateFakeResults(1);
     expectedResults[0].type = 'Recurring';
-    expect(awp.getResults()).toEqual(expectedResults);
+    expect(await awp.getResults()).toEqual(expectedResults);
   });
 
   it('retrieves non-complete results.', async () => {
@@ -265,7 +262,7 @@ describe('AutoWebPerf with fake modules', () => {
     cleanFakeResults(awp.connector.results);
     let expectedResults = generateFakeResults(1, {status: Status.RETRIEVED});
 
-    let results = awp.getResults();
+    let results = await awp.getResults();
     expect(results).toEqual(expectedResults);
     expect(results[0].fake.metrics.SpeedIndex).toEqual(500);
   });
@@ -278,7 +275,7 @@ describe('AutoWebPerf with fake modules', () => {
     cleanFakeResults(awp.connector.results);
     let expectedResults = generateFakeResults(10, {status: Status.RETRIEVED});
 
-    let results = awp.getResults();
+    let results = await awp.getResults();
     expect(results).toEqual(expectedResults);
     expect(results[0].fake.metrics.SpeedIndex).toEqual(500);
   });
@@ -292,12 +289,12 @@ describe('AutoWebPerf with fake modules', () => {
     expectedResults = generateFakeResults(95);
     await awp.run();
     cleanFakeResults(awp.connector.results);
-    expect(awp.getResults()).toEqual(expectedResults);
+    expect(await awp.getResults()).toEqual(expectedResults);
 
     await awp.retrieve();
     cleanFakeResults(awp.connector.results);
     expectedResults = generateFakeResults(95, {status: Status.RETRIEVED});
-    expect(awp.getResults()).toEqual(expectedResults);
+    expect(await awp.getResults()).toEqual(expectedResults);
   });
 
   it('runs and retrieves all results with partial updates with short list.',
@@ -309,12 +306,12 @@ describe('AutoWebPerf with fake modules', () => {
     expectedResults = generateFakeResults(22);
     await awp.run();
     cleanFakeResults(awp.connector.results);
-    expect(awp.getResults()).toEqual(expectedResults);
+    expect(await awp.getResults()).toEqual(expectedResults);
 
     await awp.retrieve();
     cleanFakeResults(awp.connector.results);
     expectedResults = generateFakeResults(22, {status: Status.RETRIEVED});
-    expect(awp.getResults()).toEqual(expectedResults);
+    expect(await awp.getResults()).toEqual(expectedResults);
   });
 
   it('runs and retrieves all recurring results with partial updates.', async () => {
@@ -327,16 +324,16 @@ describe('AutoWebPerf with fake modules', () => {
       }
     });
 
-    await awp.recurring({activateOnly: true});
+    await awp.recurring();
     awp.connector.tests.forEach(test => {
       test.recurring .nextTriggerTimestamp = nowtime;
     });
-    await awp.recurring();
     cleanFakeResults(awp.connector.results);
 
     let expectedResults = generateFakeResults(22);
     expectedResults.forEach(result => {result.type = 'Recurring'});
-    expect(awp.getResults()).toEqual(expectedResults);
+    let actualResults = await awp.getResults();
+    expect(actualResults).toEqual(expectedResults);
   });
 
   it('runs through a list of tests and executes extensions.', async () => {
@@ -353,7 +350,7 @@ describe('AutoWebPerf with fake modules', () => {
       recurring: {frequency: 'daily'},
     });
 
-    await awp.recurring({activateOnly: true});
+    await awp.recurring();
     expect(awp.extensions.fake.beforeAllRuns.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.afterAllRuns.mock.calls.length).toBe(1);
     expect(awp.extensions.fake.beforeRun.mock.calls.length).toBe(10);
@@ -450,7 +447,7 @@ describe('AutoWebPerf with fake modules', () => {
     }
     await awp.run();
 
-    result = awp.getResults()[0];
+    result = (await awp.getResults())[0];
     expect(result.fake1).toBeDefined();
     expect(result.fake2).toBeDefined();
     expect(result.fake3).toBeDefined();
@@ -466,7 +463,7 @@ describe('AutoWebPerf with fake modules', () => {
     }
     await awp.run();
 
-    result = awp.getResults()[1];
+    result = (await awp.getResults())[1];
     expect(result.fake1).toBeDefined();
     expect(result.fake2).toBeDefined();
     expect(result.fake3).toBeDefined();
@@ -482,7 +479,7 @@ describe('AutoWebPerf with fake modules', () => {
     }
     await awp.run();
 
-    result = awp.getResults()[2];
+    result = (await awp.getResults())[2];
     expect(result.fake1).toBeDefined();
     expect(result.fake2).toBeDefined();
     expect(result.fake3).toBeDefined();
@@ -498,7 +495,7 @@ describe('AutoWebPerf with fake modules', () => {
     }
     await awp.run();
 
-    result = awp.getResults()[3];
+    result = (await awp.getResults())[3];
     expect(result.fake1).toBeDefined();
     expect(result.fake2).toBeDefined();
     expect(result.fake3).toBeDefined();

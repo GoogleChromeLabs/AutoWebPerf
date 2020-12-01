@@ -529,7 +529,8 @@ class AutoWebPerf {
     // FIXME: Add batch gathering support.
 
     let count = 0;
-    results.forEach(result => {
+    for (let i=0; i<results.length; i++) {
+      let result = results[i];
       this.log(`Retrieve: id=${result.id}`);
       this.logDebug('AutoWebPerf::retrieve, result=\n', result);
       result.errors = result.errors || [];
@@ -578,17 +579,17 @@ class AutoWebPerf {
       // Batch update to the connector.
       if (this.batchUpdateBuffer &&
           resultsToUpdate.length >= this.batchUpdateBuffer) {
-        this.connector.updateResultList(resultsToUpdate, options);
+        await this.connector.updateResultList(resultsToUpdate, options);
         this.log(
             `AutoWebPerf::retrieve, batch appends ` +
             `${resultsToUpdate.length} results.`);
 
         resultsToUpdate = [];
-      }
-    });
+      }      
+    }
 
     // Update back to the result list.
-    this.connector.updateResultList(resultsToUpdate, options);
+    await this.connector.updateResultList(resultsToUpdate, options);
 
     // After retriving all results.
     // FIXME: run the extensions before updating the list back to the connector.
@@ -688,7 +689,8 @@ class AutoWebPerf {
 
     } else {
       // Run one test at a time and collect metrics from all gatherers.
-      tests.forEach(async test => {
+      for(let i=0; i<tests.length; i++) {
+        let test = tests[i];
         let statuses = [];
 
         // Create a dummy Result.
@@ -725,12 +727,12 @@ class AutoWebPerf {
         // Batch update to the connector if the buffer is full.
         if (this.batchUpdateBuffer &&
             resultsToUpdate.length >= this.batchUpdateBuffer) {
-          await this.connector.appendResultList(resultsToUpdate, options);
+          await this.connector.appendResultList(resultsToUpdate, options);          
           this.log(`AutoWebPerf::retrieve, batch appends ` +
               `${resultsToUpdate.length} results.`);
           resultsToUpdate = [];
         }
-      });
+      }
     }
 
     // Update the remaining.
