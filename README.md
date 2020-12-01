@@ -90,6 +90,11 @@ To run tests and override existing results in the output file
 ./awp run examples/tests.json output/results.json --override-results
 ```
 
+Alternatively, to run a single test with a specific URL:
+```
+./awp run --gatherer=psi url:https://web.dev json:output/results.json
+```
+
 ### Using AWP with Node CLI
 
 #### Run tests

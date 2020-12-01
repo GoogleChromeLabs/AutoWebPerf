@@ -73,6 +73,9 @@ Examples:
   # Run tests and override existing results in the output file.
   ./awp run examples/tests.json output/results.json --override-results
 
+  # Run a single test with a specific URL via URL-Connector.
+  ./awp run --gatherer=psi url:https://web.dev json:output/results.json
+
   # Run with a custom awpConfig.
   ./awp run --config=examples/awp-config.json
 
@@ -158,7 +161,6 @@ async function begin() {
         path: resultsPath,
       },
       helper: 'node',
-      gatherers: gatherers || ['webpagetest', 'psi', 'cruxbigquery', 'cruxapi'],
       extensions: extensions,
       envVars: envVars,
       verbose: verbose,
@@ -179,6 +181,7 @@ async function begin() {
     runByBatch: runByBatch,
     overrideResults: overrideResults,
     timerInterval: timerInterval,
+    gatherer: gatherers,
     verbose: verbose,
     debug: debug,
   };
