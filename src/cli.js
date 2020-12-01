@@ -74,7 +74,7 @@ Examples:
   ./awp run examples/tests.json output/results.json --override-results
 
   # Run a single test with a specific URL via URL-Connector.
-  ./awp run --gatherer=psi url:https://web.dev json:output/results.json
+  ./awp run --gatherers=psi url:https://web.dev json:output/results.json
 
   # Run with a custom awpConfig.
   ./awp run --config=examples/awp-config.json
