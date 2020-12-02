@@ -18,7 +18,7 @@
 
 const assert = require('../utils/assert');
 const setObject = require('../utils/set-object');
-const jsonexport = require('jsonexport');
+const flattenObject = require('../../src/utils/flatten-object');
 const Connector = require('./connector');
 const { GoogleSpreadsheet } = require('google-spreadsheet');
 
@@ -69,7 +69,7 @@ class SheetsConnector extends Connector {
 
     // Create a new sheet if the sheet doesn't exist.
     if (!this.resultsSheet) {
-      this.resultsSheet = await doc.addSheet({title: 'this.resultsSheetName'});
+      this.resultsSheet = await this.resultsDoc.addSheet({title: this.resultsSheetName});
     }
 
     return this.resultsSheet;
@@ -83,39 +83,80 @@ class SheetsConnector extends Connector {
     return this.envVars;
   }
 
-  /**
-   * Get all tests.
-   * @param  {Object} options
-   * @return {Array<Object>} Array of Test objects.
-   */
-  async getTestList(options) {
-    let tests = await this.readSheetData(await this.getTestsSheet());
-    if (this.debug) {
-      console.log(`SheetsAPI: Got tests from sheet "${this.testsSheetName}":`);
-      console.log(tests);
-    }
-    return tests;
+  async updateHeaders(sheet, newObjs) {
+    await sheet.loadHeaderRow()
+    let headers = sheet.headerValues;
+    let headerSet = new Set();
+    newObjs.forEach(newObj => {
+      Object.keys(newObj).forEach(key => {
+        if (key !== 'sheets.index') headerSet.add(key);
+      });
+    });
+
+    headers.forEach(header => {
+      headerSet.delete(header);
+    });
+
+    let newHeaders = headers.concat([...headerSet]);
+    await sheet.resize({
+      rowCount: sheet.rowCount,
+      columnCount: newHeaders.length,
+    });
+    await sheet.setHeaderRow(newHeaders);
   }
 
-  /**
-   * Update tests with the given new test objects.
-   * @param {Array<Object>} Array of new Test objects.
-   * @param  {Object} options
-   */
-  async updateTestList(newTests, options) {
-    console.log('updateTestList');
+  async updateSheetData(sheet, newObjs) {
+    newObjs = this.stringifyArray(newObjs);    
+    await this.updateHeaders(sheet, newObjs);
+    const rows = await sheet.getRows();
 
-    // TODO: write back to Sheets.
+    if (this.debug) {
+      console.log('Updating to sheet:');
+      console.log(newObjs);
+    }
 
-    // Reset the tests cache.
-    this.tests = null;    
+    for (const newObj of newObjs) {
+      let rowIndex = newObj['sheets.index'];
+      delete newObj['sheets.index'];
+
+      if (typeof(rowIndex) === 'undefined') {
+        console.error('Unable to locate a specific row to Sheets.');
+        console.log(newObj);
+        throw new Error('Unable to locate a specific row to Sheets.');
+      }
+
+      let row = rows[rowIndex];
+      for (const [key, value] of Object.entries(newObj)) {
+        if (Array.isArray(value)) {
+          row[key] = value.join(',');
+        } else {
+          row[key] = value;
+        }
+      }
+      await row.save();
+    }
   }
 
   async readSheetData(sheet) {
+    let headers;
+
+    try {
+      await sheet.loadHeaderRow()
+      headers = sheet.headerValues;
+
+      if (!headers) return [];
+    } catch (e) {
+      if (this.debug || this.verbose) console.log('SheetsAPI: ' + e.message);
+      if (e.message.includes('No values in the header row')) {
+        return [];
+      }
+      throw e;
+    }
+
     let rows = await sheet.getRows();
-    let headers = sheet.headerValues;
     let output = [];
     let index = 0;
+
     rows.forEach(row => {
       let obj = {
         sheets: {
@@ -130,41 +171,77 @@ class SheetsConnector extends Connector {
     return output;
   }
 
-  async writeSheetData(sheet, results) {
+  async writeSheetData(sheet, results, overrideResults) {
     var rowsToAdd = [];
     results.forEach(result => {
-      rowsToAdd.push(this.readInObject(result));
+      rowsToAdd.push(flattenObject(result));
     });
+    rowsToAdd = this.stringifyArray(rowsToAdd);    
+    await this.updateHeaders(sheet, rowsToAdd);
 
-    let headerArray = new Array();
+    if (this.verbose) {
+      console.log(`Adding ${rowsToAdd.length} rows to result sheet.`);
+    }
 
-    rowsToAdd.forEach(result => {
-      for (let object in result) {
-        if(headerArray.find(obj => obj == String(object) )==undefined) {
-          headerArray.push(String(object));
-        } 
-      }
-    });
+    if (overrideResults) {
+      await sheet.clear();
+    }
 
-    await sheet.setHeaderRow(headerArray);
-    await sheet.addRows(rowsToAdd);
-    await sheet.saveUpdatedCells();
+    if (rowsToAdd && rowsToAdd.length > 0) {
+      await sheet.resize({
+        rowCount: Math.max(rowsToAdd.length + 1, sheet.rowCount),
+        columnCount: sheet.columnCount,
+      });
+      await sheet.addRows(rowsToAdd);
+      await sheet.saveUpdatedCells();  
+    }
   }
 
   readInObject(object, _parentProperty, previousResult) {
-    let parentProperty = _parentProperty!=undefined ? (_parentProperty + ".") : "";
+    let parentProperty = _parentProperty !== undefined ? (_parentProperty + '.') : '';
     let result = previousResult ? previousResult : {};
-    for(let subObject in object) {
-      if(typeof object[subObject]=='object') {
+    for (let subObject in object) {
+      if (typeof object[subObject] === 'object') {
         this.readInObject(object[subObject], subObject, result);
       } else {
-        var objToAdd = {};
-        result[parentProperty+subObject] = object[subObject];
+        result[parentProperty + subObject] = object[subObject];
       }
     }
     return result;
   }
 
+  /**
+   * Get all tests.
+   * @param  {Object} options
+   * @return {Array<Object>} Array of Test objects.
+   */
+  async getTestList(options) {
+    let tests = await this.readSheetData(await this.getTestsSheet());
+    tests = this.jsonify(tests);
+
+    if (this.debug) {
+      console.log(`SheetsAPI: Got tests from sheet "${this.testsSheetName}":`);
+      console.log(tests);
+    }
+
+    return tests;
+  }
+
+  /**
+   * Update tests with the given new test objects.
+   * @param {Array<Object>} Array of new Test objects.
+   * @param  {Object} options
+   */
+  async updateTestList(newTests, options) {
+    var rowsToAdd = [];
+    newTests.forEach(test => {
+      rowsToAdd.push(flattenObject(test));
+    });
+
+    await this.updateSheetData(await this.getTestsSheet(), rowsToAdd);
+    this.tests = null;    
+  }
+  
   /**
    * Get all results.
    * @param  {Object} options
@@ -187,10 +264,10 @@ class SheetsConnector extends Connector {
    * @param  {Object} options
    * @return {Array<Object>} Array of Result objects.
    */
-  getResultList(options) {
+  async getResultList(options) {
     let results;
     try {
-      results = this.getResults();
+      results = await this.getResults();
 
     } catch (error) {
       console.log(error);
@@ -206,18 +283,16 @@ class SheetsConnector extends Connector {
    * @param {Object} options
    */
   async appendResultList(newResults, options) {
-    //console.log('appendResultList');
-
     options = options || {};
     let idToResults = {};
-    let results = options.overrideResults ? [] : await this.getResultList();
 
     if (this.debug) {
       console.log(`Appending ${newResults.length} results to the existing ` +
           `file at ${this.resultsPath}`);
     }
 
-    await this.writeSheetData(await this.getResultsSheet(), results.concat(newResults));
+    await this.writeSheetData(await this.getResultsSheet(), newResults, 
+        options.overrideResults);
 
     // Reset the results json cache.
     this.results = null;
@@ -247,6 +322,26 @@ class SheetsConnector extends Connector {
 
     // Reset the results json cache.
     this.results = null;
+  }
+
+  jsonify(objs) {
+    return objs.map(obj => {
+      let newObj = {};
+      for (const [key, value] of Object.entries(obj)) {
+        setObject(newObj, key, value);
+      }
+      return newObj;
+    });
+  }
+
+  stringifyArray(objs) {
+    return objs.map(obj => {
+      let newObj = {};
+      for (const [key, value] of Object.entries(obj)) {
+        obj[key] = Array.isArray(value) ? value.toString() : value;
+      }
+      return obj;
+    });
   }
 }
 

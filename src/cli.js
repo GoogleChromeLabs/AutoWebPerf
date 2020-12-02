@@ -109,6 +109,7 @@ async function begin() {
   let config = argv['config'];
   let overrideResults = argv['override-results'];
   let timerInterval = argv['timer-interval'];
+  let activateOnly = argv['activate-only'];
   let gatherers = argv['gatherers'] ? argv['gatherers'].split(',') : null;
   let extensions = argv['extensions'] ? argv['extensions'].split(',') : [];
   let runByBatch = argv['batch-mode'] ?  true : false;
@@ -181,6 +182,7 @@ async function begin() {
     runByBatch: runByBatch,
     overrideResults: overrideResults,
     timerInterval: timerInterval,
+    activateOnly: activateOnly,
     gatherer: gatherers,
     verbose: verbose,
     debug: debug,
@@ -189,11 +191,6 @@ async function begin() {
   switch(action) {
     case 'run':
       await awp.run(options);
-      break;
-
-    case 'recurringActivate':
-      options.activateOnly = true;
-      await awp.recurring(options);
       break;
 
     case 'recurring':
