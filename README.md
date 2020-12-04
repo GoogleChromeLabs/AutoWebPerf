@@ -75,7 +75,7 @@ This will automatically run each test at the frequency specified. More informati
 
 **Single URL:** To test a single URL through PageSpeedInsights:
 ```
-./awp run --url=https://www.thinkwithgoogle.com/ output/results.json
+./awp run url:https://www.thinkwithgoogle.com/ json:output/results.json
 
 ```
 **Pick Gatherer:** to test a single URL with a specific gatherer like PageSpeedInsights or WebPageTest:
