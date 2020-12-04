@@ -84,8 +84,14 @@ class SheetsConnector extends Connector {
   }
 
   async updateHeaders(sheet, newObjs) {
-    await sheet.loadHeaderRow()
-    let headers = sheet.headerValues;
+    try {
+      await sheet.loadHeaderRow();
+    } catch (e) {
+      if (!e.message || !e.message.includes('No values in the header row')) {
+        throw e;
+      }
+    }
+    let headers = sheet.headerValues || [];
     let headerSet = new Set();
     newObjs.forEach(newObj => {
       Object.keys(newObj).forEach(key => {
@@ -102,6 +108,12 @@ class SheetsConnector extends Connector {
       rowCount: sheet.rowCount,
       columnCount: newHeaders.length,
     });
+
+    if (this.debug) {
+      console.log('Updating sheet headers:');
+      console.log(newHeaders);
+    }
+
     await sheet.setHeaderRow(newHeaders);
   }
 

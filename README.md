@@ -66,7 +66,7 @@ To continuously run recurring tests and update the next trigger time:
 
 To run PageSpeedInsight tests with an [API Key](https://developers.google.com/speed/docs/insights/v5/get-started):
 ```
-PSI_APIKEY=SAMPLE_KEY ./awp run examples/tests.json output/results.json
+PSI_APIKEY=[SAMPLE_KEY] ./awp run examples/tests.json output/results.json
 ```
 
 To run tests defined in a CSV file and write results to a JSON file:
@@ -76,7 +76,7 @@ To run tests defined in a CSV file and write results to a JSON file:
 
 To run WebPageTest tests:
 ```
-WPT_APIKEY=SAMPLE_KEY ./awp run examples/tests-wpt.json output/results.json
+WPT_APIKEY=[SAMPLE_KEY] ./awp run examples/tests-wpt.json output/results.json
 ```
 
 To run a single PageSpeedInsights test of a specific URL:
@@ -193,7 +193,7 @@ Add the following line to the crontab for a daily run at 12:00 at noon. Note
 that this is based on the system time where it runs AWP.
 
 ```
-0 12 * * * PSI_APIKEY=SAMPLE_KEY cd ~/workspace/awp && ./awp run examples/tests.json csv:output/results-recurring.csv
+0 12 * * * PSI_APIKEY=[SAMPLE_KEY] cd ~/workspace/awp && ./awp run examples/tests.json csv:output/results-recurring.csv
 ```
 
 #### Run tests with extensions
@@ -266,7 +266,20 @@ WebPageTest and PageSpeedInsights. See the example below.
 
 ### Environmental Variables
 
-TBD
+Some connectors or gatheres may require a bit more information to 
+run correctly. For example, you would need an API key to run audits
+via PageSpeedInsights API. You can pass the API key as a
+Node.js' environment variable like below:
+
+```
+PSI_APIKEY=[SAMPLE_KEY] ./awp run examples/tests.json output/results.json
+```
+
+This command will pass the PSI_APIKEY to AWP and will be used when 
+making API call to PageSpeedInsights' API endpoint. 
+
+Please check out the [docs](docs/) for more details for individual
+requirements for environmental variables.
 
 ## Gatherers
 

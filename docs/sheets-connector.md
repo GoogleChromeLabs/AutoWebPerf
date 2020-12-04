@@ -3,6 +3,9 @@
 ## Overview
 The Google Spreadsheet API Connector allows to import Tests list as well as Export their Results to Google Spreadsheet files via the [Google Sheets API](https://developers.google.com/sheets/api).
 
+## Required Environmental Variables
+
+- `SERVICE_ACCOUNT_CREDENTIALS` - The path to the Service Account json file.
 
 ## How to use
 
