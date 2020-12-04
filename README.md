@@ -53,46 +53,54 @@ git clone https://github.com/GoogleChromeLabs/AutoWebPerf.git
 npm install
 ```
 
-To run tests:
+Once finished, check the install by running a single test with the following command:
 ```
 ./awp run examples/tests.json output/results.json
 ```
+This command uses the example file in ```examples/tests.json``` and returns the results to ```output/results.json```.
 
-To continuously run recurring tests and update the next trigger time:
+To start recurring tests, you'll need to include a `recurring.frequency` property in the test file and set the next trigger in the test file. To setup the next trigger time and to run a one-off test, use this command after adding the `recurring.frequency` property to your tests:
+```
+./awp recurring examples/tests-recurring.json output/results.json
+```
+If this was successful, the trigger time will have updated base on your chosen frequency, and a result would have been written to `output/results.json`.
+
+Once the trigger time is correctly set, you can have your tests auto-run on the next triger time with the `continue` command:
 ```
 ./awp continue examples/tests-recurring.json output/results.json
 ```
-- Please note that `recurring.frequency` property is required for a recurring test.
+This will automatically run each test at the frequency specified. More information can be found below in the "Run recurring tests" section below.
 
-To run PageSpeedInsight tests with an [API Key](https://developers.google.com/speed/docs/insights/v5/get-started):
-```
-PSI_APIKEY=[SAMPLE_KEY] ./awp run examples/tests.json output/results.json
-```
+### More Examples
 
-To run tests defined in a CSV file and write results to a JSON file:
-```
-./awp run csv:examples/tests.csv json:output/results.json
-```
-
-To run WebPageTest tests:
-```
-WPT_APIKEY=[SAMPLE_KEY] ./awp run examples/tests-wpt.json output/results.json
-```
-
-To run a single PageSpeedInsights test of a specific URL:
+**Single URL:** To test a single URL through PageSpeedInsights:
 ```
 ./awp run --url=https://www.thinkwithgoogle.com/ output/results.json
 
 ```
-
-To run tests and override existing results in the output file
-```
-./awp run examples/tests.json output/results.json --override-results
-```
-
-Alternatively, to run a single test with a specific URL:
+**Pick Gatherer:** to test a single URL with a specific gatherer like PageSpeedInsights or WebPageTest:
 ```
 ./awp run --gatherers=psi url:https://web.dev json:output/results.json
+```
+
+**CSV file:** To run tests defined in a CSV file and write results to a JSON file:
+```
+./awp run csv:examples/tests.csv json:output/results.json
+```
+
+**PageSpeedInsights API:** To run PageSpeedInsights tests with an [API Key](https://developers.google.com/speed/docs/insights/v5/get-started):
+```
+PSI_APIKEY=SAMPLE_KEY ./awp run examples/tests.json output/results.json
+```
+
+**WebPageTest API:** To run WebPageTest tests:
+```
+WPT_APIKEY=SAMPLE_KEY ./awp run examples/tests-wpt.json output/results.json
+```
+
+**Override vs. Append:** To run tests and override existing results in the output file
+```
+./awp run examples/tests.json output/results.json --override-results
 ```
 
 ### Using AWP with Node CLI
@@ -193,7 +201,7 @@ Add the following line to the crontab for a daily run at 12:00 at noon. Note
 that this is based on the system time where it runs AWP.
 
 ```
-0 12 * * * PSI_APIKEY=[SAMPLE_KEY] cd ~/workspace/awp && ./awp run examples/tests.json csv:output/results-recurring.csv
+0 12 * * * PSI_APIKEY=SAMPLE_KEY cd ~/workspace/awp && ./awp run examples/tests.json csv:output/results-recurring.csv
 ```
 
 #### Run tests with extensions
@@ -266,20 +274,7 @@ WebPageTest and PageSpeedInsights. See the example below.
 
 ### Environmental Variables
 
-Some connectors or gatheres may require a bit more information to 
-run correctly. For example, you would need an API key to run audits
-via PageSpeedInsights API. You can pass the API key as a
-Node.js' environment variable like below:
-
-```
-PSI_APIKEY=[SAMPLE_KEY] ./awp run examples/tests.json output/results.json
-```
-
-This command will pass the PSI_APIKEY to AWP and will be used when 
-making API call to PageSpeedInsights' API endpoint. 
-
-Please check out the [docs](docs/) for more details for individual
-requirements for environmental variables.
+TBD
 
 ## Gatherers
 
