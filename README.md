@@ -11,6 +11,8 @@ PageSpeedInsights. This library enables developers to collect metrics
 consistently and store metrics to a preferred data store such as local JSON
 files, Google Sheets, BigQuery, or an in-house SQL database.
 
+Check out https://web.dev/autowebperf for introduction.
+
 ## How it works
 
 AutoWebPerf takes a list of **Tests** from an arbitrary data store platform,
