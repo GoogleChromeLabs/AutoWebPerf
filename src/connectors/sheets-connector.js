@@ -118,7 +118,7 @@ class SheetsConnector extends Connector {
   }
 
   async updateSheetData(sheet, newObjs) {
-    newObjs = this.stringifyArray(newObjs);    
+    newObjs = this.stringifyRows(newObjs);    
     await this.updateHeaders(sheet, newObjs);
     const rows = await sheet.getRows();
 
@@ -188,8 +188,13 @@ class SheetsConnector extends Connector {
     results.forEach(result => {
       rowsToAdd.push(flattenObject(result));
     });
-    rowsToAdd = this.stringifyArray(rowsToAdd);    
+    rowsToAdd = this.stringifyRows(rowsToAdd);    
     await this.updateHeaders(sheet, rowsToAdd);
+
+    if (this.debug) {
+      console.log('rowsToAdd:');
+      console.log(rowsToAdd);
+    }
 
     if (this.verbose) {
       console.log(`Adding ${rowsToAdd.length} rows to result sheet.`);
@@ -346,11 +351,11 @@ class SheetsConnector extends Connector {
     });
   }
 
-  stringifyArray(objs) {
+  stringifyRows(objs) {
     return objs.map(obj => {
       let newObj = {};
       for (const [key, value] of Object.entries(obj)) {
-        obj[key] = Array.isArray(value) ? value.toString() : value;
+        obj[key] = !['number', 'string'].includes(typeof value) ? JSON.stringify(value) : value;
       }
       return obj;
     });

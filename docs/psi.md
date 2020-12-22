@@ -12,6 +12,7 @@ configuration for running a WebPageTest audit.
 {
   "label": "Example",
   "url": "https://examples.com",
+  "gatherer": "psi",
   "psi": {
     "settings": {
       "locale": "en-GB",

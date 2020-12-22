@@ -29,11 +29,10 @@ class CrUXBigQueryGatherer extends Gatherer {
     assert(apiHandler, 'Parameter apiHandler is missing.');
 
     this.gcpProjectId = envVars.GCP_PROJECT_ID || envVars.gcpProjectId;
-    this.keyFilename = envVars.GCP_KEYFILE_PATH || envVars.gcpKeyFilePath;
+    this.keyFilename = envVars.SERVICE_ACCOUNT_CREDENTIALS || envVars.GCP_KEYFILE_PATH || envVars.gcpKeyFilePath;
 
     assert(this.gcpProjectId, 'gcpProjectId is not defined in Environment ' +
         'Variables');
-
     this.bigQueryHandler = new BigQueryHandler({
       platform: config.platform || 'Node',
       projectId: this.gcpProjectId,

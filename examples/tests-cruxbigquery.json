@@ -1,8 +1,4 @@
 {
-  "envVars": {
-    "GCP_KEYFILE_PATH": "tmp/gcp-service-account.json",
-    "GCP_PROJECT_ID": "YOUR_GCP_PROJECT_ID"
-  },
   "tests": [
     {
       "label":"Web.dev no Protocol",
