@@ -36,7 +36,7 @@ Mandatory arguments:
 Options (*denotes default value if not passed in):
   gatherers\t\ttComma-separated list of data sources. Default: psi.
   extensions\t\tComma-separated list of extensions. Default: null.
-  config\t\tLoad a custom awpConfig. See examples/awp-config.json for example.
+  config\t\tLoad a custom awpConfig. See examples/awp-config.json for example. If the config parameter is given, the tests and results parameters will be ignored.
   override-results\tWhether to append results to the existing result list. Default: false.
   timer-interval\tSet the timer interval for executing recurring continuously.
   verbose\t\tPrint out verbose logs.
@@ -125,8 +125,8 @@ async function begin() {
     envVars[key] = envVarsFromParam[key];
   });
 
-  // Assert mandatory parameters
-  if (!action || !testsPath || !resultsPath) {
+  // Assert mandatory parameters, except if the config is given.
+  if (!config && (!action || !testsPath || !resultsPath)) {
     printUsage();
     return;
   }

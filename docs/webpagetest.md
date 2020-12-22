@@ -12,6 +12,7 @@ configuration for running a WebPageTest audit.
 {
   "label": "Example",
   "url": "https://example.com",
+  "gatherer": "webpagetest",
   "webpagetest": {
     "settings": {
       "locationId": "Dulles_MotoG",
@@ -26,6 +27,11 @@ configuration for running a WebPageTest audit.
   }
 }
 ```
+
+## Required Environmental Variables
+
+- `GCP_PROJECT_ID` - The project unique ID in the Google Cloud Platform. 
+- `SERVICE_ACCOUNT_CREDENTIALS` - The path to the Service Account json file.
 
 ## Audit Lifecycle
 

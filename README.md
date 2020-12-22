@@ -105,9 +105,46 @@ WPT_APIKEY=SAMPLE_KEY ./awp run examples/tests-wpt.json output/results.json
 ./awp run examples/tests.json output/results.json --override-results
 ```
 
-### Using AWP with Node CLI
+### Available gatherers:
 
-#### Run tests
+- WebPageTest - See [docs/webpagetest.md](docs/webpagetest.md) for details.
+- PageSpeed Insights - See [docs/psi.md](docs/psi.md) for details.
+- Chrome UX Report API - See [docs/cruxapi.md](docs/cruxapi.md) for details.
+- Chrome UX Report BigQuery - See [docs/cruxbigquery.md](docs/cruxbigquery.md) for details.
+
+### Available connectors:
+
+- JSON connector - reads or writes to local JSON files.
+This is the default connector if a conenctor name is not specified. For example:
+```
+./awp run examples/tests.json output/results.json
+```
+
+Alternatively, to specify using the JSON connector for the `Tests` path and the `Results` path:
+```
+./awp run json:/examples/tests.json json:output/results.json
+```
+
+- CSV connector - reads or writes to local CSV files.
+To specify using the CSV connector for the `Tests` path and the `Results` path:
+```
+./awp run csv:/examples/tests.csv csv:output/results.csv
+```
+
+- URL connector - generates just one `Test` with a specific URL for audit.
+To run an audit with just one `Test` with a specific URL:
+```
+./awp run url:https://example.com csv:output/results.csv
+```
+
+Please note that this connector only works with `Tests` path, not for the `Results` path.
+
+- Google Sheets connector
+See [docs/sheets-connector.md](docs/sheets-connector.md) for detailed guidance.
+
+## Using AWP with Node CLI
+
+### Run tests
 
 You can run the following anytime for printing CLI usages:
 
@@ -134,7 +171,7 @@ E.g. to run tests defined in CSV and write results in JSON:
 ./awp run csv:examples/tests.csv json:output/results.csv
 ```
 
-#### Retrieve test results
+### Retrieve test results
 
 For some audit platforms like WebPageTest, each test may take a few minutes to
 fetch actual results. For these type of *asynchronous* audits, each Result will
@@ -151,7 +188,7 @@ This will fetch metrics for all audit platforms and update to the Result object
 in the `output/results.json`. You can check out `examples/results.json` for
 details in Result objects.
 
-#### Run recurring tests
+### Run recurring tests
 
 If you'd like to set up recurring tests, you can define the `recurring` object
 that contains `frequency` for that Test.
@@ -186,7 +223,7 @@ The `nextTriggerTimestamp` will be updated to the next day based on the previous
 timestamp. This is to prevent repeated runs with the same Test and to guarantee
 that this Test is executed only once per day.
 
-#### Set up a cron job to run recurring tests
+### Set up a cron job to run recurring tests
 
 In most Unix-like operating system, you can set up a cron job to run the AWP CLI
 periodically.
@@ -206,7 +243,7 @@ that this is based on the system time where it runs AWP.
 0 12 * * * PSI_APIKEY=SAMPLE_KEY cd ~/workspace/awp && ./awp run examples/tests.json csv:output/results-recurring.csv
 ```
 
-#### Run tests with extensions
+### Run tests with extensions
 
 An extension is a module to assist AWP to run tests with additional process and
 computation. For example, `budgets` extension is able to add performance budgets
@@ -276,7 +313,13 @@ WebPageTest and PageSpeedInsights. See the example below.
 
 ### Environmental Variables
 
-TBD
+Some conenctors or gatherers may require one or more environmental variables, such as API keys or the path to 
+service account. For example, running with the CrUX API gatherer requires the CrUX API key.
+
+To pass the environmental variables in the CLI, run the command with the regular usage of environment vars:
+```
+CRUX_APIKEY=<YOUR_KEY> ./awp run url:https://wev.dev/ json:output/results.json
+```
 
 ## Gatherers
 
@@ -300,11 +343,16 @@ See [docs/psi.md](docs/psi.md) for more details for the usage of PSI gatherer.
 
 #### Chrome UX Report API (CrUX API)
 
-TBD
+The CrUX API gatherer collects performance metrics through the [Chrome UX Report API](https://developers.google.com/web/tools/chrome-user-experience-report/api/guides/getting-started). 
+
+See [docs/cruxapi.md](docs/cruxapi.md) for more details for the usage of CrUX API gatherer.
 
 #### Chrome UX Report History (CrUX via BigQuery)
 
-TBD
+The CrUX BigQuery gatherer collects performance metrics through the [Chrome UX Report](https://developers.google.com/web/tools/chrome-user-experience-report) with its [public Google BigQuery project](https://bigquery.cloud.google.com/dataset/chrome-ux-report:all). 
+Please noet that you would need set up a Google Cloud project in order to query the public BigQuery table.
+
+See [docs/cruxbigquery.md](docs/cruxbigquery.md) for more details for the usage of CrUX API gatherer.
 
 ## Design
 
