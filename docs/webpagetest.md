@@ -3,7 +3,7 @@
 ## Overview
 
 For more details on the WebPageTest API, please check out
-[the official documentation](https://sites.google.com/a/webpagetest.org/docs/advanced-features/webpagetest-restful-apis).
+[the official documentation](https://github.com/WPO-Foundation/webpagetest-docs/blob/master/dev/api.md).
 
 Below is a sample `Test` with `webpagetest` property that defines the
 configuration for running a WebPageTest audit.
