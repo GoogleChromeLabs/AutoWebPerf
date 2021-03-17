@@ -22,6 +22,14 @@ configuration for running a WebPageTest audit.
 }
 ```
 
+## Optional Environmental Variables
+
+- `PSI_APIKEY` - Use an API Key to relax rate limiting, for example if you see an error like:
+
+> Quota exceeded for quota metric 'Queries' and limit 'Queries per minute' of service 'pagespeedonline.googleapis.com' for consumer 'project_number:nnnn'."
+
+See [the official doc](https://developers.google.com/speed/docs/insights/v5/get-started#key) for details.
+
 ## Audit Lifecycle
 
 PageSpeed Insights API returns the metrics immediately after executing `run`
