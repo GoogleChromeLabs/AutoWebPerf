@@ -76,7 +76,6 @@ class PSIGatherer extends Gatherer {
       'lighthouse.ProgressiveWebApp': 'lighthouseResult.categories.pwa.score',
       'lighthouse.Manifest': 'lighthouseResult.audits["installable-manifest"].score',
       'lighthouse.ServiceWorker': 'lighthouseResult.audits["service-worker"].score',
-      'lighthouse.Offline': 'lighthouseResult.audits["works-offline"].score',
       'lighthouse.Accessibility': 'lighthouseResult.categories.accessibility.score',
       'lighthouse.SEO': 'lighthouseResult.categories.seo.score',
       'lighthouse.BestPractices': 'lighthouseResult.categories["best-practices"].score',
