@@ -1,5 +1,5 @@
 {
-  "name": "awp",
+  "name": "autowebperf",
   "version": "0.3.2",
   "description": "AutoWebPerf",
   "main": "index.js",
