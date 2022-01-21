@@ -66,7 +66,7 @@ class PSIGatherer extends Gatherer {
       'lighthouse.Medias': 'processedRessourceSummaryItems.MediasSize',
       'lighthouse.ThirdParty': 'processedRessourceSummaryItems.ThirdPartySize',
       'lighthouse.UnusedCSS': 'lighthouseResult.audits["unused-css-rules"].details.overallSavingsBytes',
-      'lighthouse.WebPImages': 'lighthouseResult.audits["uses-webp-images"].details.overallSavingsBytes',
+      'lighthouse.WebPImages': 'lighthouseResult.audits["modern-image-formats"].details.overallSavingsBytes',
       'lighthouse.OptimizedImages': 'lighthouseResult.audits["uses-optimized-images"].details.overallSavingsBytes',
       'lighthouse.ResponsiveImages': 'lighthouseResult.audits["uses-responsive-images"].details.overallSavingsBytes',
       'lighthouse.OffscreenImages': 'lighthouseResult.audits["offscreen-images"].details.overallSavingsBytes',
