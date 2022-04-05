@@ -146,7 +146,7 @@ class WebPageTestGatherer extends Gatherer {
 
     let wptConfig = test.webpagetest || {};
     let settings = wptConfig.settings || {};
-    let locationId = settings.locationId || 'Dulles_MotoG';
+    let locationId = settings.locationId || 'ec2-us-east-1';
     let connection = settings.connection || '4G';
 
     let location = `${locationId}.${connection}`;

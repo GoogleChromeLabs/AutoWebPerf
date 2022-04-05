@@ -56,16 +56,16 @@ Examples:
   ./awp continue examples/tests-recurring.json output/results.json
 
   # Run PageSpeedInsight tests with an API Key.
-  PSI_APIKEY=SAMPLE_KEY ./awp run examples/tests.json output/results.json
+  PSI_APIKEY=<YOUR_API_KEY> ./awp run examples/tests.json output/results.json
 
   # Run WebPageTest tests with an API Key.
-  WPT_APIKEY=SAMPLE_KEY ./awp run examples/tests-wpt.json output/results.json
+  WPT_APIKEY=<YOUR_API_KEY> ./awp run examples/tests-wpt.json output/results.json
 
   # Retrieve pending results (For WebPageTest usage)
-  WPT_APIKEY=SAMPLE_KEY ./awp retrieve examples/tests-wpt.json output/results.json
+  WPT_APIKEY=<YOUR_API_KEY> ./awp retrieve examples/tests-wpt.json output/results.json
 
   # Retrieve from CrUX API
-  CRUX_APIKEY=SAMPLE_KEY ./awp run examples/tests-cruxapi.json output/results.json
+  CRUX_APIKEY=<YOUR_API_KEY> ./awp run examples/tests-cruxapi.json output/results.json
 
   # Run tests with budget extension
   ./awp run examples/tests.json output/results.json --extensions=budgets
