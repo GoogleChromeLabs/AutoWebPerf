@@ -41,7 +41,9 @@ class CrUXAPIGatherer extends Gatherer {
       'LargestContentfulPaint': 'processedCrUXMetrics.lcp',
       'FirstInputDelay': 'processedCrUXMetrics.fid',
       'CumulativeLayoutShift': 'processedCrUXMetrics.cls',
-      'FirstContentfulPaint': 'processedCrUXMetrics .fcp',
+      'FirstContentfulPaint': 'processedCrUXMetrics.fcp',
+      'TimeToFirstByte': 'processedCrUXMetrics.ttfb',
+      'InteractionToNextPaint': 'processedCrUXMetrics.inp',
     };
   }
 
@@ -148,10 +150,12 @@ class CrUXAPIGatherer extends Gatherer {
     let processedCrUXMetrics = {};
     let metrics = json.record.metrics;
     let metricsToProcess = {
+      ttfb: metrics.experimental_time_to_first_byte,
+      fcp: metrics.first_contentful_paint,
       lcp: metrics.largest_contentful_paint,
       cls: metrics.cumulative_layout_shift,
       fid: metrics.first_input_delay,
-      fcp: metrics.first_contentful_paint
+      inp: metrics.experimental_interaction_to_next_paint
     };
 
     for (let metric in metricsToProcess) {
@@ -195,6 +199,48 @@ class CrUXAPIGatherer extends Gatherer {
             ],
             "percentiles": {
               "p75": "0.05"
+            }
+          },
+          "experimental_interaction_to_next_paint": {
+            "histogram": [
+              {
+                "start": 0,
+                "end": 200,
+                "density": 0.10587334572897318
+              },
+              {
+                "start": 200,
+                "end": 500,
+                "density": 0.40435305698348528
+              },
+              {
+                "start": 500,
+                "density": 0.4897735972875415
+              }
+            ],
+            "percentiles": {
+              "p75": 808
+            }
+          },
+           "experimental_time_to_first_byte": {
+            "histogram": [
+              {
+                "start": 0,
+                "end": 800,
+                "density": 0.95794647733478966
+              },
+              {
+                "start": 800,
+                "end": 1800,
+                "density": 0.032113599126160568
+              },
+              {
+                "start": 1800,
+                "density": 0.0099399235390496919
+              }
+            ],
+            "percentiles": {
+              "p75": 286
             }
           },
           "first_contentful_paint": {

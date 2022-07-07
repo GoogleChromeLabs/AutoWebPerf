@@ -136,14 +136,17 @@ class AppScriptConnector extends Connector {
       'cruxbigquery.metrics.p75_fcp': [2500, 1500],
       'cruxbigquery.metrics.p75_lcp': [4000,2500],
       'cruxbigquery.metrics.p75_fid': [300,100],
+      'cruxbigquery.metrics.p75_inp': [500,200],
       'cruxbigquery.metrics.p75_cls': [0.25,0.1],
       'cruxbigquery.metrics.p75_dcl': [3500, 1500],
       'cruxbigquery.metrics.p75_ol': [6500, 2500],
-
+      
+      'cruxapi.metrics.TimeToFirstByte.p75': [1800, 500],
       'cruxapi.metrics.FirstContentfulPaint.p75': [3000, 1000],
       'cruxapi.metrics.LargestContentfulPaint.p75': [4000,2500],
       'cruxapi.metrics.CumulativeLayoutShift.p75': [0.25,0.1],
-      'cruxapi.metrics.FirstInputDelay.p75': [300,100]
+      'cruxapi.metrics.FirstInputDelay.p75': [300,100],
+      'cruxapi.metrics.InteractionToNextPaint.p75': [500,200]
     };
 
     this.healthCheck();
