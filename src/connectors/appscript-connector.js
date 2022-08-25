@@ -141,7 +141,8 @@ class AppScriptConnector extends Connector {
       'cruxbigquery.metrics.p75_cls': [0.25,0.1],
       'cruxbigquery.metrics.p75_dcl': [3500, 1500],
       'cruxbigquery.metrics.p75_ol': [6500, 2500],
-
+      
+      'cruxapi.metrics.TimeToFirstByte.p75': [1800, 500],
       'cruxapi.metrics.FirstContentfulPaint.p75': [3000, 1000],
       'cruxapi.metrics.LargestContentfulPaint.p75': [4000,2500],
       'cruxapi.metrics.CumulativeLayoutShift.p75': [0.25,0.1],
