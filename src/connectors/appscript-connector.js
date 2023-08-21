@@ -129,6 +129,7 @@ class AppScriptConnector extends Connector {
       'psi.metrics.crux.FirstContentfulPaint.percentile': [3000, 1000],
       'psi.metrics.crux.LargestContentfulPaint.percentile': [4000,2500],
       'psi.metrics.crux.FirstInputDelay.percentile': [300,100],
+      'psi.metrics.crux.InteractionToNextPaint.percentile': [500,200],
       'psi.metrics.crux.CumulativeLayoutShift.percentile':  [25,10],
 
       'cruxbigquery.metrics.p75_ttfb': [1500,500],
