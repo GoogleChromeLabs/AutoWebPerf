@@ -38,6 +38,7 @@ const MetricKeys = [
   'LargestContentfulPaint',
   'CumulativeLayoutShift',
   'FirstInputDelay',
+  'InteractionToNextPaint',
   'TTIMeasurementEnd',
 
   // resourceSize

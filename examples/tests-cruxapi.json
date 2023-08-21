@@ -29,7 +29,7 @@
     },
     {
       "label":"Web.dev wrong Origin",
-      "url": "https://wew.dev",
+      "url": "https://web.dev",
       "gatherer": "cruxapi",
       "cruxapi": {
         "settings": {
