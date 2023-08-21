@@ -155,7 +155,7 @@ class CrUXAPIGatherer extends Gatherer {
       lcp: metrics.largest_contentful_paint,
       cls: metrics.cumulative_layout_shift,
       fid: metrics.first_input_delay,
-      inp: metrics.experimental_interaction_to_next_paint
+      inp: metrics.interaction_to_next_paint
     };
 
     for (let metric in metricsToProcess) {
@@ -201,7 +201,7 @@ class CrUXAPIGatherer extends Gatherer {
               "p75": "0.05"
             }
           },
-          "experimental_interaction_to_next_paint": {
+          "interaction_to_next_paint": {
             "histogram": [
               {
                 "start": 0,
