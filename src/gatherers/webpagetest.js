@@ -180,6 +180,8 @@ class WebPageTestGatherer extends Gatherer {
       urlParams.push(key + '=' + params[key]);
     });
     let url = this.runApiEndpoint + '?' + urlParams.join('&');
+    options.headers = options.headers || {};
+    options.headers['X-WPT-API-KEY'] = this.apiKey;
 
     let response, body = {}, statusText;
     if (this.apiKey === 'TEST_APIKEY') {
@@ -193,7 +195,7 @@ class WebPageTestGatherer extends Gatherer {
 
     } else {
       if (this.debug) console.log('WPTGatherer::run\n', url);
-      response = this.apiHandler.fetch(url);
+      response = this.apiHandler.fetch(url, options);
 
       if (this.debug) {
         console.log('WPTGatherer::run API response: \n', response);
@@ -298,7 +300,7 @@ class WebPageTestGatherer extends Gatherer {
     let url = this.resultApiEndpoint + '?' + urlParams.join('&');
     if (this.debug) console.log('WPTGatherer::retrieve\n', url);
 
-    let response = this.apiHandler.fetch(url);
+    let response = this.apiHandler.fetch(url, options);
 
     if (response.statusCode >= 400) {
       return {

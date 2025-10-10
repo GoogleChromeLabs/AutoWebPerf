@@ -17,13 +17,13 @@
 const ApiHandler = require('./api-handler');
 
 class AppScriptApiHandler extends ApiHandler {
-  fetch(url) {
-    return this.get(url);
+  fetch(url, options) {
+    return this.get(url, options);
   }
 
-  get(url) {
+  get(url, options) {
     try {
-      var response = UrlFetchApp.fetch(url);
+      var response = UrlFetchApp.fetch(url, options);
       return {
         statusCode: response.getResponseCode(),
         body: response.getContentText(),
