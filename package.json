@@ -43,6 +43,6 @@
     "rollup-plugin-banner": "^0.2.1",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-insert": "^1.1.0",
-    "rollup-plugin-visualizer": "^3.3.1"
+    "rollup-plugin-visualizer": "^7.1.1"
   }
 }
