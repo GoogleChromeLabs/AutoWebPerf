@@ -1,5 +1,8 @@
 # AutoWebPerf (AWP)
 
+> [!WARNING] 
+> This project is now archived and no longer maintained, if you need web performance automation needs please look up for alternatives available both from open source projects as well as commercial solutions.
+
 <p align="left">
   <img src="https://i.imgur.com/f87A9xi.png" width="200" alt="quicklink">
 </p>
